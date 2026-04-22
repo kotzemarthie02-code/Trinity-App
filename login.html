@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Genshin Impact - Login</title>
+    <style>
+        body {
+            /* FIX SIZE: Hierdie sorg dat die prentjie presies op die skerm pas */
+            background: url(Login.jpg); no-repeat center center fixed;
+            background-size: cover; 
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .card {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 40px;
+            border-radius: 15px;
+            width: 380px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .input-group { position: relative; margin-bottom: 15px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            box-sizing: border-box;
+        }
+        .eye-icon { position: absolute; right: 12px; top: 10px; cursor: pointer; font-size: 20px; }
+        
+        #user-list {
+            position: absolute;
+            background: rgba(20, 20, 20, 0.95);
+            width: 100%;
+            border-radius: 5px;
+            display: none;
+            z-index: 10;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+            border: 1px solid #444;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        #user-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid #333; }
+        #user-list li:hover { background: #555; }
+        
+        .btn { background: white; color: black; width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .link { margin-top: 15px; display: block; color: #ccc; cursor: pointer; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Genshin Impact</h2>
+    <div id="login-box">
+        <div class="input-group">
+            <input type="text" id="l-email" placeholder="Email" onfocus="showUsers()" autocomplete="off">
+            <ul id="user-list"></ul>
+        </div>
+        <div class="input-group">
+            <input type="password" id="l-pass" placeholder="Password">
+            <span class="eye-icon" onclick="togglePass('l-pass')">👁️</span>
+        </div>
+        <button class="btn" onclick="login()">LOG IN</button>
+        <span class="link" onclick="toggle('reg')">Register New Account</span>
+    </div>
+
+    <div id="reg-box" style="display:none;">
+        <input type="text" id="r-email" placeholder="Email">
+        <input type="text" id="r-nick" placeholder="Nickname">
+        <input type="text" id="r-uid" placeholder="UID">
+        <div class="input-group">
+            <input type="password" id="r-pass" placeholder="Password">
+            <span class="eye-icon" onclick="togglePass('r-pass')">👁️</span>
+        </div>
+        <button class="btn" onclick="register()">CREATE ACCOUNT</button>
+        <span class="link" onclick="toggle('login')">Back to Login</span>
+    </div>
+</div>
+
+<script>
+    function togglePass(id) {
+        const x = document.getElementById(id);
+        x.type = (x.type === "password") ? "text" : "password";
+    }
+
+    function toggle(mode) {
+        document.getElementById('login-box').style.display = (mode === 'login' ? 'block' : 'none');
+        document.getElementById('reg-box').style.display = (mode === 'reg' ? 'block' : 'none');
+    }
+
+    function showUsers() {
+        const users = JSON.parse(localStorage.getItem("allUsers") || "[]");
+        const list = document.getElementById("user-list");
+        if(users.length > 0) {
+            list.innerHTML = "";
+            users.forEach(email => {
+                let li = document.createElement("li");
+                li.innerText = email;
+                li.onmousedown = function() { // Gebruik onmousedown vir beter clicks
+                    document.getElementById("l-email").value = email;
+                    list.style.display = "none";
+                };
+                list.appendChild(li);
+            });
+            list.style.display = "block";
+        }
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('#l-email')) {
+            document.getElementById("user-list").style.display = "none";
+        }
+    }
+
+    function register() {
+        const email = document.getElementById('r-email').value;
+        const nick = document.getElementById('r-nick').value;
+        const uid = document.getElementById('r-uid').value;
+        const pass = document.getElementById('r-pass').value;
+        
+        if(email && nick && uid && pass) {
+            const user = { email, nick, uid, password: pass };
+            // Save die spesifieke user data
+            localStorage.setItem("user_" + email, JSON.stringify(user));
+            
+            // Voeg by die lys van alle e-posse
+            let allUsers = JSON.parse(localStorage.getItem("allUsers") || "[]");
+            if(!allUsers.includes(email)) {
+                allUsers.push(email);
+                localStorage.setItem("allUsers", JSON.stringify(allUsers));
+            }
+            
+            alert("Registered! You can now log in.");
+            toggle('login');
+        } else { alert("Please fill in all fields!"); }
+    }
+
+    function login() {
+        const email = document.getElementById('l-email').value;
+        const pass = document.getElementById('l-pass').value;
+        const data = localStorage.getItem("user_" + email);
+
+        if(data) {
+            const user = JSON.parse(data);
+            if(user.password === pass) {
+                localStorage.setItem("currentUser", JSON.stringify(user));
+                window.location.href = "Dashboard.html";
+            } else { alert("Wrong password!"); }
+        } else { alert("User not found! Did you register?"); }
+    }
+</script>
+</body>
+</html>
