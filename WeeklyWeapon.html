@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+    <meta charset="UTF-8">
+    <title>Weekly Weapon Calendar</title>
+    <style>
+        body { 
+            background-image: url('WeeklyWeapon1.jpg');
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-size: cover; 
+            color: white; 
+            font-family: sans-serif; 
+            margin: 0;
+            padding: 10px; 
+            height: 100vh;
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            box-sizing: border-box;
+        }
+
+        .main-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            /* Ligte donker filter oor die hele prent */
+            background: rgba(0, 0, 0, 0.2); 
+            z-index: -1; 
+        }
+
+        .header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            margin-bottom: 15px; 
+            flex-shrink: 0;
+        }
+
+        .back-btn { 
+            position: absolute; 
+            left: 10px; 
+            background: rgba(0, 0, 0, 0.5); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: white; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 16px;
+        }
+
+        h1 { 
+            margin: 0;
+            font-size: 42px; 
+            text-shadow: 2px 2px 15px rgba(0,0,0,0.7); 
+            font-weight: bold;
+        }
+
+        .calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 15px; 
+            width: 98%; 
+            margin: 0 auto; 
+            flex-grow: 1; 
+            min-height: 0;
+        }
+
+        .day-column { 
+            /* VERANDERING: Baie ligter deursigtige swart (0.4 in plaas van 0.9) */
+            background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(5px); /* Dit maak die agtergrond agter die boksie effens wasig vir styl */
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 15px; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+        }
+
+        .day-title { 
+            border-bottom: 1px solid rgba(255,255,255,0.3); 
+            padding-bottom: 12px; 
+            margin-top: 0;
+            font-size: 26px; 
+            text-align: center; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .char-list { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 12px; 
+            margin-top: 15px; 
+            justify-content: center; 
+            overflow-y: auto; 
+        }
+
+        .char-pic { 
+            width: 85px; 
+            height: 85px; 
+            border-radius: 12px; 
+            border: 2px solid rgba(255,255,255,0.6); 
+            background-size: cover; 
+            background-position: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .sunday-section { 
+            margin-top: 15px; 
+            text-align: center; 
+            font-size: 22px; 
+            color: white;
+            padding: 12px; 
+            /* VERANDERING: Ligte deursigtige strook vir die Sondag teks */
+            background: rgba(0, 0, 0, 0.5); 
+            border-radius: 15px; 
+            width: 98%;
+            margin-left: auto;
+            margin-right: auto;
+            text-shadow: 1px 1px 3px black;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-overlay"></div>
+    <div class="header">
+        <a href="Dashboard.html" class="back-btn">🏠 Dashboard</a>
+        <h1>Weekly Weapon Calendar</h1>
+    </div>
+    <div class="calendar-grid">
+        <div class="day-column">
+            <h3 class="day-title">Monday / Thursday</h3>
+            <div class="char-list" id="list-mon"></div>
+        </div>
+        <div class="day-column">
+            <h3 class="day-title">Tuesday / Friday</h3>
+            <div class="char-list" id="list-tue"></div>
+        </div>
+        <div class="day-column">
+            <h3 class="day-title">Wednesday / Saturday</h3>
+            <div class="char-list" id="list-wed"></div>
+        </div>
+    </div>
+    <div class="sunday-section">
+        Sunday: All Weapon Ascension Materials can be obtained on Sundays.
+    </div>
+
+    <script>
+        function loadWeaponCalendar() {
+            const characterDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
+            const owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+            
+            const listMon = document.getElementById('list-mon');
+            const listTue = document.getElementById('list-tue');
+            const listWed = document.getElementById('list-wed');
+
+            listMon.innerHTML = '';
+            listTue.innerHTML = '';
+            listWed.innerHTML = '';
+
+            owned.forEach(charName => {
+                const data = characterDetails[charName];
+                if (!data) return;
+
+                // First check explicit weaponDay field
+                let chosenDay = data['weaponDay'] || "";
+                // Fallback: scan all fields
+                if (!chosenDay) {
+                    for (let key in data) {
+                        const val = data[key];
+                        if (["Mon/Thu", "Tue/Fri", "Wed/Sat", "Ma/Do", "Di/Vr", "Wo/Sa"].includes(val)) {
+                            chosenDay = val;
+                            break;
+                        }
+                    }
+                }
+
+                const imgHTML = `<div class="char-pic" style="background-image: url('${charName}1.jpg')" title="${charName}"></div>`;
+
+                if (chosenDay === "Mon/Thu" || chosenDay === "Ma/Do") {
+                    listMon.innerHTML += imgHTML;
+                } 
+                else if (chosenDay === "Tue/Fri" || chosenDay === "Di/Vr") {
+                    listTue.innerHTML += imgHTML;
+                } 
+                else if (chosenDay === "Wed/Sat" || chosenDay === "Wo/Sa") {
+                    listWed.innerHTML += imgHTML;
+                }
+            });
+        }
+        window.onload = loadWeaponCalendar;
+    </script>
+</body>
+</html>

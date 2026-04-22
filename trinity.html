@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+<meta charset="UTF-8">
+<title>The Trinity's Action Plan</title>
+<style>
+/* ... (Alle CSS bly presies dieselfde as jou oorspronklike kode) ... */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;900&family=Cinzel:wght@700&display=swap');
+
+:root {
+  --bg-dark: rgba(0,0,0,0.72);
+  --bg-panel: rgba(0,0,0,0.70);
+  --border: rgba(255,255,255,0.13);
+  --green: #4caf50;
+  --green-light: #a5ffad;
+  --gold: #ffe08a;
+  --white: #f0f0f0;
+  --tan: rgba(210,180,140,0.15);
+  --tan-border: rgba(210,180,140,0.38);
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: url('Task.jpg') no-repeat center top fixed;
+  background-size: cover;
+  font-family: 'Nunito', sans-serif;
+  color: var(--white);
+  min-height: 100vh;
+  padding: 0 0 60px;
+
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.15); 
+  z-index: 0;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 0 18px; }
+
+.topnav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0 10px; margin-bottom: 4px;
+}
+.nav-link {
+  background: rgba(0,0,0,0.60);
+  border: 1px solid var(--border); color: var(--white);
+  padding: 9px 20px; border-radius: 10px;
+  text-decoration: none; font-size: 15px; font-weight: 700;
+  transition: background 0.25s, transform 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-link:hover { background: rgba(255,255,255,0.10); transform: scale(1.03); }
+.nav-home-icon { font-size: 20px; }
+
+.site-title { text-align: center; padding: 10px 0 22px; }
+.site-title h1 {
+  font-family: 'Cinzel', serif; font-size: 32px; font-weight: 700;
+  color: var(--white); text-shadow: 0 0 24px rgba(255,255,255,0.25); letter-spacing: 2px;
+}
+
+.sec-head {
+  font-size: 17px; font-weight: 700; color: var(--gold);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+
+.panel {
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px 24px; margin-bottom: 22px;
+  backdrop-filter: blur(12px); transition: box-shadow 0.3s, transform 0.2s;
+}
+.panel:hover { box-shadow: 0 0 32px rgba(255,255,255,0.07); }
+
+.check-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; margin-bottom: 5px;
+  transition: background 0.18s; cursor: pointer; user-select: none;
+}
+.check-item:hover { background: rgba(255,255,255,0.05); }
+.cb {
+  width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 5px; flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; cursor: pointer;
+}
+.cb.checked { background: var(--green); border-color: var(--green); }
+.cb.checked::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 900; }
+.check-label { font-size: 14px; line-height: 1.5; flex: 1; }
+.check-item.done .check-label { color: rgba(255,255,255,0.32); text-decoration: line-through; }
+.check-link { color: #7eb8ff; font-size: 12px; word-break: break-all; }
+
+.weekly-item {
+  margin-bottom: 18px; padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.weekly-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.counter-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.counter-boxes { display: flex; gap: 8px; }
+
+.cbox {
+  width: 28px; height: 28px; 
+  border-radius: 8px; 
+  border: 2px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+}
+
+.cbox.filled {
+  background: #2d5a27;
+  border-color: #89f09c;
+  box-shadow: 0 0 12px rgba(137, 240, 156, 0.4);
+}
+
+.cbox.filled::after {
+  content: '✓';
+  color: #89f09c;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  display: block;
+}
+
+.region-select-short {
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: white;
+  padding: 4px 8px;
+  font-size: 13px;
+  width: 110px;
+  outline: none;
+  cursor: pointer;
+}
+
+.counter-frac-left {
+  font-size: 14px; color: rgba(255,255,255,0.5); font-weight: 700;
+  min-width: 32px;
+}
+.counter-frac-left.done { color: var(--green-light); }
+
+.deadline {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,180,0,0.12);
+  border: 1px solid rgba(255,180,0,0.35);
+  border-radius: 20px;
+  padding: 3px 12px; font-size: 11px;
+  color: #ffcc44; font-weight: 700;
+}
+
+.counter-sub {
+  margin-top: 10px;
+  background: var(--tan); border: 1px solid var(--tan-border);
+  border-radius: 12px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.counter-sub label {
+  font-size: 11px; color: rgba(255,255,255,0.5);
+  text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;
+}
+.counter-sub select {
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 7px; color: var(--white); padding: 6px 10px;
+  font-family: 'Nunito', sans-serif; font-size: 13px; outline: none; cursor: pointer;
+  flex: 1; min-width: 140px;
+}
+.counter-sub select:focus { border-color: rgba(255,255,255,0.4); }
+
+.boss-note {
+  margin-top: 10px; background: var(--tan);
+  border: 1px solid var(--tan-border); border-radius: 12px; padding: 12px 14px;
+}
+.boss-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;
+}
+.boss-row:last-child { margin-bottom: 0; }
+.boss-row select {
+  background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 7px; color: var(--white); padding: 6px 10px;
+  font-family: 'Nunito', sans-serif; font-size: 13px; width: 100%; outline: none; cursor: pointer;
+}
+
+.plan-single {
+  border-radius: 14px; padding: 20px 18px; position: relative;
+  min-height: 260px; transition: border-color 0.3s, background 0.3s;
+}
+.plan-single { background: rgba(80,80,80,0.4); border: 2px solid #888; }
+
+.note-pin {
+  width: 18px; height: 18px; border-radius: 50%;
+  position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  transition: background 0.3s;
+  background: radial-gradient(circle at 40% 35%, #bbb, #666);
+}
+
+.plan-color-row {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 7px; margin-bottom: 10px;
+}
+.plan-color-row label { font-size: 11px; color: rgba(255,255,255,0.45); }
+.color-dot {
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: transform 0.18s, border-color 0.18s;
+}
+.color-dot:hover { transform: scale(1.2); }
+.color-dot.active { border-color: #fff; transform: scale(1.15); }
+.color-dot.c-grey  { background: #888; }
+.color-dot.c-green { background: #4caf50; }
+.color-dot.c-rose  { background: #c28090; }
+.color-dot.c-blue  { background: #5b9bd5; }
+.color-dot.c-gold  { background: #d4a017; }
+
+.plan-title-input {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  color: var(--white); font-family: 'Cinzel', serif;
+  font-size: 13px; padding: 4px 4px 6px; outline: none;
+  text-align: center; margin-bottom: 12px; letter-spacing: 1px;
+}
+.plan-title-input:focus { border-bottom-color: rgba(255,255,255,0.5); }
+
+.plan-item {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 8px;
+}
+.plan-cb {
+  width: 17px; height: 17px; border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 4px; flex-shrink: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.plan-cb:hover { border-color: var(--green); }
+.plan-cb:active { transform: scale(0.88); }
+.plan-cb.checked { background: var(--green); border-color: var(--green); }
+.plan-cb.checked::after { content: '✓'; color: #fff; font-size: 10px; font-weight: 900; }
+.plan-item input[type=text] {
+  flex: 1; background: rgba(0,0,0,0.3); border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  color: var(--white); font-family: 'Nunito', sans-serif;
+  font-size: 13px; padding: 3px 6px; outline: none; transition: border-color 0.18s;
+}
+.plan-item input:focus { border-bottom-color: rgba(255,255,255,0.45); }
+.plan-item.item-done input { color: rgba(255,255,255,0.32); text-decoration: line-through; }
+
+select {
+  background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 7px; color: var(--white); padding: 7px 10px;
+  font-family: 'Nunito', sans-serif; font-size: 13px; outline: none; cursor: pointer;
+}
+select option { background: #1a1a1a; }
+
+.divider { height:1px; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); margin: 6px 0 14px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
+
+a, button, .check-item, .cbox, .plan-cb, .cb, .nav-link {
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.cbox:active, .cb:active, .plan-cb:active {
+  transform: scale(0.9);
+}
+
+@media(max-width:650px){ .boss-row { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topnav">
+    <a href="Dashboard.html" class="nav-link">
+      <span class="nav-home-icon">🏠</span> Dashboard
+    </a>
+    <div></div>
+  </div>
+
+  <div class="site-title">
+    <h1>The Trinity's Action Plan 🧪🔥🕊️</h1>
+  </div>
+
+  <div class="panel">
+    <div class="sec-head">
+      ☀️ Daily Routine
+      <div class="cb" id="daily-master-cb" style="margin-left:8px;" onclick="toggleAllDaily()" title="Merk almal klaar"></div>
+    </div>
+    <div id="daily-list">
+      <div class="check-item" onclick="toggleDaily(0)">
+        <div class="cb" id="d0"></div>
+        <div class="check-label">
+          🔗 HoyoLab DAILY CHECK-IN<br>
+          <a class="check-link" href="https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481" target="_blank" onclick="event.stopPropagation()">HoyoLab Check-in Link 🔗</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="toggleDaily(1)">
+        <div class="cb" id="d1"></div>
+        <div class="check-label">Battle Pass</div>
+      </div>
+      <div class="check-item" onclick="toggleDaily(2)">
+        <div class="cb" id="d2"></div>
+        <div class="check-label">200 Original Resin 🌙</div>
+      </div>
+      <div class="check-item" onclick="toggleDaily(3)">
+        <div class="cb" id="d3"></div>
+        <div class="check-label"><strong>To Temper Thyself and Journey Far 🧭</strong></div>
+      </div>
+      <div class="check-item" onclick="toggleDaily(4)">
+        <div class="cb" id="d4"></div>
+        <div class="check-label">Daily Commissions 🤝</div>
+      </div>
+      <div class="check-item" onclick="toggleDaily(5)">
+        <div class="cb" id="d5"></div>
+        <div class="check-label">Expedition Guide</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sec-head">🗓️ Weekly Objectives</div>
+
+    <div class="weekly-item">
+  <div class="counter-row" style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap;">
+    <span style="font-size:16px;">📜</span>
+    <span class="counter-label" style="min-width: 160px;">The Ministry of Affairs</span>
+    
+    <span class="counter-frac-left" id="min-frac">0/3</span>
+
+    <div class="counter-boxes" style="display: flex; gap: 6px;">
+      <div class="cbox" id="min0" onclick="tickCounter('min',0,3)"></div>
+      <div class="cbox" id="min1" onclick="tickCounter('min',1,3)"></div>
+      <div class="cbox" id="min2" onclick="tickCounter('min',2,3)"></div>
+    </div>
+
+    <select class="region-select-mid" id="bounty-region" onchange="saveWeekly()">
+      <option value="">Region</option>
+      <option>Mondstadt</option><option>Liyue</option><option>Inazuma</option>
+      <option>Sumeru</option><option>Fontaine</option><option>Natlan</option><option>Nod-Krai</option>
+    </select>
+
+    <span class="deadline">⚠️ Before Sunday</span>
+  </div>
+</div>
+
+    <div class="weekly-item">
+  <div class="counter-row" style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap;">
+    <span style="font-size:16px;">⚔️</span>
+    <span class="counter-label" style="min-width: 160px;">Weekly Boss</span>
+    
+    <span class="counter-frac-left" id="wb-frac">0/3</span>
+
+    <div class="counter-boxes" style="display: flex; gap: 6px;">
+      <div class="cbox" id="wb0" onclick="tickCounter('wb',0,3)"></div>
+      <div class="cbox" id="wb1" onclick="tickCounter('wb',1,3)"></div>
+      <div class="cbox" id="wb2" onclick="tickCounter('wb',2,3)"></div>
+    </div>
+
+    <span class="deadline">⚠️ Before Sunday</span>
+  </div>
+
+  <div class="boss-note">
+    <div class="boss-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+      <select id="boss-char-0" onchange="saveWeekly()" style="flex:1.5;"><option value="">— Choose Character —</option></select>
+      <select id="boss-loc-0" onchange="saveWeekly()" style="flex:2;"><option value="">— Weekly Boss —</option></select>
+    </div>
+    <div class="boss-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+      <select id="boss-char-1" onchange="saveWeekly()" style="flex:1.5;"><option value="">— Choose Character —</option></select>
+      <select id="boss-loc-1" onchange="saveWeekly()" style="flex:2;"><option value="">— Weekly Boss —</option></select>
+    </div>
+    <div class="boss-row" style="display: flex; align-items: center; gap: 10px;">
+      <select id="boss-char-2" onchange="saveWeekly()" style="flex:1.5;"><option value="">— Choose Character —</option></select>
+      <select id="boss-loc-2" onchange="saveWeekly()" style="flex:2;"><option value="">— Weekly Boss —</option></select>
+    </div>
+  </div>
+</div>
+
+    <div class="weekly-item">
+  <div class="counter-row" style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap;">
+    <span style="font-size:16px;">⚔️</span>
+    <span class="counter-label" style="min-width: 160px;">Stygian Onslaught</span>
+    
+    <span class="counter-frac-left" id="st-frac">0/3</span>
+
+    <div class="counter-boxes" style="display: flex; gap: 6px;">
+      <div class="cbox" id="st0" onclick="tickCounter('st',0,3)"></div>
+      <div class="cbox" id="st1" onclick="tickCounter('st',1,3)"></div>
+      <div class="cbox" id="st2" onclick="tickCounter('st',2,3)"></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-left: 20px;">
+      <span style="font-size:12px; color:rgba(255,224,138,0.7); white-space: nowrap;">100 Primogems ✨</span>
+      <span class="deadline">⚠️ Before Sunday</span>
+    </div>
+  </div>
+</div>
+
+    <div class="weekly-item">
+  <div class="counter-row" style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap;">
+    <span style="font-size:16px;">🎭</span>
+    <span class="counter-label" style="min-width: 160px;">Imaginarium Theater</span>
+    
+    <span class="counter-frac-left" id="im-frac">0/3</span>
+
+    <div class="counter-boxes" style="display: flex; gap: 6px;">
+      <div class="cbox" id="im0" onclick="tickCounter('im',0,3)"></div>
+      <div class="cbox" id="im1" onclick="tickCounter('im',1,3)"></div>
+      <div class="cbox" id="im2" onclick="tickCounter('im',2,3)"></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-left: 20px;">
+      <span style="font-size:12px; color:rgba(255,224,138,0.7); white-space: nowrap;">Earn a lot of Primogems ✨</span>
+      <span class="deadline">⚠️ Starts 1st</span>
+    </div>
+  </div>
+
+  <div class="counter-sub">
+    <label>Element</label>
+    <select id="im-element" onchange="saveIm()">
+      <option value="">— Required Element —</option>
+      <option>Anemo</option><option>Geo</option><option>Electro</option>
+      <option>Dendro</option><option>Hydro</option><option>Pyro</option><option>Cryo</option>
+    </select>
+  </div>
+</div>
+
+    <div class="weekly-item">
+      <div class="counter-row" style="flex-wrap:wrap; gap:10px;">
+        <span style="font-size:16px;">🌀</span>
+        <span class="counter-label">Spiral Abyss</span>
+        <span class="counter-frac-left" id="sa-frac">0/4</span>
+        <div class="counter-boxes">
+          <div class="cbox" id="sa0" onclick="tickCounter('sa',0,4)"></div>
+          <div class="cbox" id="sa1" onclick="tickCounter('sa',1,4)"></div>
+          <div class="cbox" id="sa2" onclick="tickCounter('sa',2,4)"></div>
+          <div class="cbox" id="sa3" onclick="tickCounter('sa',3,4)"></div>
+        </div>
+        <span style="font-size:12px;color:rgba(255,224,138,0.7);">600 Primogems ✨</span>
+        <span class="deadline">⚠️ Starts 16th</span>
+      </div>
+      <div class="counter-sub">
+        <label>Floor</label>
+        <select id="sa-floor" onchange="saveSa()">
+          <option value="">— Target Floor —</option>
+          <option>Floor 9 ⭐⭐⭐</option><option>Floor 10 ⭐⭐⭐</option><option>Floor 11 ⭐⭐⭐</option>
+          <option>Floor 12 ⭐⭐⭐</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <div class="sec-head">📌 Plans — To-do Notes</div>
+
+    <div class="plan-single" id="planNote">
+      <div class="note-pin" id="planPin"></div>
+
+      <div class="plan-color-row">
+        <label>Kleur:</label>
+        <div class="color-dot c-grey  active" onclick="setPlanColor('grey')"  title="Grys"></div>
+        <div class="color-dot c-green"         onclick="setPlanColor('green')" title="Groen"></div>
+        <div class="color-dot c-rose"          onclick="setPlanColor('rose')"  title="Pienk"></div>
+        <div class="color-dot c-blue"          onclick="setPlanColor('blue')"  title="Blou"></div>
+        <div class="color-dot c-gold"          onclick="setPlanColor('gold')"  title="Goud"></div>
+      </div>
+
+      <input type="text" class="plan-title-input" id="planTitle" placeholder="Note titel..." oninput="savePlan()">
+
+      <div id="plan-items"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const S = key => JSON.parse(localStorage.getItem('trinity_' + key) || 'null');
+const W = (key,val) => localStorage.setItem('trinity_' + key, JSON.stringify(val));
+
+// --- AUTO-RESET LOGIC ---
+function checkAndReset() {
+    const lastVisit = S('last_visit_date'); // "YYYY-MM-DD"
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    if (lastVisit !== todayStr) {
+        // --- DAILY RESET ---
+        dailyState = Array(DAILY_COUNT).fill(false);
+        W('daily', dailyState);
+        
+        // --- WEEKLY RESET (Checks if today is Monday) ---
+        // 1 = Monday
+        if (now.getDay() === 1) {
+            ['wb','st','im','sa','min'].forEach(id => W('counter_' + id, 0));
+            
+            // Vee ook dropdowns uit vir die nuwe week
+            W('weekly', {});
+            W('im_el', "");
+            W('sa_fl', "");
+        }
+
+        W('last_visit_date', todayStr);
+    }
+}
+
+const charList = ["Aino", "Albedo", "Alhaitham", "Aloy", "Amber", "Arataki Itto", "Arlecchino", "Baizhu", "Barbara", "Beidou", "Bennett", "Candace", "Charlotte", "Chasca", "Chevreuse", "Chiori", "Chongyun", "Citlali", "Clorinde", "Collei", "Columbina", "Cyno", "Dahlia", "Dehya", "Diluc", "Diona", "Dori", "Durin", "Emilie", "Escoffier", "Eula", "Faruzan", "Fischl", "Flins", "Freminet", "Furina", "Gaming", "Ganyu", "Gorou", "Hu Tao", "Iansan", "Ifa", "Illuga", "Ineffa", "Jahoda", "Jean", "Kachina", "Kaedehara Kazuha", "Kaeya", "Kamisato Ayaka", "Kamisato Ayato", "Kaveh", "Keqing", "Kinich", "Kirara", "Klee", "Kujou Sara", "Kuki Shinobu", "Lan Yan", "Lauma", "Layla", "Linnea", "Lisa", "Lynette", "Lyney", "Mavuika", "Mika", "Mona", "Mualani", "Nahida", "Navia", "Nefer", "Neuvillette", "Nilou", "Ningguang", "Noelle", "Ororon", "Qiqi", "Raiden Shogun", "Razor", "Rosaria", "Sangonomiya Kokomi", "Sayu", "Sethos", "Shenhe", "Shikanoin Heizou", "Sigewinne", "Skirk", "Sucrose", "Tartaglia", "Thoma", "Tighnari", "Traveler Anemo", "Traveler Dendro", "Traveler Electro", "Traveler Geo", "Traveler Hydro", "Traveler Pyro", "Varesa", "Varka", "Venti", "Wanderer", "Wriothesley", "Xiangling", "Xianyun", "Xiao", "Xilonen", "Xingqiu", "Xinyan", "Yae Miko", "Yanfei", "Yaoyao", "Yelan", "Yoimiya", "Yumemizuki Mizuki", "Yun Jin", "Zhongli", "Zibai"];
+const bossList = ["All-Devouring Narwhal", "Azhdaha", "Childe (Tartaglia)", "Guardian of Apep's Oasis", "La Signora", "Lord of Eroded Primal Fire", "Lupus Boreas (Andrius)", "Magatsu Mitake Narukami no Mikoto", "Shouki no Kami (Scaramouche)", "Stormterror (Dvalin)", "The Doctor (Dottore)", "The Knave (Arlecchino)"];
+
+function fillDropdowns() {
+  for (let i = 0; i < 3; i++) {
+    const loc = document.getElementById('boss-loc-' + i);
+    if (loc) {
+      loc.innerHTML = '<option value="">— Weekly Boss —</option>';
+      bossList.forEach(c => {
+        const o = document.createElement('option'); o.value = c; o.textContent = c;
+        loc.appendChild(o);
+      });
+    }
+  }
+  loadOwnedIntoDropdowns();
+}
+
+function loadOwnedIntoDropdowns() {
+  const owned = JSON.parse(localStorage.getItem('ownedCharacters') || '[]');
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById('boss-char-'+i);
+    if (!el) return;
+    const saved = el.value;
+    el.innerHTML = '<option value="">— Choose Character —</option>';
+    owned.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      el.appendChild(o);
+    });
+    if (saved) el.value = saved;
+  }
+}
+
+const DAILY_COUNT = 6;
+let dailyState = S('daily') || Array(DAILY_COUNT).fill(false);
+
+function toggleDaily(i) {
+  dailyState[i] = !dailyState[i];
+  W('daily', dailyState);
+  renderDaily();
+}
+function toggleAllDaily() {
+  const allDone = dailyState.every(v => v);
+  dailyState = Array(DAILY_COUNT).fill(!allDone);
+  W('daily', dailyState);
+  renderDaily();
+}
+function renderDaily() {
+  let done = 0;
+  dailyState.forEach((v, i) => {
+    const cb = document.getElementById('d' + i);
+    const item = cb ? cb.closest('.check-item') : null;
+    if (!cb) return;
+    if (v) { cb.classList.add('checked'); if(item) item.classList.add('done'); done++; }
+    else   { cb.classList.remove('checked'); if(item) item.classList.remove('done'); }
+  });
+  const masterCb = document.getElementById('daily-master-cb');
+  if (done === DAILY_COUNT) {
+    masterCb.classList.add('checked');
+    document.querySelectorAll('#daily-list .check-item').forEach(el => el.style.opacity = '0.55');
+  } else {
+    masterCb.classList.remove('checked');
+    document.querySelectorAll('#daily-list .check-item').forEach(el => el.style.opacity = '');
+  }
+}
+
+const counters = {};
+function tickCounter(id, boxIdx, max) {
+  if (!counters[id]) counters[id] = 0;
+  if (boxIdx === counters[id] - 1 && counters[id] > 0) counters[id]--;
+  else counters[id] = boxIdx + 1;
+  W('counter_' + id, counters[id]);
+  renderCounter(id, max);
+}
+
+function renderCounter(id, max) {
+  const val = counters[id] || 0;
+  for (let i = 0; i < max; i++) {
+    const el = document.getElementById(id + i);
+    if (!el) continue;
+    el.classList.toggle('filled', i < val);
+  }
+  const frac = document.getElementById(id + '-frac');
+  if (frac) {
+    frac.innerText = val + '/' + max;
+    if (val >= max) frac.classList.add('done');
+    else frac.classList.remove('done');
+  }
+}
+
+function loadCounters() {
+  ['wb','st','im','sa','min'].forEach(id => {
+    counters[id] = S('counter_' + id) || 0;
+    let max = (id === 'sa') ? 4 : 3;
+    renderCounter(id, max);
+  });
+}
+
+function saveWeekly() {
+  const d = { region: document.getElementById('bounty-region').value };
+  for (let i = 0; i < 3; i++) {
+    d['boss_char_' + i] = document.getElementById('boss-char-' + i).value;
+    d['boss_loc_' + i]  = document.getElementById('boss-loc-' + i).value;
+  }
+  W('weekly', d);
+}
+function loadWeekly() {
+  const d = S('weekly') || {};
+  if (d.region) document.getElementById('bounty-region').value = d.region;
+  for (let i = 0; i < 3; i++) {
+    const bc = document.getElementById('boss-char-' + i);
+    const bl = document.getElementById('boss-loc-' + i);
+    if (bc && d['boss_char_' + i]) bc.value = d['boss_char_' + i];
+    if (bl && d['boss_loc_' + i])  bl.value = d['boss_loc_' + i];
+  }
+}
+
+function saveIm() { W('im_el', document.getElementById('im-element').value); }
+function loadIm() { const v=S('im_el'); if(v) document.getElementById('im-element').value=v; }
+
+function saveSa() { W('sa_fl', document.getElementById('sa-floor').value); }
+function loadSa() { const v=S('sa_fl'); if(v) document.getElementById('sa-floor').value=v; }
+
+const colorStyles = {
+  grey:  { bg:'rgba(80,80,80,0.4)',   border:'#888',    pin:'radial-gradient(circle at 40% 35%,#bbb,#666)' },
+  green: { bg:'rgba(40,90,46,0.4)',   border:'#4caf50', pin:'radial-gradient(circle at 40% 35%,#a5ffad,#2e6b35)' },
+  rose:  { bg:'rgba(100,50,60,0.4)',  border:'#c28090', pin:'radial-gradient(circle at 40% 35%,#e8a0b0,#7a3d4a)' },
+  blue:  { bg:'rgba(30,60,110,0.4)',  border:'#5b9bd5', pin:'radial-gradient(circle at 40% 35%,#9ec8f0,#2a5080)' },
+  gold:  { bg:'rgba(80,60,10,0.4)',   border:'#d4a017', pin:'radial-gradient(circle at 40% 35%,#ffe08a,#8a6010)' },
+};
+let currentColor = S('plan_color') || 'grey';
+
+function setPlanColor(c) {
+  currentColor = c;
+  W('plan_color', c);
+  applyPlanColor(c);
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  document.querySelector('.color-dot.c-' + c).classList.add('active');
+  savePlan();
+}
+function applyPlanColor(c) {
+  const s = colorStyles[c] || colorStyles.grey;
+  const note = document.getElementById('planNote');
+  const pin  = document.getElementById('planPin');
+  note.style.background  = s.bg;
+  note.style.borderColor = s.border;
+  pin.style.background   = s.pin;
+}
+
+const PLAN_ROWS = 10;
+function buildPlan() {
+  const data = S('plan_data') || { title:'', checks:Array(PLAN_ROWS).fill(false), texts:Array(PLAN_ROWS).fill('') };
+  const titleEl = document.getElementById('planTitle');
+  if (titleEl) titleEl.value = data.title || '';
+
+  const container = document.getElementById('plan-items');
+  container.innerHTML = '';
+  for (let i = 0; i < PLAN_ROWS; i++) {
+    const row = document.createElement('div');
+    row.className = 'plan-item' + (data.checks[i] ? ' item-done' : '');
+    const cb = document.createElement('div');
+    cb.className = 'plan-cb' + (data.checks[i] ? ' checked' : '');
+    cb.onclick = () => togglePlanItem(i);
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = 'To-do…';
+    inp.value = data.texts[i] || '';
+    inp.oninput = () => savePlanText(i, inp.value);
+    row.appendChild(cb); row.appendChild(inp);
+    container.appendChild(row);
+  }
+}
+
+function savePlan() {
+  const data = S('plan_data') || { title:'', checks:Array(PLAN_ROWS).fill(false), texts:Array(PLAN_ROWS).fill('') };
+  const t = document.getElementById('planTitle');
+  if (t) data.title = t.value;
+  W('plan_data', data);
+}
+
+function savePlanText(i, val) {
+  const data = S('plan_data') || { title:'', checks:Array(PLAN_ROWS).fill(false), texts:Array(PLAN_ROWS).fill('') };
+  data.texts[i] = val; W('plan_data', data);
+}
+
+function togglePlanItem(i) {
+  const data = S('plan_data') || { title:'', checks:Array(PLAN_ROWS).fill(false), texts:Array(PLAN_ROWS).fill('') };
+  data.checks[i] = !data.checks[i]; W('plan_data', data);
+  buildPlan();
+}
+
+window.onload = function() {
+  checkAndReset(); // <--- Hierdie doen die werk
+  fillDropdowns();
+  renderDaily();
+  loadCounters();
+  loadWeekly();
+  loadIm();
+  loadSa();
+  buildPlan();
+  applyPlanColor(currentColor);
+};
+</script>
+</body>
+</html>

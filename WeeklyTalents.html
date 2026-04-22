@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weekly Talent Calendar</title>
+    <style>
+        body { 
+            background-image: url('WeeklyTalents1.jpg');
+            background-color: #1a1a1a; 
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-size: cover; 
+            color: white; 
+            font-family: sans-serif; 
+            margin: 0;
+            padding: 10px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .main-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4); 
+            z-index: -1;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Sentreer titel */
+            position: relative;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 { 
+            margin: 0; 
+            font-size: 42px; 
+            text-shadow: 2px 2px 10px rgba(0,0,0,1);
+            font-weight: bold;
+        }
+
+        /* MAAK DIE KOLOMME BREËR (Size soos nr 4) */
+        .calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 15px; 
+            width: 98%; /* Vul amper die hele breedte van die skerm */
+            margin: 0 auto;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .day-column { 
+            background: rgba(0, 0, 0, 0.65); /* Swart deursigtig soos foto 4 */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px; 
+            padding: 20px; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        }
+
+        .day-title { 
+            border-bottom: 2px solid rgba(255,255,255,0.2); 
+            padding-bottom: 12px; 
+            margin-top: 0;
+            font-size: 26px;
+            text-align: center;
+            flex-shrink: 0;
+            text-shadow: 1px 1px 5px black;
+        }
+
+        .char-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .char-list::-webkit-scrollbar { width: 6px; }
+        .char-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .char-pic { 
+            width: 90px; /* Effens groter prente vir die breër kolomme */
+            height: 90px; 
+            border-radius: 10px; 
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            background-size: cover;
+            background-position: center;
+            background-color: #222;
+            flex-shrink: 0;
+        }
+
+        /* SUNDAY SEKSIE SOOS FOTO 4 */
+        .sunday-section {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 24px;
+            color: white;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            width: 98%;
+            margin-left: auto;
+            margin-right: auto;
+            flex-shrink: 0;
+            text-shadow: 1px 1px 5px black;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-overlay"></div>
+
+    <div class="header">
+        <a href="Dashboard.html" class="back-btn"><span>🏠</span> Dashboard</a>
+        <h1>Weekly Talent Calendar</h1>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="day-column">
+            <h3 class="day-title">Monday / Thursday</h3>
+            <div class="char-list" id="list-mon"></div>
+        </div>
+
+        <div class="day-column">
+            <h3 class="day-title">Tuesday / Friday</h3>
+            <div class="char-list" id="list-tue"></div>
+        </div>
+
+        <div class="day-column">
+            <h3 class="day-title">Wednesday / Saturday</h3>
+            <div class="char-list" id="list-wed"></div>
+        </div>
+    </div>
+
+    <div class="sunday-section">
+        Sunday: All Talent Book Materials can be obtained on Sundays.
+    </div>
+
+    <script>
+        const schedule = {
+            mon: ["Amber", "Barbara", "Klee", "Sucrose", "Tartaglia", "Diona", "Varka", "Aloy", "Xiao", "Ningguang", "Qiqi", "Keqing", "Shenhe", "Yelan", "Gaming", "Yoimiya", "Thoma", "Sangonomiya Kokomi", "Shikanoin Heizou", "Kirara", "Yumemizuki Mizuki", "Cyno", "Tighnari", "Candace", "Faruzan", "Lyney", "Navia", "Sigewinne", "Neuvillette", "Skirk", "Iansan", "Mualani", "Mavuika", "Columbina", "Lauma"],
+            tue: ["Jean", "Diluc", "Razor", "Bennett", "Noelle", "Mona", "Eula", "Xiangling", "Chongyun", "Ganyu", "Hu Tao", "Kaedehara Kazuha", "Yun Jin", "Yaoyao", "Lan Yan", "Kamisato Ayaka", "Kujou Sara", "Arataki Itto", "Kamisato Ayato", "Kuki Shinobu", "Dori", "Alhaitham", "Nahida", "Kaveh", "Layla", "Charlotte", "Freminet", "Furina", "Clorinde", "Escoffier", "Kinich", "Citlali", "Xilonen", "Ororon", "Aino", "Nefer", "Illuga"],
+            wed: ["Lisa", "Kaeya", "Venti", "Fischl", "Albedo", "Rosaria", "Mika", "Dahlia", "Durin", "Beidou", "Xingqiu", "Zhongli", "Xinyan", "Yanfei", "Baizhu", "Xianyun", "Zibai", "Yae Miko", "Sayu", "Gorou", "Raiden Shogun", "Chiori", "Wanderer", "Collei", "Dehya", "Nilou", "Sethos", "Lynette", "Arlecchino", "Wriothesley", "Emilie", "Chevreuse", "Kachina", "Chasca", "Ifa", "Varesa", "Ineffa", "Jahoda", "Flins", "Linnea"]
+        };
+
+        function loadCalendar() {
+            const owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+            const days = ['mon', 'tue', 'wed'];
+            const targets = ['list-mon', 'list-tue', 'list-wed'];
+
+            days.forEach((day, index) => {
+                const listContainer = document.getElementById(targets[index]);
+                schedule[day].forEach(char => {
+                    if(owned.includes(char)) {
+                        listContainer.innerHTML += `<div class="char-pic" style="background-image: url('${char}1.jpg')" title="${char}"></div>`;
+                    }
+                });
+            });
+        }
+        window.onload = loadCalendar;
+    </script>
+</body>
+</html>

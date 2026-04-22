@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Genshin Event Calendar</title>
+    <style>
+        :root {
+            --gold: #f3d18b;
+            --border: rgba(243, 209, 139, 0.3);
+            --blue: #00d4ff;
+            --green: #33ff77;
+            --red: #ff4d4d;
+            --purple: #cc66ff;
+        }
+
+        body {
+            background: url('Calendar.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            margin: 0;
+            padding: 10px 20px;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.85);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        /* --- NAVIGASIE EN PYLTE (FIX) --- */
+        .nav-controls { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 20px; 
+            flex: 1; 
+        }
+
+        .nav-btn { 
+            background: rgba(0, 0, 0, 0.6); 
+            border: 2px solid var(--green); /* Die groen boksie van die skets */
+            color: white; 
+            font-size: 22px; 
+            font-weight: bold;
+            cursor: pointer; 
+            border-radius: 8px; 
+            width: 45px; 
+            height: 45px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--green);
+            color: black;
+            transform: scale(1.1);
+        }
+
+        .month-title { 
+            font-size: 24px; 
+            font-weight: 900; 
+            color: var(--gold); 
+            text-transform: uppercase; 
+            min-width: 220px; 
+            text-align: center; 
+            letter-spacing: 2px;
+        }
+
+        /* --- LOCK BUTTON --- */
+        .lock-btn {
+            background: #ff4d4d; color: white; border: none; padding: 10px 20px;
+            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;
+            display: flex; align-items: center; gap: 8px;
+            transition: 0.3s;
+        }
+        .lock-btn.unlocked { background: #4bff7d; color: black; }
+
+        /* --- CALENDAR GRID --- */
+        .calendar-container {
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 50px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .day-header {
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--gold);
+            text-align: center;
+            padding: 15px;
+            font-weight: bold;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .day-box {
+            background: rgba(15, 15, 25, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-num { font-size: 18px; font-weight: bold; opacity: 0.6; margin-bottom: 10px; }
+        .today { border: 2px solid var(--blue); background: rgba(0, 212, 255, 0.1); }
+        .today .day-num { opacity: 1; color: var(--blue); }
+
+        .notes-list { display: flex; flex-direction: column; gap: 8px; }
+        .note-item { display: flex; align-items: center; gap: 10px; padding: 4px; border-radius: 4px; }
+        .unlocked .note-item { cursor: pointer; }
+        .unlocked .note-item:hover { background: rgba(255,255,255,0.1); }
+
+        .note-pin {
+            width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+            box-shadow: 0 0 10px currentColor;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .note-text { font-size: 14px; font-weight: 700; color: white; text-shadow: 1px 1px 2px black; }
+
+        .add-note-btn {
+            display: none; width: 100%; background: rgba(243, 209, 139, 0.1);
+            border: 1px dashed var(--gold); color: var(--gold);
+            cursor: pointer; font-size: 11px; border-radius: 4px;
+            margin-top: 15px; padding: 6px; font-weight: bold;
+        }
+        .unlocked .add-note-btn { display: block; }
+        
+        .dash-back { text-decoration: none; color: white; font-size: 16px; display: flex; align-items: center; gap: 5px; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="Dashboard.html" class="dash-back" style="text-decoration:none;color:white;font-size:16px;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.5);padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);">🏠 Dashboard</a>
+        
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="changeMonth(-1)">&lt;</button>
+            <div class="month-title" id="monthDisplay">MONTH 2026</div>
+            <button class="nav-btn" onclick="changeMonth(1)">&gt;</button>
+        </div>
+
+        <button class="lock-btn" id="mainLockButton" onclick="toggleLock()">
+            <span id="lockIcon">🔒</span> <span id="lockText">LOCKED</span>
+        </button>
+    </div>
+
+    <div class="calendar-container" id="mainContainer">
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <script>
+        let isLocked = true;
+        let currentViewDate = new Date(2026, 3, 1); 
+        const MY_PASSWORD = "8618Super"; 
+
+        const colorList = {
+            "1": "#00d4ff", // Blue
+            "2": "#ffcc00", // Gold
+            "3": "#33ff77", // Green
+            "4": "#ff4d4d", // Red
+            "5": "#cc66ff"  // Purple
+        };
+
+        function toggleLock() {
+            if (isLocked) {
+                let pw = prompt("⚙️ Enter PIN to unlock editing::");
+                if (pw === MY_PASSWORD) {
+                    isLocked = false;
+                } else {
+                    alert("Wrong Password!");
+                    return;
+                }
+            } else {
+                isLocked = true;
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            const btn = document.getElementById('mainLockButton');
+            const icon = document.getElementById('lockIcon');
+            const text = document.getElementById('lockText');
+            const container = document.getElementById('mainContainer');
+            
+            if (isLocked) {
+                btn.classList.remove('unlocked');
+                icon.innerText = "🔒";
+                text.innerText = "LOCKED";
+                container.classList.remove('unlocked');
+            } else {
+                btn.classList.add('unlocked');
+                icon.innerText = "🔓";
+                text.innerText = "EDIT MODE";
+                container.classList.add('unlocked');
+            }
+            renderCalendar();
+        }
+
+        function changeMonth(offset) {
+            currentViewDate.setMonth(currentViewDate.getMonth() + offset);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthDisplay = document.getElementById('monthDisplay');
+            grid.innerHTML = `<div class="day-header">Sun</div><div class="day-header">Mon</div><div class="day-header">Tue</div><div class="day-header">Wed</div><div class="day-header">Thu</div><div class="day-header">Fri</div><div class="day-header">Sat</div>`;
+            
+            const year = currentViewDate.getFullYear();
+            const month = currentViewDate.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            monthDisplay.innerText = `${monthNames[month]} ${year}`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
+
+            for(let i=0; i<firstDay; i++) {
+                grid.innerHTML += `<div class="day-box" style="opacity:0.1; border:none;"></div>`;
+            }
+
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateKey = `${year}-${month + 1}-${d}`;
+                const today = new Date();
+                const isToday = (today.getDate() === d && today.getMonth() === month && today.getFullYear() === year) ? 'today' : '';
+                
+                let notesHtml = '';
+                if(notesData[dateKey]) {
+                    notesData[dateKey].forEach((n, idx) => {
+                        notesHtml += `
+                            <div class="note-item" onclick="deleteNote('${dateKey}', ${idx})">
+                                <div class="note-pin" style="background-color: ${n.color}; color: ${n.color}"></div>
+                                <div class="note-text">${n.text}</div>
+                            </div>`;
+                    });
+                }
+
+                grid.innerHTML += `
+                    <div class="day-box ${isToday}">
+                        <div class="day-num">${d}</div>
+                        <div class="notes-list">${notesHtml}</div>
+                        <button class="add-note-btn" onclick="addNote('${dateKey}')">+ NOTE</button>
+                    </div>
+                `;
+            }
+        }
+
+        function addNote(dateKey) {
+            if(isLocked) return;
+            const text = prompt("Note:");
+            if(!text) return;
+            const choice = prompt("1:Blou, 2:Goud, 3:Groen, 4:Rooi, 5:Pers");
+            const color = colorList[choice] || colorList["2"];
+            
+            let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
+            if(!notesData[dateKey]) notesData[dateKey] = [];
+            notesData[dateKey].push({ text: text, color: color });
+            
+            localStorage.setItem('cal_save_data', JSON.stringify(notesData));
+            localStorage.setItem('calUnread', 'true');
+            renderCalendar();
+        }
+
+        function deleteNote(dateKey, idx) {
+            if(isLocked) return;
+            if(confirm("Delete?")) {
+                let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
+                notesData[dateKey].splice(idx, 1);
+                localStorage.setItem('cal_save_data', JSON.stringify(notesData));
+                renderCalendar();
+            }
+        }
+
+        renderCalendar();
+    </script>
+</body>
+</html>
