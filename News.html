@@ -88,7 +88,7 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
 <div class="wrap">
   <div style="padding:10px 0 5px;display:flex;justify-content:space-between;align-items:center;">
     <a href="Dashboard.html" class="dash-btn">🏠 Dashboard</a>
-    <button id="lock-btn" onclick="toggleLock()" title="Settings — PIN required to edit" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">⚙️ <span id="lock-lbl">Settings</span></button>
+    <button id="lock-btn" onclick="toggleLock()" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">⚙️ <span id="lock-lbl">Settings</span></button>
   </div>
   <div class="site-title"><h1>The Trinity News</h1></div>
 
@@ -321,43 +321,68 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
         </div>
         <a class="btn btn-gd btn-w pub-btn" href="https://genshin.hoyoverse.com/en/gift" target="_blank">🎁 Open Redeem</a>
         <ul id="code-list" style="list-style:none;margin-top:10px;"></ul>
-        <div class="lr"><input type="text" id="code-inp" placeholder="Type code here..."><button class="btn btn-g" onclick="addCode()">+ Add</button></div>
+        <div class="lr"><input type="text" id="code-inp" placeholder="Type code here..."><button class="btn btn-g" onclick="addCode()">+ Add</button>
+</div>
       </div>
     </div>
   </div>
 
 </div><!-- /wrap -->
+</div><script>
+// --- LOCK / SETTINGS (ANONIEM) ---
+var _unlocked = false;
 
-<script>
-// ── LOCK / SETTINGS ──
-const DEFAULT_PIN='Super8618';
-var _unlocked=false;
-function toggleLock(){
-  if(_unlocked){setLocked(true);}
-  else{
-    var pin=prompt('⚙️ Enter PIN to unlock editing:');
-    var stored=localStorage.getItem('tnews_pin')||DEFAULT_PIN;
-    if(pin===stored){setLocked(false);}
-    else if(pin!==null){alert('\u274C Wrong PIN. Default is your secret pass — change in console: localStorage.setItem(\'tnews_pin\',\'yourPIN\')');}
+function toggleLock() {
+  if (_unlocked) {
+    setLocked(true);
+  } else {
+    // 1. Kyk wie is tans ingeteken
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    
+    // 2. Kyk na die lys van alle mense wat op HIERDIE rekenaar geregistreer het
+    const allUsers = JSON.parse(localStorage.getItem("allUsers")) || [];
+    
+    // 3. Check of die persoon wat ingeteken is, die heel eerste een op die lys is
+    // Gebruik die logika van jou foto: currentUser.email === allUsers[0]
+    if (currentUser && allUsers.length > 0 && currentUser.email === allUsers[0]) {
+      var pin = prompt('⚙️ Enter your secret login password:');
+      
+      if (pin === currentUser.password) {
+        setLocked(false);
+      } else {
+        alert('❌ Wrong Password!');
+      }
+    } else {
+      alert('❌ Only the owner can open these Settings.');
+    }
   }
 }
-function setLocked(locked){
-  _unlocked=!locked;
-  var btn=document.getElementById('lock-btn');
-  var lbl=document.getElementById('lock-lbl');
-  if(locked){
-    btn.style.borderColor='rgba(255,100,100,0.5)';btn.style.color='#ff9090';
-    lbl.textContent='LOCKED';btn.innerHTML='⚙️ <span id="lock-lbl">Settings</span>';btn.style.borderColor='rgba(255,100,100,0.5)';btn.style.color='#ff9090';
-    document.querySelectorAll('input[type=text],textarea').forEach(function(el){el.disabled=true;el.style.opacity='0.5';});
-    document.querySelectorAll('.btn,.set-btn,.clr-btn').forEach(function(el){if(!el.classList.contains('pub-btn')){el.disabled=true;el.style.opacity='0.4';el.style.pointerEvents='none';}});
-    // Keep lock button and nav clickable
-    document.getElementById('lock-btn').disabled=false;document.getElementById('lock-btn').style.opacity='1';document.getElementById('lock-btn').style.pointerEvents='auto';
-  } else {
-    btn.style.borderColor='rgba(165,255,173,0.5)';btn.style.color='var(--green)';
-    btn.innerHTML='⚙️ <span id="lock-lbl">Settings ✓</span>';btn.style.borderColor='rgba(165,255,173,0.5)';btn.style.color='var(--green)';
-    document.querySelectorAll('input[type=text],textarea').forEach(function(el){el.disabled=false;el.style.opacity='';});
-    document.querySelectorAll('.btn,.set-btn,.clr-btn').forEach(function(el){el.disabled=false;el.style.opacity='';el.style.pointerEvents='';});
-  }
+
+function setLocked(locked) {
+  _unlocked = !locked;
+  const lbl = document.getElementById('lock-lbl');
+  if (lbl) lbl.textContent = locked ? 'Settings' : '🔓 Unlocked';
+  
+  // 1. Sluit alle teks-boksies
+  document.querySelectorAll('input, textarea').forEach(i => {
+    if(i.id !== 'dtm-inp' && i.id !== 'code-inp') i.readOnly = locked;
+  });
+
+  // 2. Sluit die prente (picture any kies)
+  document.querySelectorAll('.pw, .timer-bg').forEach(el => {
+    el.style.pointerEvents = locked ? 'none' : 'auto';
+  });
+
+  // 3. NUUT: Sluit die "Set Date" knoppies
+  document.querySelectorAll('.set-btn').forEach(btn => {
+    if (locked) {
+      btn.style.pointerEvents = 'none'; // Jy kan nie klik nie
+      btn.style.opacity = '0.5';       // Dit lyk "dead"
+    } else {
+      btn.style.pointerEvents = 'auto'; // Werk weer as jy unlock
+      btn.style.opacity = '1';
+    }
+  });
 }
 
 const P=(k,v)=>localStorage.setItem('tnews_final_'+k,JSON.stringify(v));
@@ -366,13 +391,13 @@ function V(id){const e=document.getElementById(id);return e?e.value:'';}
 function SV(id,val){const e=document.getElementById(id);if(e&&val!=null)e.value=val;}
 function openL(id){let u=V(id);if(!u)return;if(!u.startsWith('http'))u='https://'+u;window.open(u,'_blank');}
 
+// --- JOU LOGIC (Bly dieselfde) ---
 function saveNews(){
   const evs=[...document.querySelectorAll('.ev-inp')].map(i=>i.value);
   P('news',{ver:V('ver-input'),title:V('title-input'),story:V('news-story'),maps:V('new-maps'),tiktok:V('tiktok-link'),
     p1c1:V('p1c1'),p1c1yt:V('p1c1yt'),p1c1b:V('p1c1b'),p1c2:V('p1c2'),p1c2yt:V('p1c2yt'),p1c2b:V('p1c2b'),
     p2c1:V('p2c1'),p2c1yt:V('p2c1yt'),p2c1b:V('p2c1b'),p2c2:V('p2c2'),p2c2yt:V('p2c2yt'),p2c2b:V('p2c2b'),
     goal1:V('goal1'),goal2:V('goal2'),goal3:V('goal3'),events:evs});
-  // Vertel Dashboard dat nuus opgedateer is
   localStorage.setItem('newsUnread','true');
 }
 
@@ -391,6 +416,7 @@ function updVer(){
 
 function saveBattle(){P('battle',{char:V('new-char'),yd:V('yt-demo'),ym:V('yt-misc'),bl:V('build-link'),wl:V('wiki-link'),wb:V('weekly-boss'),blink:V('boss-link')});}
 function saveLive(){P('live',{date:V('live-date'),ver:V('live-ver')});}
+
 // ── BIRTHDAYS AUTO-LIST ──
 const charBirthdays = [
   "Chasca 10/12","Faruzan 8/20","Ifa 3/23","Jahoda 5/1","Jean 3/14","Kaedehara Kazuha 10/29",
@@ -425,19 +451,16 @@ function renderBdays() {
   const todayMonth = today.getMonth() + 1;
   const todayDay = today.getDate();
 
-  // Parse and sort upcoming birthdays from today
   const parsed = charBirthdays.map(entry => {
     const parts = entry.split(' ');
-    const dateStr = parts[parts.length - 1]; // last token is M/D
+    const dateStr = parts[parts.length - 1];
     const name = parts.slice(0, parts.length - 1).join(' ');
     const [m, d] = dateStr.split('/').map(Number);
-    // Days from today (this year or next year)
     let diff = (m - todayMonth) * 31 + (d - todayDay);
     if (m < todayMonth || (m === todayMonth && d < todayDay)) diff += 365;
     return { name, m, d, diff };
   }).sort((a, b) => a.diff - b.diff);
 
-  // Show next 4
   container.innerHTML = '';
   parsed.slice(0, 4).forEach(b => {
     const isToday = b.m === todayMonth && b.d === todayDay;
@@ -450,9 +473,9 @@ function renderBdays() {
     container.appendChild(row);
   });
 }
+
 function saveDates(){P('cds',{d1:V('cd1'),d2:V('cd2')});P('pd',{p1:V('p1d'),p2:V('p2d')});saveLive();}
 
-// ── SAVE STATUS ──
 let ss='';
 function setSave(s){
   if(ss===s){ss='';['full','pity','all'].forEach(x=>{const b=document.getElementById('ss-'+x);if(b)b.className='ss';});P('ss','');return;}
@@ -488,9 +511,7 @@ function applyDT(){
   saveDates();
   closeDT();
 }
-document.getElementById('dtm').addEventListener('click',function(e){if(e.target===this)closeDT();});
 
-// ── TIMERS ──
 function fmtFull(v){
   if(!v)return '—';
   return new Date(v).toLocaleString('en-US',{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
@@ -544,37 +565,17 @@ function addCode(){const i=document.getElementById('code-inp');if(i.value.trim()
 window.onload=()=>{
   const n=G('news')||{};
   SV('ver-input',n.ver);SV('title-input',n.title);SV('news-story',n.story);SV('tiktok-link',n.tiktok);SV('new-maps',n.maps);
-  ['p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b',
-   'p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b',
-   'goal1','goal2','goal3'].forEach(k=>{const el=document.getElementById(k);if(el&&n[k])el.value=n[k];});
+  ['p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b','p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b','goal1','goal2','goal3'].forEach(k=>{const el=document.getElementById(k);if(el&&n[k])el.value=n[k];});
   (n.events||[]).forEach(ev=>addEvent(ev));
 
   const bt=G('battle')||{};SV('new-char',bt.char);SV('yt-demo',bt.yd);SV('yt-misc',bt.ym);SV('build-link',bt.bl);SV('wiki-link',bt.wl);SV('weekly-boss',bt.wb);SV('boss-link',bt.blink);
-
   const cd=G('cds')||{};SV('cd1',cd.d1);SV('cd2',cd.d2);
   const pd=G('pd')||{};SV('p1d',pd.p1);SV('p2d',pd.p2);
   const lv=G('live')||{};SV('live-date',lv.date);SV('live-ver',lv.ver);
 
-  // Restore display texts
-  const dispMap=[
-    {inp:'cd1',disp:'d1',pre:'Release Date & Time'},
-    {inp:'cd2',disp:'d2',pre:'Release Date & Time'},
-    {inp:'p1d',disp:'dp1',pre:'Expected Date & Time'},
-    {inp:'p2d',disp:'dp2',pre:'Expected Date & Time'},
-    {inp:'live-date',disp:'dlive',pre:'Release Date & Time'}
-  ];
-  dispMap.forEach(x=>{
-    const v=V(x.inp);
-    if(v){const dp=document.getElementById(x.disp);if(dp)dp.textContent=x.pre+': '+fmtFull(v);}
-  });
-
   renderBdays();
   const s=G('ss')||'';if(s)setSave(s);
   codes=G('codes')||[];renderCodes();
-  // Load separate banner/maint version inputs
-  const vb=G('vb');const vm=G('vm');
-  if(vb){const e=document.getElementById('ver-banner');if(e)e.value=vb;}
-  if(vm){const e=document.getElementById('ver-maint');if(e)e.value=vm;}
   updVer();
   tickAll();
   setLocked(true);
