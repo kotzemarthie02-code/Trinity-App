@@ -227,13 +227,18 @@
                 
                 let notesHtml = '';
 
-                // --- HIER IS JOU ADMIN UPDATES (Verander hierdie op GitHub) ---
-                if (dateKey === "2026-4-24") { 
-                    notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">🎉 Arlecchino Banner!</div></div>`;
-                }
-                if (dateKey === "2026-4-28") {
-                    notesHtml += `<div class="note-item"><div class="note-pin" style="background:#cc66ff"></div><div class="note-text">🎉 Verjaarsdag!</div></div>`;
-                }
+                // --- APRIL VOLLEDIGE LYS ---
+                if (dateKey === "2026-4-1") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Operation Stronghold Defense End</div></div>`; }
+                if (dateKey === "2026-4-5") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Overflowing Abundance End</div></div>`; }
+                if (dateKey === "2026-4-6") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Luna V Stygian Onslaught End</div></div>`; }
+                if (dateKey === "2026-4-7") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Skirk and Escoffier Banners End</div></div><div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Version 6.4 End</div></div>`; }
+                if (dateKey === "2026-4-8") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ffcc00"></div><div class="note-text">Linnea and Chasca Banners Start</div></div><div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Version 6.5 Start</div></div>`; }
+                if (dateKey === "2026-4-10") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#00d4ff"></div><div class="note-text">Surveying & Mapping Studies Start</div></div>`; }
+                if (dateKey === "2026-4-15") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#33ff77"></div><div class="note-text">Luna VI Stygian Onslaught Start</div></div><div class="note-item"><div class="note-pin" style="background:#33ff77"></div><div class="note-text">Spiral Abyss Reset</div></div>`; }
+                if (dateKey === "2026-4-24") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">🎉 Arlecchino Banner!</div></div>`; }
+                if (dateKey === "2026-4-27") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ffcc00"></div><div class="note-text">Where Waves Meet Start</div></div>`; }
+                if (dateKey === "2026-4-28") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#00d4ff"></div><div class="note-text">Lauma and Neferon se dag</div></div>`; }
+                if (dateKey === "2026-4-30") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#33ff77"></div><div class="note-text">Imaginarium Theater Reset</div></div>`; }
 
                 // Wys ook gewone notas
                 if(notesData[dateKey]) {
