@@ -1,165 +1,576 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="af">
 <head>
-    <meta charset="UTF-8">
-    <title>Genshin Impact - Login</title>
-    <style>
-        body {
-            /* FIX SIZE: Hierdie sorg dat die prentjie presies op die skerm pas */
-            background: url('Login.jpg') no-repeat center center fixed;
-            background-size: cover; 
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .card {
-            background: rgba(0, 0, 0, 0.75);
-            padding: 40px;
-            border-radius: 15px;
-            width: 380px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .input-group { position: relative; margin-bottom: 15px; }
-        input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 5px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.5);
-            color: white;
-            box-sizing: border-box;
-        }
-        .eye-icon { position: absolute; right: 12px; top: 10px; cursor: pointer; font-size: 20px; }
-        
-        #user-list {
-            position: absolute;
-            background: rgba(20, 20, 20, 0.95);
-            width: 100%;
-            border-radius: 5px;
-            display: none;
-            z-index: 10;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            text-align: left;
-            border: 1px solid #444;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        #user-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid #333; }
-        #user-list li:hover { background: #555; }
-        
-        .btn { background: white; color: black; width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .link { margin-top: 15px; display: block; color: #ccc; cursor: pointer; text-decoration: underline; }
-    </style>
+<meta charset="UTF-8">
+<title>The Trinity News</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Nunito:wght@300;400;600;700;800&display=swap');
+:root{--green:#a5ffad;--gold:#ffe08a;--blue:#82ccdd;--white:rgba(255,255,255,0.85);--border:rgba(255,255,255,0.12);--bg-lb:rgba(15,15,30,0.52);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body::-webkit-scrollbar{display:none;}
+body{-ms-overflow-style:none;scrollbar-width:none;background:url('News.jpg') no-repeat center top fixed;background-size:cover;font-family:'Nunito',sans-serif;color:var(--white);min-height:100vh;padding-bottom:60px;}
+body::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,0.20);z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:20px;}
+.dash-btn{background:rgba(0,0,0,0.5);border:1px solid var(--border);color:white;padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:10px;}
+.site-title{text-align:center;margin:20px 0;}
+.site-title h1{font-family:'Cinzel',serif;font-size:36px;color:rgba(255,255,255,0.9);letter-spacing:4px;}
+.panel{background:rgba(10,10,20,0.58);border:1px solid var(--border);border-radius:16px;padding:20px;backdrop-filter:blur(8px);margin-bottom:20px;}
+.card,.banner-card,.b-char,.b-boss{background:var(--bg-lb);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;}
+.sec-lbl{font-family:'Cinzel',serif;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);border-bottom:1px solid rgba(255,224,138,0.2);padding-bottom:10px;margin-bottom:20px;}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.ver-bar{background:rgba(165,255,173,0.15);border:1px solid var(--green);border-radius:12px;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+
+/* TIMER — bg and content are separate layers */
+.timer-rect{position:relative;border-radius:15px;border:1px solid var(--border);overflow:hidden;background:#000;margin-bottom:6px;}
+/* The bg div is clickable for pic */
+.timer-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.38);z-index:1;cursor:pointer;transition:filter 0.2s;}
+.timer-bg:hover{filter:brightness(0.52);}
+/* The content floats above — its children handle their own clicks */
+.timer-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:14px 14px 10px;text-align:center;pointer-events:none;}
+.timer-content *{pointer-events:auto;}
+.timer-digits{font-family:'Cinzel',serif;font-size:28px;font-weight:900;color:white;display:flex;gap:14px;margin:6px 0;}
+.timer-unit{display:flex;flex-direction:column;align-items:center;line-height:1.1;}
+.t-lbl{font-size:8px;text-transform:uppercase;opacity:0.55;margin-top:1px;}
+.timer-info{font-size:13px;font-weight:700;margin:3px 0 6px;line-height:1.4;}
+.set-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;background:rgba(0,0,0,0.6);transition:all 0.2s;}
+.set-btn:hover{filter:brightness(1.35);}
+.clr-btn{background:none;border:none;color:rgba(255,120,120,0.75);cursor:pointer;font-size:10px;padding:0 4px;vertical-align:middle;}
+.clr-btn:hover{color:#ff6060;}
+
+textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:white;padding:8px 12px;font-size:13px;outline:none;}
+.hide{position:absolute;opacity:0;width:0;height:0;pointer-events:none;}
+
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;text-decoration:none;transition:filter 0.18s;}
+.btn:hover{filter:brightness(1.25);}
+.btn-g{background:rgba(165,255,173,0.1);border-color:var(--green);color:var(--green);}
+.btn-gd{background:rgba(255,224,138,0.1);border-color:var(--gold);color:var(--gold);}
+.btn-r{background:rgba(255,68,68,0.2);border-color:#ff4444;color:#ff4444;}
+.btn-b{background:rgba(130,204,221,0.1);border-color:var(--blue);color:var(--blue);}
+.btn-w{width:100%;justify-content:center;margin-top:5px;}
+
+.lbl{font-size:10px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:8px 0 4px;display:block;}
+.lr{display:flex;gap:6px;align-items:center;margin-top:5px;}
+.pw{border-radius:12px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;background-size:cover;background-position:center;background-color:rgba(0,0,0,0.3);}
+
+/* Save-Status */
+.ss{flex:1;padding:12px 8px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(90,90,90,0.22);color:rgba(200,200,200,0.7);font-family:'Cinzel',serif;font-size:12px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:1px;transition:all 0.2s;}
+.ss:hover{background:rgba(255,255,255,0.09);}
+.ss.sel-full{background:rgba(76,175,80,0.28);border-color:#4caf50;color:#a5ffad;box-shadow:0 0 14px rgba(76,175,80,0.3);}
+.ss.sel-pity{background:rgba(255,204,68,0.25);border-color:#ffcc44;color:#ffcc44;box-shadow:0 0 14px rgba(255,204,68,0.22);}
+.ss.sel-all{background:rgba(255,80,80,0.25);border-color:#ff5050;color:#ff9090;box-shadow:0 0 14px rgba(255,80,80,0.22);}
+.gr{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.gd{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.gr input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.12);border-radius:0;padding:5px 4px;color:white;}
+
+/* Date modal */
+.dtm{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.76);align-items:center;justify-content:center;}
+.dtm.open{display:flex;}
+.dtm-box{background:rgba(12,12,26,0.98);border:1px solid rgba(255,255,255,0.2);border-radius:18px;padding:30px;min-width:330px;text-align:center;box-shadow:0 0 40px rgba(0,0,0,0.6);}
+.dtm-title{font-family:'Cinzel',serif;font-size:14px;letter-spacing:2px;margin-bottom:18px;}
+.dtm-inp{width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:white;padding:11px;font-size:14px;outline:none;color-scheme:dark;margin-bottom:16px;}
+.dtm-acts{display:flex;gap:10px;justify-content:center;}
+</style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Genshin Impact</h2>
-    <div id="login-box">
-        <div class="input-group">
-            <input type="text" id="l-email" placeholder="Email" onfocus="showUsers()" autocomplete="off">
-            <ul id="user-list"></ul>
-        </div>
-        <div class="input-group">
-            <input type="password" id="l-pass" placeholder="Password">
-            <span class="eye-icon" onclick="togglePass('l-pass')">👁️</span>
-        </div>
-        <button class="btn" onclick="login()">LOG IN</button>
-        <span class="link" onclick="toggle('reg')">Register New Account</span>
+<!-- Shared date-picker modal -->
+<div class="dtm" id="dtm">
+  <div class="dtm-box">
+    <div class="dtm-title" id="dtm-title">📅 Set Date &amp; Time</div>
+    <input type="datetime-local" class="dtm-inp" id="dtm-inp">
+    <div class="dtm-acts">
+      <button class="btn btn-g" onclick="applyDT()">✓ Apply</button>
+      <button class="btn" style="border-color:rgba(255,100,100,0.4);color:#ff9090;" onclick="closeDT()">✕ Cancel</button>
     </div>
-
-    <div id="reg-box" style="display:none;">
-        <input type="text" id="r-email" placeholder="Email">
-        <input type="text" id="r-nick" placeholder="Nickname">
-        <input type="text" id="r-uid" placeholder="UID">
-        <div class="input-group">
-            <input type="password" id="r-pass" placeholder="Password">
-            <span class="eye-icon" onclick="togglePass('r-pass')">👁️</span>
-        </div>
-        <button class="btn" onclick="register()">CREATE ACCOUNT</button>
-        <span class="link" onclick="toggle('login')">Back to Login</span>
-    </div>
+  </div>
 </div>
 
+<div class="wrap">
+  <div style="padding:10px 0 5px;display:flex;justify-content:space-between;align-items:center;">
+    <a href="Dashboard.html" class="dash-btn">🏠 Dashboard</a>
+    <button id="lock-btn" onclick="toggleLock()" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">⚙️ <span id="lock-lbl">Settings</span></button>
+  </div>
+  <div class="site-title"><h1>The Trinity News</h1></div>
+
+  <!-- ── NEWS UPDATE ── -->
+  <div class="panel">
+    <div class="sec-lbl">📢 News Update</div>
+    <div class="ver-bar">
+      <div style="font-family:'Cinzel',serif;font-weight:900;color:var(--green);letter-spacing:1px;">GENSHIN IMPACT</div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input type="text" id="ver-input" placeholder="6.5" style="width:60px;text-align:center;" oninput="saveNews();updVer()">
+        <input type="text" id="title-input" placeholder="Update Title..." style="width:200px;" oninput="saveNews()">
+        <div style="color:var(--green);font-size:10px;font-weight:800;">● ACTIVE</div>
+      </div>
+    </div>
+
+    <div class="split" style="margin-bottom:20px;">
+      <!-- Banner countdown -->
+      <div>
+        <div class="timer-rect" style="height:175px;">
+          <div class="timer-bg" id="bg1" onclick="document.getElementById('f1').click()" title="Klik hier vir prentjie 🖼️"></div>
+          <input class="hide" type="file" id="f1" accept="image/*" onchange="chBg(this,'bg1')">
+          <input class="hide" type="datetime-local" id="cd1">
+          <div class="timer-content">
+            <div style="font-size:12px;color:var(--gold);font-weight:800;letter-spacing:1px;margin-bottom:2px;display:flex;align-items:center;gap:4px;justify-content:center;">⚡ GENSHIN IMPACT <input type="text" id="ver-banner" value="6.5" style="width:44px;background:none;border:none;border-bottom:1px solid var(--gold);color:var(--gold);text-align:center;font-size:12px;font-weight:800;padding:0 2px;" oninput="P('vb',this.value)" onclick="event.stopPropagation()"> BANNER</div>
+            <div class="timer-digits">
+              <div class="timer-unit"><span id="t1d">--</span><span class="t-lbl">days</span></div>
+              <div class="timer-unit"><span id="t1h">--</span><span class="t-lbl">hours</span></div>
+              <div class="timer-unit"><span id="t1m">--</span><span class="t-lbl">min</span></div>
+              <div class="timer-unit"><span id="t1s">--</span><span class="t-lbl">sec</span></div>
+            </div>
+            <div class="timer-info" id="d1" style="color:var(--gold);">Release Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('cd1','d1','Release Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);" onclick="openDT('cd1','d1','Release Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
+          </div>
+        </div>
+      </div>
+      <!-- Maintenance countdown -->
+      <div>
+        <div class="timer-rect" style="height:175px;">
+          <div class="timer-bg" id="bg2" onclick="document.getElementById('f2').click()" title="Klik hier vir prentjie 🖼️"></div>
+          <input class="hide" type="file" id="f2" accept="image/*" onchange="chBg(this,'bg2')">
+          <input class="hide" type="datetime-local" id="cd2">
+          <div class="timer-content">
+            <div style="font-size:12px;color:var(--blue);font-weight:800;letter-spacing:1px;margin-bottom:2px;display:flex;align-items:center;gap:4px;justify-content:center;">🔧 GENSHIN IMPACT <input type="text" id="ver-maint" value="6.6" style="width:44px;background:none;border:none;border-bottom:1px solid var(--blue);color:var(--blue);text-align:center;font-size:12px;font-weight:800;padding:0 2px;" oninput="P('vm',this.value)" onclick="event.stopPropagation()"> MAINTENANCE</div>
+            <div class="timer-digits">
+              <div class="timer-unit"><span id="t2d">--</span><span class="t-lbl">days</span></div>
+              <div class="timer-unit"><span id="t2h">--</span><span class="t-lbl">hours</span></div>
+              <div class="timer-unit"><span id="t2m">--</span><span class="t-lbl">min</span></div>
+              <div class="timer-unit"><span id="t2s">--</span><span class="t-lbl">sec</span></div>
+            </div>
+            <div class="timer-info" id="d2" style="color:var(--blue);">Release Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('cd2','d2','Release Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--blue);color:var(--blue);" onclick="openDT('cd2','d2','Release Date &amp; Time','blue')">📅 Set Date &amp; Time</button>
+            <div style="font-size:11px;opacity:0.55;margin-top:3px;">Maintenance Rewards: Primosgems x300</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <span class="lbl">📰 NEWS UPDATE STORY</span>
+        <textarea id="news-story" rows="4" placeholder="Write the update news here..." oninput="saveNews()"></textarea>
+        <span class="lbl">TikTok Share Link</span>
+        <div class="lr"><input type="text" id="tiktok-link" placeholder="TikTok URL..." oninput="saveNews()"><button class="btn btn-g pub-btn" onclick="openL('tiktok-link')">▶ Share</button></div>
+        <span class="lbl">New Events</span>
+        <div id="events-con" style="display:flex;flex-direction:column;gap:4px;"></div>
+        <button class="btn btn-g btn-w" style="margin-top:6px;" onclick="addEvent()">+ Add Event</button>
+      </div>
+      <div class="card">
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--blue);margin-bottom:10px;">🗺️ NEW MAPS &amp; CONTENT</div>
+        <input type="text" id="new-maps" placeholder="New Areas / Content Names..." oninput="saveNews()">
+        <div class="pw" id="maps-wrap" style="margin-top:10px;height:200px;border:1px solid var(--blue);background-size:cover;background-position:center;" onclick="document.getElementById('maps-file').click()">
+          <span id="maps-ph" style="font-size:11px;opacity:0.5;">🗺️ Click to add Maps picture</span>
+        </div>
+        <input type="file" id="maps-file" style="display:none" accept="image/*" onchange="chPic(this,'maps-wrap','maps-ph')">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BANNER TRACKER ── -->
+  <div class="panel">
+    <div class="sec-lbl">🎴 Banner Tracker</div>
+
+    <div class="split">
+      <!-- Phase 1 -->
+      <div class="banner-card" style="border-top:3px solid var(--gold);">
+        <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:10px;">⚡ PHASE 1</div>
+        <input type="text" id="p1c1" placeholder="Character — Element — Weapon" oninput="saveNews()" style="margin-bottom:8px;">
+        <div class="lr">
+          <input type="text" id="p1c1yt" placeholder="YouTube/TikTok..." oninput="saveNews()">
+          <button class="btn btn-g pub-btn" onclick="openL('p1c1yt')">▶</button>
+          <input type="text" id="p1c1b" placeholder="Build link..." oninput="saveNews()">
+          <button class="btn btn-gd pub-btn" onclick="openL('p1c1b')">📖</button>
+        </div>
+
+        <div class="timer-rect" style="height:135px;margin-top:12px;">
+          <div class="timer-bg" id="bgp1" onclick="document.getElementById('fp1').click()" title="Klik hier vir prentjie 🖼️"></div>
+          <input class="hide" type="file" id="fp1" accept="image/*" onchange="chBg(this,'bgp1')">
+          <input class="hide" type="datetime-local" id="p1d">
+          <div class="timer-content">
+            <div class="timer-digits" style="font-size:22px;gap:10px;">
+              <div class="timer-unit"><span id="p1dd">--</span><span class="t-lbl">d</span></div>
+              <div class="timer-unit"><span id="p1dh">--</span><span class="t-lbl">h</span></div>
+              <div class="timer-unit"><span id="p1dm">--</span><span class="t-lbl">m</span></div>
+              <div class="timer-unit"><span id="p1ds">--</span><span class="t-lbl">s</span></div>
+            </div>
+            <div class="timer-info" id="dp1" style="color:var(--gold);font-size:11px;">Expected Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('p1d','dp1','Expected Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);font-size:10px;padding:4px 11px;" onclick="openDT('p1d','dp1','Expected Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
+          </div>
+        </div>
+
+        <input type="text" id="p1c2" placeholder="Character — Element — Weapon" oninput="saveNews()" style="margin-top:12px;margin-bottom:8px;">
+        <div class="lr">
+          <input type="text" id="p1c2yt" placeholder="YouTube/TikTok..." oninput="saveNews()">
+          <button class="btn btn-g pub-btn" onclick="openL('p1c2yt')">▶</button>
+          <input type="text" id="p1c2b" placeholder="Build link..." oninput="saveNews()">
+          <button class="btn btn-gd pub-btn" onclick="openL('p1c2b')">📖</button>
+        </div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="banner-card" style="border-top:3px solid var(--blue);">
+        <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--blue);margin-bottom:10px;">🌙 PHASE 2</div>
+        <input type="text" id="p2c1" placeholder="Character — Element — Weapon" oninput="saveNews()" style="margin-bottom:8px;">
+        <div class="lr">
+          <input type="text" id="p2c1yt" placeholder="YouTube/TikTok..." oninput="saveNews()">
+          <button class="btn btn-b pub-btn" onclick="openL('p2c1yt')">▶</button>
+          <input type="text" id="p2c1b" placeholder="Build link..." oninput="saveNews()">
+          <button class="btn btn-gd pub-btn" onclick="openL('p2c1b')">📖</button>
+        </div>
+
+        <div class="timer-rect" style="height:135px;margin-top:12px;">
+          <div class="timer-bg" id="bgp2" onclick="document.getElementById('fp2').click()" title="Klik hier vir prentjie 🖼️"></div>
+          <input class="hide" type="file" id="fp2" accept="image/*" onchange="chBg(this,'bgp2')">
+          <input class="hide" type="datetime-local" id="p2d">
+          <div class="timer-content">
+            <div class="timer-digits" style="font-size:22px;gap:10px;">
+              <div class="timer-unit"><span id="p2dd">--</span><span class="t-lbl">d</span></div>
+              <div class="timer-unit"><span id="p2dh">--</span><span class="t-lbl">h</span></div>
+              <div class="timer-unit"><span id="p2dm">--</span><span class="t-lbl">m</span></div>
+              <div class="timer-unit"><span id="p2ds">--</span><span class="t-lbl">s</span></div>
+            </div>
+            <div class="timer-info" id="dp2" style="color:var(--blue);font-size:11px;">Expected Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('p2d','dp2','Expected Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--blue);color:var(--blue);font-size:10px;padding:4px 11px;" onclick="openDT('p2d','dp2','Expected Date &amp; Time','blue')">📅 Set Date &amp; Time</button>
+          </div>
+        </div>
+
+        <input type="text" id="p2c2" placeholder="Character — Element — Weapon" oninput="saveNews()" style="margin-top:12px;margin-bottom:8px;">
+        <div class="lr">
+          <input type="text" id="p2c2yt" placeholder="YouTube/TikTok..." oninput="saveNews()">
+          <button class="btn btn-b pub-btn" onclick="openL('p2c2yt')">▶</button>
+          <input type="text" id="p2c2b" placeholder="Build link..." oninput="saveNews()">
+          <button class="btn btn-gd pub-btn" onclick="openL('p2c2b')">📖</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BATTLE & BUILD ── -->
+  <div class="panel">
+    <div class="sec-lbl">⚔️ Battle &amp; Build Intel</div>
+    <div class="split">
+      <div class="b-char">
+        <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--green);letter-spacing:1px;margin-bottom:12px;">✨ NEW CHARACTER DEBUT</div>
+        <span class="lbl">Character Name + Element</span>
+        <input type="text" id="new-char" placeholder="Name — Element..." oninput="saveBattle()">
+        <span class="lbl">YouTube Demo / Trailer</span>
+        <div class="lr"><input type="text" id="yt-demo" placeholder="Link..."><button class="btn btn-g pub-btn" onclick="openL('yt-demo')">▶ Watch</button></div>
+        <span class="lbl">Collected Miscellany</span>
+        <div class="lr"><input type="text" id="yt-misc" placeholder="Link..."><button class="btn btn-g pub-btn" onclick="openL('yt-misc')">▶ Watch</button></div>
+        <span class="lbl">Build Guide Link</span>
+        <div class="lr"><input type="text" id="build-link" placeholder="Link..."><button class="btn btn-gd pub-btn" onclick="openL('build-link')">📖 Open</button></div>
+        <span class="lbl">Genshin Impact Wiki</span>
+        <div class="lr"><input type="text" id="wiki-link" placeholder="Link..."><button class="btn btn-gd pub-btn" onclick="openL('wiki-link')">📖 Open</button></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:15px;">
+        <div class="b-boss">
+          <div style="font-family:'Cinzel',serif;font-size:11px;color:#ff9090;letter-spacing:1px;margin-bottom:10px;">👹 NEW WEEKLY BOSS</div>
+          <input type="text" id="weekly-boss" placeholder="Boss name..." oninput="saveBattle()">
+          <div class="lr" style="margin-top:8px;"><input type="text" id="boss-link" placeholder="Guide..."><button class="btn btn-r pub-btn" onclick="openL('boss-link')">🔗 Open</button></div>
+        </div>
+        <div class="pw" id="boss-wrap" style="border:1px solid rgba(255,100,100,0.3);height:200px;background-size:cover;background-position:center;" onclick="document.getElementById('boss-file').click()">
+          <span id="boss-ph" style="font-size:11px;opacity:0.5;">👹 Click to add Weekly Boss picture</span>
+        </div>
+        <input type="file" id="boss-file" style="display:none" accept="image/*" onchange="chPic(this,'boss-wrap','boss-ph')">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REMINDERS ── -->
+  <div class="panel">
+    <div class="sec-lbl">⏳ Reminders</div>
+    <div class="split">
+      <div class="card">
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:12px;">🎂 UPCOMING BIRTHDAYS</div>
+        <div id="bday-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div class="pw" id="bday-wrap" style="margin-top:12px;border:2px solid rgba(0,195,255,0.35);height:180px;background-size:cover;background-position:center;" onclick="document.getElementById('bday-file').click()">
+          <span id="bday-ph" style="font-size:11px;opacity:0.5;">🎂 Click to add birthday picture</span>
+        </div>
+        <input type="file" id="bday-file" style="display:none" accept="image/*" onchange="chPic(this,'bday-wrap','bday-ph')">
+      </div>
+
+      <div class="card">
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:12px;">🔑 REDEEM CODES / 📺 LIVESTREAM</div>
+        <!-- Livestream countdown -->
+        <div class="timer-rect" style="height:185px;">
+          <div class="timer-bg" id="live-bg" onclick="document.getElementById('live-file').click()" title="Klik hier vir prentjie 🖼️"></div>
+          <input class="hide" type="file" id="live-file" accept="image/*" onchange="chBg(this,'live-bg')">
+          <input class="hide" type="datetime-local" id="live-date">
+          <div class="timer-content">
+            <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:5px;justify-content:center;">
+              📺 GENSHIN IMPACT
+              <input type="text" id="live-ver" placeholder="6.5"
+                style="width:52px;background:none;border:none;border-bottom:1px solid var(--gold);color:white;text-align:center;font-size:11px;padding:0 3px;"
+                oninput="saveLive()" onclick="event.stopPropagation()">
+              LIVESTREAM
+            </div>
+            <div class="timer-digits" style="margin:4px 0;">
+              <div class="timer-unit"><span id="lcd">--</span><span class="t-lbl">days</span></div>
+              <div class="timer-unit"><span id="lch">--</span><span class="t-lbl">hours</span></div>
+              <div class="timer-unit"><span id="lcm">--</span><span class="t-lbl">min</span></div>
+              <div class="timer-unit"><span id="lcs">--</span><span class="t-lbl">sec</span></div>
+            </div>
+            <div class="timer-info" id="dlive" style="color:var(--blue);font-size:11px;">Release Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('live-date','dlive','Release Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--blue);color:var(--blue);font-size:10px;padding:4px 11px;" onclick="openDT('live-date','dlive','Release Date &amp; Time','blue')">📅 Set Date &amp; Time</button>
+            <div style="font-size:11px;opacity:0.55;margin-top:3px;">Codes will be added during the livestream</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin:10px 0;">
+          <a class="btn btn-r pub-btn" href="https://www.youtube.com/@GenshinImpact" target="_blank" style="padding:10px 20px;">▶ Watch on YouTube</a>
+        </div>
+        <a class="btn btn-gd btn-w pub-btn" href="https://genshin.hoyoverse.com/en/gift" target="_blank">🎁 Open Redeem</a>
+        <ul id="code-list" style="list-style:none;margin-top:10px;"></ul>
+        <div class="lr"><input type="text" id="code-inp" placeholder="Type code here..."><button class="btn btn-g" onclick="addCode()">+ Add</button>
 <script>
-    function togglePass(id) {
-        const x = document.getElementById(id);
-        x.type = (x.type === "password") ? "text" : "password";
-    }
+// --- LOCK / SETTINGS (SOOS KALENDER) ---
+var _unlocked = false;
+const MY_PASSWORD = "owner"; // Die wagwoord wat net jy weet
 
-    function toggle(mode) {
-        document.getElementById('login-box').style.display = (mode === 'login' ? 'block' : 'none');
-        document.getElementById('reg-box').style.display = (mode === 'reg' ? 'block' : 'none');
+function toggleLock() {
+  if (_unlocked) {
+    setLocked(true);
+  } else {
+    // Vra net vir die PIN, moenie kyk na wie ingeteken is nie
+    var pin = prompt('⚙️ Enter your secret login password:');
+    
+    if (pin === MY_PASSWORD) {
+      setLocked(false);
+    } else {
+      alert('❌ Wrong Password!');
     }
+  }
+}
 
-    function showUsers() {
-        const users = JSON.parse(localStorage.getItem("allUsers") || "[]");
-        const list = document.getElementById("user-list");
-        if(users.length > 0) {
-            list.innerHTML = "";
-            users.forEach(email => {
-                let li = document.createElement("li");
-                li.innerText = email;
-                li.onmousedown = function() { // Gebruik onmousedown vir beter clicks
-                    document.getElementById("l-email").value = email;
-                    list.style.display = "none";
-                };
-                list.appendChild(li);
-            });
-            list.style.display = "block";
-        }
+function setLocked(locked) {
+  _unlocked = !locked;
+  const lbl = document.getElementById('lock-lbl');
+  const btn = document.getElementById('lock-btn');
+  
+  if (lbl) lbl.textContent = locked ? 'Settings' : '🔓 Unlocked';
+  
+  // Verander die kleur van die knoppie sodat jy weet hy is oop
+  if (btn) {
+      btn.style.borderColor = locked ? 'rgba(255,255,255,0.2)' : '#a5ffad';
+  }
+  
+  // 1. Sluit/Ontsluit alle teks-boksies
+  document.querySelectorAll('input, textarea').forEach(i => {
+    if(i.id !== 'dtm-inp' && i.id !== 'code-inp') i.readOnly = locked;
+  });
+
+  // 2. Sluit/Ontsluit die prente (picture kies)
+  document.querySelectorAll('.pw, .timer-bg').forEach(el => {
+    el.style.pointerEvents = locked ? 'none' : 'auto';
+  });
+
+  // 3. Sluit/Ontsluit die "Set Date" knoppies
+  document.querySelectorAll('.set-btn').forEach(btn => {
+    if (locked) {
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '0.5';
+    } else {
+      btn.style.pointerEvents = 'auto';
+      btn.style.opacity = '1';
     }
+  });
+}
 
-    window.onclick = function(event) {
-        if (!event.target.matches('#l-email')) {
-            document.getElementById("user-list").style.display = "none";
-        }
-    }
+const P=(k,v)=>localStorage.setItem('tnews_final_'+k,JSON.stringify(v));
+const G=k=>{try{return JSON.parse(localStorage.getItem('tnews_final_'+k));}catch{return null;}};
+function V(id){const e=document.getElementById(id);return e?e.value:'';}
+function SV(id,val){const e=document.getElementById(id);if(e&&val!=null)e.value=val;}
+function openL(id){let u=V(id);if(!u)return;if(!u.startsWith('http'))u='https://'+u;window.open(u,'_blank');}
 
-    function register() {
-        const email = document.getElementById('r-email').value;
-        const nick = document.getElementById('r-nick').value;
-        const uid = document.getElementById('r-uid').value;
-        const pass = document.getElementById('r-pass').value;
-        
-        if(email && nick && uid && pass) {
-            const user = { email, nick, uid, password: pass };
-            // Save die spesifieke user data
-            localStorage.setItem("user_" + email, JSON.stringify(user));
-            
-            // Voeg by die lys van alle e-posse
-            let allUsers = JSON.parse(localStorage.getItem("allUsers") || "[]");
-            if(!allUsers.includes(email)) {
-                allUsers.push(email);
-                localStorage.setItem("allUsers", JSON.stringify(allUsers));
-            }
-            
-            alert("Registered! You can now log in.");
-            toggle('login');
-        } else { alert("Please fill in all fields!"); }
-    }
+// --- JOU LOGIC (Bly dieselfde) ---
+function saveNews(){
+  const evs=[...document.querySelectorAll('.ev-inp')].map(i=>i.value);
+  P('news',{ver:V('ver-input'),title:V('title-input'),story:V('news-story'),maps:V('new-maps'),tiktok:V('tiktok-link'),
+    p1c1:V('p1c1'),p1c1yt:V('p1c1yt'),p1c1b:V('p1c1b'),p1c2:V('p1c2'),p1c2yt:V('p1c2yt'),p1c2b:V('p1c2b'),
+    p2c1:V('p2c1'),p2c1yt:V('p2c1yt'),p2c1b:V('p2c1b'),p2c2:V('p2c2'),p2c2yt:V('p2c2yt'),p2c2b:V('p2c2b'),
+    goal1:V('goal1'),goal2:V('goal2'),goal3:V('goal3'),events:evs});
+  localStorage.setItem('newsUnread','true');
+}
 
-    function login() {
-        const email = document.getElementById('l-email').value;
-        const pass = document.getElementById('l-pass').value;
-        const data = localStorage.getItem("user_" + email);
+function addEvent(val=''){
+  const c=document.getElementById('events-con');
+  const i=document.createElement('input');i.type='text';i.className='ev-inp';
+  i.placeholder='Event Name...';i.value=val;
+  i.style.cssText='width:100%;margin-top:4px;';
+  i.oninput=saveNews;c.appendChild(i);
+}
 
-        if(data) {
-            const user = JSON.parse(data);
-            if(user.password === pass) {
-                localStorage.setItem("currentUser", JSON.stringify(user));
-                window.location.href = "Dashboard.html";
-            } else { alert("Wrong password!"); }
-        } else { alert("User not found! Did you register?"); }
-    }
+function updVer(){
+  const v=V('ver-input')||'6.5';
+  document.querySelectorAll('.vlbl').forEach(el=>el.textContent=v);
+}
+
+function saveBattle(){P('battle',{char:V('new-char'),yd:V('yt-demo'),ym:V('yt-misc'),bl:V('build-link'),wl:V('wiki-link'),wb:V('weekly-boss'),blink:V('boss-link')});}
+function saveLive(){P('live',{date:V('live-date'),ver:V('live-ver')});}
+
+// ── BIRTHDAYS AUTO-LIST ──
+const charBirthdays = [
+  "Chasca 10/12","Faruzan 8/20","Ifa 3/23","Jahoda 5/1","Jean 3/14","Kaedehara Kazuha 10/29",
+  "Lan Yan 1/6","Lynette 2/2","Sayu 10/19","Shikanoin Heizou 7/24","Sucrose 11/26",
+  "Varka 2/17","Venti 6/16","Wanderer (Scaramouche) 3/1","Xianyun 11/4","Xiao 4/17",
+  "Yumemizuki Mizuki 3/16","Albedo 9/13","Arataki Itto 1/6","Chiori 8/17","Gorou 5/18",
+  "Illuga 12/23","Kachina 4/22","Linnea 5/23","Navia 8/16","Ningguang 8/26","Noelle 3/21",
+  "Xilonen 3/13","Yun Jin 5/21","Zhongli 12/31","Zibai 5/15","Beidou 2/14","Clorinde 9/20",
+  "Cyno 6/23","Dori 12/21","Fischl 5/27","Flins 10/31","Ineffa 4/2","Keqing 11/20",
+  "Kujou Sara 7/14","Kuki Shinobu 7/27","Iansan 8/8","Lisa 6/9","Ororon 10/14",
+  "Raiden Shogun 6/26","Razor 9/9","Sethos 5/31","Varesa 11/15","Yae Miko 6/27",
+  "Alhaitham 2/11","Baizhu 4/25","Collei 5/8","Emilie 9/22","Kaveh 7/9","Kinich 11/11",
+  "Kirara 1/22","Lauma 3/1","Nahida 10/27","Nefer 5/9","Tighnari 12/29","Yaoyao 3/6",
+  "Aino 9/21","Barbara 7/5","Candace 5/3","Colombina 1/14","Dahila 5/25","Furina 10/13",
+  "Kamisato Ayato 3/26","Mona 8/31","Mualani 8/3","Neuvillette 12/18","Nilou 12/3",
+  "Sangonomiya Kokomi 2/22","Sigewinne 3/30","Tartaglia (Childe) 7/20","Xingqiu 10/9",
+  "Yelan 4/20","Amber 8/10","Arlecchino 8/22","Bennett 2/29","Chevreuse 1/10","Dehya 4/7",
+  "Diluc 4/30","Durin 3/14","Gaming 12/22","Hu Tao 7/15","Klee 7/27","Lyney 2/2",
+  "Mavuika 8/28","Thoma 1/9","Xiangling 11/2","Xinyan 10/16","Yanfei 7/28","Yoimiya 6/21",
+  "Aloy 4/4","Charlotte 4/10","Chongyun 9/7","Citlali 1/20","Diona 1/18","Esoffier 6/8",
+  "Eula 10/25","Freminet 9/24","Ganyu 12/2","Kaeya 11/30","Kamisato Ayaka 9/28",
+  "Layla 12/19","Mika 8/11","Qiqi 3/3","Rosaria 1/24","Shenhe 3/10","Skirk 11/5",
+  "Wriothesley 11/23"
+];
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function renderBdays() {
+  const container = document.getElementById('bday-list');
+  if (!container) return;
+  const today = new Date();
+  const todayMonth = today.getMonth() + 1;
+  const todayDay = today.getDate();
+
+  const parsed = charBirthdays.map(entry => {
+    const parts = entry.split(' ');
+    const dateStr = parts[parts.length - 1];
+    const name = parts.slice(0, parts.length - 1).join(' ');
+    const [m, d] = dateStr.split('/').map(Number);
+    let diff = (m - todayMonth) * 31 + (d - todayDay);
+    if (m < todayMonth || (m === todayMonth && d < todayDay)) diff += 365;
+    return { name, m, d, diff };
+  }).sort((a, b) => a.diff - b.diff);
+
+  container.innerHTML = '';
+  parsed.slice(0, 4).forEach(b => {
+    const isToday = b.m === todayMonth && b.d === todayDay;
+    const dateLabel = MONTH_NAMES[b.m - 1] + ' ' + b.d;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:8px 12px;';
+    row.innerHTML = `<span style="font-size:18px;">${isToday ? '🎂✨' : '🎂'}</span>
+      <span style="flex:1;font-size:13px;font-weight:${isToday?'900':'600'};color:${isToday?'#ffe08a':'white'};">${b.name}</span>
+      <span style="font-size:12px;color:rgba(255,255,255,0.5);white-space:nowrap;">${dateLabel}${isToday?' 🎉':''}</span>`;
+    container.appendChild(row);
+  });
+}
+
+function saveDates(){P('cds',{d1:V('cd1'),d2:V('cd2')});P('pd',{p1:V('p1d'),p2:V('p2d')});saveLive();}
+
+let ss='';
+function setSave(s){
+  if(ss===s){ss='';['full','pity','all'].forEach(x=>{const b=document.getElementById('ss-'+x);if(b)b.className='ss';});P('ss','');return;}
+  ss=s;['full','pity','all'].forEach(x=>{const b=document.getElementById('ss-'+x);if(b)b.className='ss'+(s===x?' sel-'+x:'');});P('ss',s);
+}
+
+// ── DATE MODAL ──
+let _dtTarget=null,_dtDisp=null,_dtPre='';
+const clrMap={gold:'var(--gold)',blue:'var(--blue)',green:'var(--green)'};
+
+function openDT(inpId,dispId,prefixText,color){
+  event.stopPropagation();
+  _dtTarget=inpId;_dtDisp=dispId;_dtPre=prefixText;
+  document.getElementById('dtm-title').textContent='📅 '+prefixText;
+  document.getElementById('dtm-title').style.color=clrMap[color]||'var(--gold)';
+  const existing=document.getElementById(inpId);
+  document.getElementById('dtm-inp').value=existing?existing.value:'';
+  document.getElementById('dtm').classList.add('open');
+}
+function closeDT(){document.getElementById('dtm').classList.remove('open');_dtTarget=null;}
+function clearDT(inpId,dispId,pre){
+  var inp=document.getElementById(inpId);if(inp)inp.value='';
+  var dp=document.getElementById(dispId);if(dp)dp.textContent=pre+': —';
+  saveDates();
+}
+function applyDT(){
+  const val=document.getElementById('dtm-inp').value;
+  if(!val||!_dtTarget){closeDT();return;}
+  const inp=document.getElementById(_dtTarget);
+  if(inp)inp.value=val;
+  const dp=document.getElementById(_dtDisp);
+  if(dp)dp.textContent=_dtPre+': '+fmtFull(val);
+  saveDates();
+  closeDT();
+}
+
+function fmtFull(v){
+  if(!v)return '—';
+  return new Date(v).toLocaleString('en-US',{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
+}
+function fmtCD(ms){
+  if(ms<=0)return['LIVE','00','00','00'];
+  return[Math.floor(ms/86400000),String(Math.floor((ms%86400000)/3600000)).padStart(2,'0'),String(Math.floor((ms%3600000)/60000)).padStart(2,'0'),String(Math.floor((ms%60000)/1000)).padStart(2,'0')];
+}
+
+const tickers=[
+  {inp:'cd1', ids:['t1d','t1h','t1m','t1s']},
+  {inp:'cd2', ids:['t2d','t2h','t2m','t2s']},
+  {inp:'p1d', ids:['p1dd','p1dh','p1dm','p1ds']},
+  {inp:'p2d', ids:['p2dd','p2dh','p2dm','p2ds']},
+  {inp:'live-date',ids:['lcd','lch','lcm','lcs']}
+];
+
+function tickAll(){
+  const now=Date.now();
+  tickers.forEach(t=>{
+    const v=V(t.inp);
+    const parts=v?fmtCD(new Date(v).getTime()-now):['--','--','--','--'];
+    t.ids.forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=parts[i];});
+  });
+}
+setInterval(tickAll,1000);
+
+// ── IMAGES ──
+function chBg(i,id){if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}if(i.files&&i.files[0]){const r=new FileReader();r.onload=e=>document.getElementById(id).style.backgroundImage='url("'+e.target.result+'")';r.readAsDataURL(i.files[0]);}}
+function chPic(i,w,p){if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}if(i.files&&i.files[0]){const r=new FileReader();r.onload=e=>{document.getElementById(w).style.backgroundImage='url("'+e.target.result+'")';const ph=document.getElementById(p);if(ph)ph.style.display='none';};r.readAsDataURL(i.files[0]);}}
+
+// ── CODES ──
+let codes=[];
+function renderCodes(){
+  const ul=document.getElementById('code-list');ul.innerHTML='';
+  codes.forEach((c,i)=>{
+    const li=document.createElement('li');
+    li.style.cssText='background:rgba(0,0,0,0.5);padding:6px 10px;margin-bottom:5px;border-radius:7px;display:flex;justify-content:space-between;align-items:center;';
+    li.innerHTML=`<span style="color:var(--green);font-family:monospace;letter-spacing:1px;">${c}</span>
+      <div style="display:flex;gap:5px;">
+        <button onclick="navigator.clipboard.writeText('${c}')" style="background:none;border:1px solid rgba(165,255,173,0.3);color:var(--green);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:11px;">📋</button>
+        <button onclick="codes.splice(${i},1);renderCodes();" style="background:none;border:1px solid rgba(255,100,100,0.3);color:#ff9090;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:11px;">✕</button>
+      </div>`;
+    ul.appendChild(li);
+  });
+  P('codes',codes);
+}
+function addCode(){const i=document.getElementById('code-inp');if(i.value.trim()){codes.push(i.value.trim().toUpperCase());i.value='';renderCodes();}}
+
+// ── INIT ──
+window.onload=()=>{
+  const n=G('news')||{};
+  SV('ver-input',n.ver);SV('title-input',n.title);SV('news-story',n.story);SV('tiktok-link',n.tiktok);SV('new-maps',n.maps);
+  ['p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b','p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b','goal1','goal2','goal3'].forEach(k=>{const el=document.getElementById(k);if(el&&n[k])el.value=n[k];});
+  (n.events||[]).forEach(ev=>addEvent(ev));
+
+  const bt=G('battle')||{};SV('new-char',bt.char);SV('yt-demo',bt.yd);SV('yt-misc',bt.ym);SV('build-link',bt.bl);SV('wiki-link',bt.wl);SV('weekly-boss',bt.wb);SV('boss-link',bt.blink);
+  const cd=G('cds')||{};SV('cd1',cd.d1);SV('cd2',cd.d2);
+  const pd=G('pd')||{};SV('p1d',pd.p1);SV('p2d',pd.p2);
+  const lv=G('live')||{};SV('live-date',lv.date);SV('live-ver',lv.ver);
+
+  renderBdays();
+  const s=G('ss')||'';if(s)setSave(s);
+  codes=G('codes')||[];renderCodes();
+  updVer();
+  tickAll();
+  setLocked(true);
+};
 </script>
 </body>
 </html>
