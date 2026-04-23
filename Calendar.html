@@ -38,7 +38,6 @@
             z-index: 100;
         }
 
-        /* --- NAVIGASIE EN PYLTE (FIX) --- */
         .nav-controls { 
             display: flex; 
             align-items: center; 
@@ -49,7 +48,7 @@
 
         .nav-btn { 
             background: rgba(0, 0, 0, 0.6); 
-            border: 2px solid var(--green); /* Die groen boksie van die skets */
+            border: 2px solid var(--green); 
             color: white; 
             font-size: 22px; 
             font-weight: bold;
@@ -79,7 +78,6 @@
             letter-spacing: 2px;
         }
 
-        /* --- LOCK BUTTON --- */
         .lock-btn {
             background: #ff4d4d; color: white; border: none; padding: 10px 20px;
             border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;
@@ -88,7 +86,6 @@
         }
         .lock-btn.unlocked { background: #4bff7d; color: black; }
 
-        /* --- CALENDAR GRID --- */
         .calendar-container {
             background: rgba(0,0,0,0.4);
             border-radius: 15px;
@@ -128,9 +125,7 @@
 
         .notes-list { display: flex; flex-direction: column; gap: 8px; }
         .note-item { display: flex; align-items: center; gap: 10px; padding: 4px; border-radius: 4px; }
-        .unlocked .note-item { cursor: pointer; }
-        .unlocked .note-item:hover { background: rgba(255,255,255,0.1); }
-
+        
         .note-pin {
             width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
             box-shadow: 0 0 10px currentColor;
@@ -146,8 +141,6 @@
             margin-top: 15px; padding: 6px; font-weight: bold;
         }
         .unlocked .add-note-btn { display: block; }
-        
-        .dash-back { text-decoration: none; color: white; font-size: 16px; display: flex; align-items: center; gap: 5px; }
         
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
@@ -179,25 +172,15 @@
         const MY_PASSWORD = "8618Super"; 
 
         const colorList = {
-            "1": "#00d4ff", // Blue
-            "2": "#ffcc00", // Gold
-            "3": "#33ff77", // Green
-            "4": "#ff4d4d", // Red
-            "5": "#cc66ff"  // Purple
+            "1": "#00d4ff", "2": "#ffcc00", "3": "#33ff77", "4": "#ff4d4d", "5": "#cc66ff"
         };
 
         function toggleLock() {
             if (isLocked) {
-                let pw = prompt("⚙️ Enter PIN to unlock editing::");
-                if (pw === MY_PASSWORD) {
-                    isLocked = false;
-                } else {
-                    alert("Wrong Password!");
-                    return;
-                }
-            } else {
-                isLocked = true;
-            }
+                let pw = prompt("⚙️ Enter PIN to unlock editing:");
+                if (pw === MY_PASSWORD) { isLocked = false; } 
+                else { alert("Wrong Password!"); return; }
+            } else { isLocked = true; }
             updateUI();
         }
 
@@ -206,17 +189,10 @@
             const icon = document.getElementById('lockIcon');
             const text = document.getElementById('lockText');
             const container = document.getElementById('mainContainer');
-            
             if (isLocked) {
-                btn.classList.remove('unlocked');
-                icon.innerText = "🔒";
-                text.innerText = "LOCKED";
-                container.classList.remove('unlocked');
+                btn.classList.remove('unlocked'); icon.innerText = "🔒"; text.innerText = "LOCKED"; container.classList.remove('unlocked');
             } else {
-                btn.classList.add('unlocked');
-                icon.innerText = "🔓";
-                text.innerText = "EDIT MODE";
-                container.classList.add('unlocked');
+                btn.classList.add('unlocked'); icon.innerText = "🔓"; text.innerText = "EDIT MODE"; container.classList.add('unlocked');
             }
             renderCalendar();
         }
@@ -238,7 +214,6 @@
             
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
             const notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
 
             for(let i=0; i<firstDay; i++) {
@@ -251,13 +226,19 @@
                 const isToday = (today.getDate() === d && today.getMonth() === month && today.getFullYear() === year) ? 'today' : '';
                 
                 let notesHtml = '';
+
+                // --- HIER IS JOU ADMIN UPDATES (Verander hierdie op GitHub) ---
+                if (dateKey === "2026-4-24") { 
+                    notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">🎉 Arlecchino Banner!</div></div>`;
+                }
+                if (dateKey === "2026-4-28") {
+                    notesHtml += `<div class="note-item"><div class="note-pin" style="background:#cc66ff"></div><div class="note-text">🎉 Verjaarsdag!</div></div>`;
+                }
+
+                // Wys ook gewone notas
                 if(notesData[dateKey]) {
                     notesData[dateKey].forEach((n, idx) => {
-                        notesHtml += `
-                            <div class="note-item" onclick="deleteNote('${dateKey}', ${idx})">
-                                <div class="note-pin" style="background-color: ${n.color}; color: ${n.color}"></div>
-                                <div class="note-text">${n.text}</div>
-                            </div>`;
+                        notesHtml += `<div class="note-item" onclick="deleteNote('${dateKey}', ${idx})"><div class="note-pin" style="background-color: ${n.color}"></div><div class="note-text">${n.text}</div></div>`;
                     });
                 }
 
@@ -266,8 +247,7 @@
                         <div class="day-num">${d}</div>
                         <div class="notes-list">${notesHtml}</div>
                         <button class="add-note-btn" onclick="addNote('${dateKey}')">+ NOTE</button>
-                    </div>
-                `;
+                    </div>`;
             }
         }
 
@@ -277,13 +257,10 @@
             if(!text) return;
             const choice = prompt("1:Blou, 2:Goud, 3:Groen, 4:Rooi, 5:Pers");
             const color = colorList[choice] || colorList["2"];
-            
             let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
             if(!notesData[dateKey]) notesData[dateKey] = [];
             notesData[dateKey].push({ text: text, color: color });
-            
             localStorage.setItem('cal_save_data', JSON.stringify(notesData));
-            localStorage.setItem('calUnread', 'true');
             renderCalendar();
         }
 
@@ -296,7 +273,6 @@
                 renderCalendar();
             }
         }
-
         renderCalendar();
     </script>
 </body>
