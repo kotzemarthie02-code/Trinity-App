@@ -243,11 +243,9 @@ window.onload = function() {
         if (savedPic) document.getElementById("avatar").src = savedPic;
     } else { window.location.href = "login.html"; }
 
-    // HIERDIE TWEE MOET NET CHECK, NIE VERANDER NIE
     checkNewsBadge();
     checkCalBadge(); 
     initCal();
-    loadCalNotes();
 };
 
 function logout() { localStorage.removeItem("currentUser"); window.location.href = "login.html"; }
@@ -262,10 +260,6 @@ function changePic(event) {
     reader.readAsDataURL(event.target.files[0]);
 }
 
-// ── NEWS BADGE ──
-// Shows ONLY when newsUnread === 'true' in localStorage
-// Set to 'true' by News.html when content is saved/updated
-// Set to 'false' only when user clicks NEWS button
 function checkNewsBadge() {
     const badge = document.getElementById('newsBadge');
     if (!badge) return;
@@ -282,13 +276,15 @@ function markNewsRead() {
 }
 
 // ── CALENDAR BADGE ──
-// Same — shows only when calUnread === 'true'
-// Set to 'true' by Calendar.html when notes are added
-// Set to 'false' only when user opens the calendar panel
+// Wys nou ALTYD as dit April 2026 is OF as daar nuwe notas is
 function checkCalBadge() {
     const badge = document.getElementById('calBadge');
     if (!badge) return;
-    if (localStorage.getItem('calUnread') === 'true') {
+    
+    const now = new Date();
+    const isApril2026 = (now.getMonth() === 3 && now.getFullYear() === 2026);
+    
+    if (localStorage.getItem('calUnread') === 'true' || isApril2026) {
         badge.classList.remove('hidden');
     } else {
         badge.classList.add('hidden');
@@ -303,7 +299,6 @@ function markCalRead() {
 // ── CALENDAR ──
 let calOpen = false;
 let calYear, calMonth;
-let calNotes = {};
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
@@ -312,9 +307,8 @@ function toggleCal() {
     calOpen = !calOpen;
     document.getElementById('calPanel').classList.toggle('open', calOpen);
     if (calOpen) { 
-        loadCalNotes(); 
         renderCal(); 
-        markCalRead(); // Badge gaan weg NET as jy klik
+        markCalRead();
     }
 }
 
@@ -346,43 +340,66 @@ function renderCal() {
     const lbl=document.getElementById('calMonthLblText');if(lbl)lbl.textContent=MONTHS[calMonth]+' '+calYear;
     const grid = document.getElementById('calGrid');
     grid.innerHTML = '';
+    
     DAYS.forEach(d => {
         const el = document.createElement('div');
         el.className = 'cal-dow'; el.textContent = d;
         grid.appendChild(el);
     });
+
     const firstDay = new Date(calYear, calMonth, 1).getDay();
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
     const daysInPrev = new Date(calYear, calMonth, 0).getDate();
     const today = new Date();
+    
+    // Laai gewone notas
+    const savedNotes = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
+
     for (let i = firstDay - 1; i >= 0; i--) {
         const el = document.createElement('div');
         el.className = 'cal-day other-month';
         el.textContent = daysInPrev - i;
         grid.appendChild(el);
     }
+
     for (let d = 1; d <= daysInMonth; d++) {
         const el = document.createElement('div');
         el.className = 'cal-day';
         el.textContent = d;
-        const key = dateKey(calYear, calMonth, d);
+        const key = calYear + '-' + (calMonth + 1) + '-' + d;
+        
         if (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear()) {
             el.classList.add('today');
         }
-        const noteEntry = calNotes[key];
-        if (noteEntry && Array.isArray(noteEntry) && noteEntry.length > 0) {
-            const dotsWrap = document.createElement('div');
-            dotsWrap.className = 'cal-note-dots';
-            noteEntry.slice(0, 5).forEach(n => {
+
+        const dotsWrap = document.createElement('div');
+        dotsWrap.className = 'cal-note-dots';
+
+        // --- VOEG APRIL ADMIN DOTS BY ---
+        if (calYear === 2026 && calMonth === 3) {
+            const adminDays = ["1","5","6","7","8","10","15","24","27","28","30"];
+            if (adminDays.includes(d.toString())) {
+                const dot = document.createElement('div');
+                dot.className = 'cal-note-dot';
+                dot.style.background = (d==8 || d==27) ? '#ffcc00' : (d==10 || d==28) ? '#00d4ff' : (d==15 || d==30) ? '#33ff77' : '#ff4d4d';
+                dotsWrap.appendChild(dot);
+            }
+        }
+
+        // Voeg gewone stoor-notas dots by
+        if (savedNotes[key]) {
+            savedNotes[key].forEach(n => {
                 const dot = document.createElement('div');
                 dot.className = 'cal-note-dot';
                 dot.style.background = n.color || '#f3d18b';
                 dotsWrap.appendChild(dot);
             });
-            el.appendChild(dotsWrap);
         }
+
+        if (dotsWrap.children.length > 0) el.appendChild(dotsWrap);
         grid.appendChild(el);
     }
+
     const total = firstDay + daysInMonth;
     const trailing = (7 - (total % 7)) % 7;
     for (let i = 1; i <= trailing; i++) {
@@ -392,15 +409,6 @@ function renderCal() {
         grid.appendChild(el);
     }
 }
-
-function dateKey(y, m, d) { return y + '-' + (m + 1) + '-' + d; }
-function loadCalNotes() {
-    const saved = localStorage.getItem('cal_save_data');
-    if (saved) calNotes = JSON.parse(saved);
-}
-window.addEventListener('storage', function(e) {
-    if (e.key === 'cal_save_data') { loadCalNotes(); if (calOpen) renderCal(); }
-});
 </script>
 </body>
 </html>
