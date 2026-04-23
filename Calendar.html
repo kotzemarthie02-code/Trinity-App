@@ -169,7 +169,9 @@
     <script>
         let isLocked = true;
         let currentViewDate = new Date(2026, 3, 1); 
-        const MY_PASSWORD = "8618Super"; 
+        
+        // Die wagwoord is 'owner', maar ge-encode sodat mense dit nie maklik sien nie
+        const _0x4f2a = "b3duZXI="; 
 
         const colorList = {
             "1": "#00d4ff", "2": "#ffcc00", "3": "#33ff77", "4": "#ff4d4d", "5": "#cc66ff"
@@ -178,9 +180,16 @@
         function toggleLock() {
             if (isLocked) {
                 let pw = prompt("⚙️ Enter PIN to unlock editing:");
-                if (pw === MY_PASSWORD) { isLocked = false; } 
-                else { alert("Wrong Password!"); return; }
-            } else { isLocked = true; }
+                // Vergelyk die wagwoord met die ge-encodeerde een
+                if (btoa(pw) === _0x4f2a) { 
+                    isLocked = false; 
+                } else { 
+                    alert("❌ Wrong Password!"); 
+                    return; 
+                }
+            } else { 
+                isLocked = true; 
+            }
             updateUI();
         }
 
@@ -227,7 +236,7 @@
                 
                 let notesHtml = '';
 
-                // --- APRIL VOLLEDIGE LYS ---
+                // --- Vaste Events vir April 2026 ---
                 if (dateKey === "2026-4-1") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Operation Stronghold Defense End</div></div>`; }
                 if (dateKey === "2026-4-5") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Overflowing Abundance End</div></div>`; }
                 if (dateKey === "2026-4-6") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Luna V Stygian Onslaught End</div></div>`; }
@@ -240,7 +249,6 @@
                 if (dateKey === "2026-4-28") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#00d4ff"></div><div class="note-text">Lauma and Neferon se dag</div></div>`; }
                 if (dateKey === "2026-4-30") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#33ff77"></div><div class="note-text">Imaginarium Theater Reset</div></div>`; }
 
-                // Wys ook gewone notas
                 if(notesData[dateKey]) {
                     notesData[dateKey].forEach((n, idx) => {
                         notesHtml += `<div class="note-item" onclick="deleteNote('${dateKey}', ${idx})"><div class="note-pin" style="background-color: ${n.color}"></div><div class="note-text">${n.text}</div></div>`;
