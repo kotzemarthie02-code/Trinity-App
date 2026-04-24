@@ -563,15 +563,52 @@ function addCode(){const i=document.getElementById('code-inp');if(i.value.trim()
 
 // ── INIT ──
 window.onload=()=>{
+  // Hierdie sorg dat die rooi ! op die dashboard dadelik verdwyn
+  localStorage.setItem('newsUnread', 'false'); 
+
   const n=G('news')||{};
-  SV('ver-input',n.ver);SV('title-input',n.title);SV('news-story',n.story);SV('tiktok-link',n.tiktok);SV('new-maps',n.maps);
-  ['p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b','p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b','goal1','goal2','goal3'].forEach(k=>{const el=document.getElementById(k);if(el&&n[k])el.value=n[k];});
+  SV('ver-input',n.ver);
+  SV('title-input',n.title);
+  SV('news-story',n.story);
+  SV('tiktok-link',n.tiktok);
+  SV('new-maps',n.maps);
+
+  ['p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b','p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b','goal1','goal2','goal3'].forEach(k=>{
+    const el=document.getElementById(k);
+    if(el&&n[k]) el.value=n[k];
+  });
+
   (n.events||[]).forEach(ev=>addEvent(ev));
 
-  const bt=G('battle')||{};SV('new-char',bt.char);SV('yt-demo',bt.yd);SV('yt-misc',bt.ym);SV('build-link',bt.bl);SV('wiki-link',bt.wl);SV('weekly-boss',bt.wb);SV('boss-link',bt.blink);
-  const cd=G('cds')||{};SV('cd1',cd.d1);SV('cd2',cd.d2);
-  const pd=G('pd')||{};SV('p1d',pd.p1);SV('p2d',pd.p2);
-  const lv=G('live')||{};SV('live-date',lv.date);SV('live-ver',lv.ver);
+  const bt=G('battle')||{};
+  SV('new-char',bt.char);
+  SV('yt-demo',bt.yd);
+  SV('yt-misc',bt.ym);
+  SV('build-link',bt.bl);
+  SV('wiki-link',bt.wl);
+  SV('weekly-boss',bt.wb);
+  SV('boss-link',bt.blink);
+
+  const cd=G('cds')||{};
+  SV('cd1',cd.d1);
+  SV('cd2',cd.d2);
+
+  const pd=G('pd')||{};
+  SV('p1d',pd.p1);
+  SV('p2d',pd.p2);
+
+  const lv=G('live')||{};
+  SV('live-date',lv.date);
+  SV('live-ver',lv.ver);
+
+  // Moenie vergeet om die res van jou funksies soos tickAll() ens. hieronder te los nie
+  tickAll();
+  setInterval(tickAll,1000);
+  renderCodes();
+  updateBirthdayList();
+  
+  // Die res van jou "Lock" logika...
+};
 
   renderBdays();
   const s=G('ss')||'';if(s)setSave(s);
