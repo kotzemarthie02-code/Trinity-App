@@ -167,10 +167,16 @@
     </div>
 
     <script>
+        // --- STAP 3/4: FIX VIR DIE ROOI ! OP DIE DASHBOARD ---
+        window.onload = () => {
+            localStorage.setItem('calUnread', 'false');
+            localStorage.setItem('calRead_April2026', 'true');
+            renderCalendar(); 
+        };
+
         let isLocked = true;
         let currentViewDate = new Date(2026, 3, 1); 
         
-        // Die wagwoord is 'owner', maar ge-encode sodat mense dit nie maklik sien nie
         const _0x4f2a = "b3duZXI="; 
 
         const colorList = {
@@ -180,7 +186,6 @@
         function toggleLock() {
             if (isLocked) {
                 let pw = prompt("⚙️ Enter PIN to unlock editing:");
-                // Vergelyk die wagwoord met die ge-encodeerde een
                 if (btoa(pw) === _0x4f2a) { 
                     isLocked = false; 
                 } else { 
@@ -236,7 +241,6 @@
                 
                 let notesHtml = '';
 
-                // --- Vaste Events vir April 2026 ---
                 if (dateKey === "2026-4-1") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Operation Stronghold Defense End</div></div>`; }
                 if (dateKey === "2026-4-5") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Overflowing Abundance End</div></div>`; }
                 if (dateKey === "2026-4-6") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Luna V Stygian Onslaught End</div></div>`; }
@@ -268,7 +272,7 @@
             if(isLocked) return;
             const text = prompt("Note:");
             if(!text) return;
-            const choice = prompt("1:Blou, 2:Goud, 3:Groen, 4:Rooi, 5:Pers");
+            const choice = prompt("1:Blue, 2:Goud, 3:Green, 4:Red, 5:Purple");
             const color = colorList[choice] || colorList["2"];
             let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
             if(!notesData[dateKey]) notesData[dateKey] = [];
@@ -286,7 +290,6 @@
                 renderCalendar();
             }
         }
-        renderCalendar();
     </script>
 </body>
 </html>
