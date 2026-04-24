@@ -5,8 +5,8 @@
     <title>Genshin Impact - Login</title>
     <style>
         body {
-            /* FIX SIZE: Hierdie sorg dat die prentjie presies op die skerm pas */
-            background: url(Login.jpg); no-repeat center center fixed;
+            /* FIX: Punt-komma verwyder sodat die agtergrond werk */
+            background: url('Login.jpg') no-repeat center center fixed;
             background-size: cover; 
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
@@ -108,7 +108,7 @@
             users.forEach(email => {
                 let li = document.createElement("li");
                 li.innerText = email;
-                li.onmousedown = function() { // Gebruik onmousedown vir beter clicks
+                li.onmousedown = function() {
                     document.getElementById("l-email").value = email;
                     list.style.display = "none";
                 };
@@ -132,10 +132,8 @@
         
         if(email && nick && uid && pass) {
             const user = { email, nick, uid, password: pass };
-            // Save die spesifieke user data
             localStorage.setItem("user_" + email, JSON.stringify(user));
             
-            // Voeg by die lys van alle e-posse
             let allUsers = JSON.parse(localStorage.getItem("allUsers") || "[]");
             if(!allUsers.includes(email)) {
                 allUsers.push(email);
@@ -156,6 +154,7 @@
             const user = JSON.parse(data);
             if(user.password === pass) {
                 localStorage.setItem("currentUser", JSON.stringify(user));
+                // FIX: Gaan na Dashboard
                 window.location.href = "Dashboard.html";
             } else { alert("Wrong password!"); }
         } else { alert("User not found! Did you register?"); }
