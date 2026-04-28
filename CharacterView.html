@@ -601,6 +601,17 @@ const bossMaterials = ["Hurricane Seed","Lightning Prism","Hoarfrost Core","Crys
 
 const statusList = ["Done","Not Yet","Farming"];
 
+// === FIREBASE SETUP (OPSIONEEL) ===
+// Indien jy Firebase later wil koppel, vul jou config hier in.
+const firebaseConfig = {
+    apiKey: "API_KEY",
+    authDomain: "PROJECT.firebaseapp.com",
+    projectId: "PROJECT",
+    storageBucket: "PROJECT.appspot.com",
+    messagingSenderId: "ID",
+    appId: "APP_ID"
+};
+
 // 1. Die Hoofdatabasis vir stoorplek
 let characterDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
 
@@ -860,5 +871,6 @@ document.addEventListener('change', autoSave);
 document.addEventListener('input', autoSave);
 
 window.onload = setupDropdowns;
-
 </script>
+</body>
+</html>
