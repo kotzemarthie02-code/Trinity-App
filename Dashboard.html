@@ -274,8 +274,8 @@
         }
 
 function renderCal() {
-    // 1. Kry die data uit localStorage (gebruik die regte prefix 'tnews_final_')
-    const allNotes = JSON.parse(localStorage.getItem('tnews_final_cal_notes')) || {};
+    // 1. Gebruik dieselfde key as die Calendar: 'cal_save_data'
+    const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
     
     const lbl = document.getElementById('calMonthLblText'); 
     if(lbl) lbl.textContent = MONTHS[calMonth] + ' ' + calYear;
@@ -283,7 +283,6 @@ function renderCal() {
     const grid = document.getElementById('calGrid');
     grid.innerHTML = '';
     
-    // Teken die weeksdae (Mo, Tu, ens)
     DAYS.forEach(d => {
         const el = document.createElement('div');
         el.className = 'cal-dow'; el.textContent = d;
@@ -293,48 +292,43 @@ function renderCal() {
     const firstDay = new Date(calYear, calMonth, 1).getDay();
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
 
-    // Leë boksies vir vorige maand
     for (let i = 0; i < firstDay; i++) {
         const el = document.createElement('div'); 
         el.className = 'cal-day other-month'; 
         grid.appendChild(el);
     }
 
-    // Teken die dae van die maand
     for (let d = 1; d <= daysInMonth; d++) {
         const el = document.createElement('div'); 
         el.className = 'cal-day'; 
         el.textContent = d;
         
-        // Kyk of dit vandag is
         const now = new Date();
         if (d === now.getDate() && calMonth === now.getMonth() && calYear === now.getFullYear()) {
             el.classList.add('today');
         }
 
-        // --- SIRKEL LOGIKA ---
-        const dateKey = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayData = allNotes[dateKey];
+        // --- SIRKEL LOGIKA REGMAAK VIR JOU DATA STRUKTUUR ---
+        // Let wel: Jou Calendar stoor maande sonder 'padStart' (bv. 2026-4-1)
+        const dateKey = `${calYear}-${calMonth + 1}-${d}`;
+        const dayNotes = allNotes[dateKey]; // Dit is 'n array van notas
 
-        if (dayData && dayData.notes && dayData.notes.length > 0) {
+        if (dayNotes && dayNotes.length > 0) {
             const dotsContainer = document.createElement('div');
             dotsContainer.className = 'cal-note-dots';
             
-            dayData.notes.forEach(note => {
+            dayNotes.forEach(note => {
                 const dot = document.createElement('div');
                 dot.className = 'cal-note-dot';
-                // Gebruik die kleur wat gestoor is, of 'gold' as daar nie een is nie
-                dot.style.background = note.color || '#f3d18b'; 
+                // Gebruik die kleur van die nota
+                dot.style.backgroundColor = note.color; 
                 dotsContainer.appendChild(dot);
             });
             el.appendChild(dotsContainer);
         }
-        // ----------------------
-
         grid.appendChild(el);
     }
-}
-        
+}        
         function markCalRead() { document.getElementById('calBadge').classList.add('hidden'); }
 
         window.onload = () => {
