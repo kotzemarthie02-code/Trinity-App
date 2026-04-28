@@ -26,7 +26,6 @@
             left: 0; 
             width: 100%; 
             height: 100%; 
-            /* Ligte donker filter oor die hele prent */
             background: rgba(0, 0, 0, 0.2); 
             z-index: -1; 
         }
@@ -70,9 +69,8 @@
         }
 
         .day-column { 
-            /* VERANDERING: Baie ligter deursigtige swart (0.4 in plaas van 0.9) */
             background: rgba(0, 0, 0, 0.4); 
-            backdrop-filter: blur(5px); /* Dit maak die agtergrond agter die boksie effens wasig vir styl */
+            backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.2); 
             border-radius: 15px; 
             padding: 20px; 
@@ -115,7 +113,6 @@
             font-size: 22px; 
             color: white;
             padding: 12px; 
-            /* VERANDERING: Ligte deursigtige strook vir die Sondag teks */
             background: rgba(0, 0, 0, 0.5); 
             border-radius: 15px; 
             width: 98%;
@@ -149,6 +146,42 @@
         Sunday: All Weapon Ascension Materials can be obtained on Sundays.
     </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
+            authDomain: "trinityapp-28019.firebaseapp.com",
+            databaseURL: "https://trinityapp-28019-default-rtdb.firebaseio.com",
+            projectId: "trinityapp-28019",
+            storageBucket: "trinityapp-28019.firebasestorage.app",
+            messagingSenderId: "72035223407",
+            appId: "1:72035223407:web:b1a40d9ce96ae479be4a9a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const currentUsername = localStorage.getItem('trinity_user') || "Admin";
+
+        // Luister vir data vanaf Firebase en werk localStorage op
+        onValue(ref(db, 'users/' + currentUsername + '/ownedCharacters'), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                localStorage.setItem('ownedCharacters', JSON.stringify(data));
+                loadWeaponCalendar();
+            }
+        });
+
+        onValue(ref(db, 'users/' + currentUsername + '/characterDetails'), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                localStorage.setItem('characterDetails', JSON.stringify(data));
+                loadWeaponCalendar();
+            }
+        });
+    </script>
+
     <script>
         function loadWeaponCalendar() {
             const characterDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
@@ -166,9 +199,7 @@
                 const data = characterDetails[charName];
                 if (!data) return;
 
-                // First check explicit weaponDay field
                 let chosenDay = data['weaponDay'] || "";
-                // Fallback: scan all fields
                 if (!chosenDay) {
                     for (let key in data) {
                         const val = data[key];
@@ -192,6 +223,9 @@
                 }
             });
         }
+        
+        // Maak dit beskikbaar vir die Firebase module
+        window.loadWeaponCalendar = loadWeaponCalendar;
         window.onload = loadWeaponCalendar;
     </script>
 </body>
