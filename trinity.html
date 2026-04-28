@@ -2,6 +2,29 @@
 <html lang="af">
 <head>
 <meta charset="UTF-8">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
+    authDomain: "trinityapp-28019.firebaseapp.com",
+    projectId: "trinityapp-28019",
+    storageBucket: "trinityapp-28019.firebasestorage.app",
+    messagingSenderId: "72035223407",
+    appId: "1:72035223407:web:b1a40d9ce96ae479be4a9a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+    }
+  });
+</script>
+
 <title>The Trinity's Action Plan</title>
 <style>
 /* ... (Alle CSS bly presies dieselfde as jou oorspronklike kode) ... */
@@ -700,7 +723,7 @@ function togglePlanItem(i) {
 }
 
 window.onload = function() {
-  checkAndReset(); // <--- Hierdie doen die werk
+  checkAndReset(); 
   fillDropdowns();
   renderDaily();
   loadCounters();
