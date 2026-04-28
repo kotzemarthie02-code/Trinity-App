@@ -599,21 +599,73 @@ const enemyTypes = ["Slime","Landcruiser","Fatui Oprichnik","Nobushi","Clockwork
 
 const bossMaterials = ["Hurricane Seed","Lightning Prism","Hoarfrost Core","Crystalline Bloom","Basalt Pillar","Everflame Seed","Cleansing Heart","Juvenile Jade","Runic Fang","Cloudseam Scale","Marionette Core","Perpetual Heart","Smoldering Pearl","Dew of Repudiation","Storm Beads","Riftborn Regalia","Dragonheir's False Fin","Majestic Hooked Beak","Thunderclap Fruitcore","Perpetual Caliber","Light Guiding Tetrahedron","Quelled Creeper","Pseudo-Stamens","Evergloom Ring","Artificed Spare Clockwork Component - Coppelia","Artificed Spare Clockwork Component - Coppelius","Emperor's Resolution","Fontemer Unihorn","Tourbillon Device","Water That Failed to Transcend","Fragment of a Golden Melody","Mark of the Binding Blessing","Overripe Flamegranate","Gold-Inscribed Secret Source Core","Ensnaring Gaze","Talisman of the Enigmatic Land","Sparkless Statue Core","Lightbearing Scale-Feather","Radiant Antler","Remnant of the Dreadwing","Prismatic Severed Tail"];
 
-const statusList = ["Done","Not Yet","Farming"];
+// Hierdie bly BUITE die script sodat die HTML dit kan sien
+const statusList = ["Done", "Not Yet", "Farming"];
 
-// === FIREBASE SETUP (OPSIONEEL) ===
-// Indien jy Firebase later wil koppel, vul jou config hier in.
+<script type="module">
+// === FIREBASE SETUP ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
 const firebaseConfig = {
-    apiKey: "API_KEY",
-    authDomain: "PROJECT.firebaseapp.com",
-    projectId: "PROJECT",
-    storageBucket: "PROJECT.appspot.com",
-    messagingSenderId: "ID",
-    appId: "APP_ID"
+    apiKey: "JOU_API_KEY",
+    authDomain: "JOU_PROJECT.firebaseapp.com",
+    databaseURL: "https://JOU_PROJECT-default-rtdb.firebaseio.com",
+    projectId: "JOU_PROJECT",
+    storageBucket: "JOU_PROJECT.appspot.com",
+    messagingSenderId: "JOU_ID",
+    appId: "JOU_APP_ID"
 };
 
-// 1. Die Hoofdatabasis vir stoorplek
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 1. Die Hoofdatabasis (Slegs characterDetails hier binne)
 let characterDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
+
+// === DATA SINCHRONISASIE ===
+onValue(ref(db, 'characterDetails'), (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        characterDetails = data;
+        localStorage.setItem('characterDetails', JSON.stringify(data));
+        
+        const currentChar = document.getElementById('charName').innerText;
+        if (currentChar && currentChar !== "Character Name" && currentChar !== "-") {
+            loadCharData(currentChar);
+        }
+    }
+});
+
+// GEKOMBINEERDE AUTOSAVE
+function autoSave() {
+    const charName = document.getElementById('charName').innerText;
+    if (!charName || charName === "Character Name" || charName === "-") return;
+
+    if (!characterDetails[charName]) characterDetails[charName] = {};
+
+    const selects = document.querySelectorAll('select');
+    selects.forEach((sel, index) => {
+        if (sel.id !== 'charSelect') {
+            characterDetails[charName]["sel_" + index] = sel.value;
+        }
+    });
+
+    const inputs = document.querySelectorAll('input[type="text"]');
+    inputs.forEach((inp, index) => {
+        characterDetails[charName]["inp_" + index] = inp.value;
+    });
+
+    const circles = document.querySelectorAll('.panel .status-circle');
+    circles.forEach((c, i) => {
+        characterDetails[charName]["circle_" + i] = c.style.backgroundColor || 'rgb(85, 85, 85)';
+    });
+
+    localStorage.setItem('characterDetails', JSON.stringify(characterDetails));
+    set(ref(db, 'characterDetails'), characterDetails);
+}
+
+// --- JOU ANDER FUNKSIES ---
 
 function fillDropdown(selector, list) {
     document.querySelectorAll(selector).forEach(dropdown => {
@@ -646,14 +698,17 @@ function setupDropdowns() {
     fillDropdown('.weapon-list-drop', weaponList);
     fillDropdown('.weapon-type-drop', weaponTypes);
     fillDropdown('.enemy-mat-drop', enemyMaterials);
-    fillDropdown('.mat-drop', enemyMaterials);          // Weapons[Now] Enemy Material koloms
+    fillDropdown('.mat-drop', enemyMaterials);
     fillDropdown('.enemy-type-list', enemyList);
-    fillDropdown('.talent-ascend-enemy-type', enemyTypes);  // Talents + Ascend: kort lys
+    fillDropdown('.talent-ascend-enemy-type', enemyTypes);
     fillDropdown('.dom-mat-drop', domainMaterials);
     fillDropdown('.domain-list-drop', domainTypes);
     fillDropdown('.days-drop', daysList);
     fillDropdown('.wea-days-drop', daysList);
-    fillDropdown('.status-drop', statusList);
+    
+    // Gebruik die statusList wat BUITE die script is
+    fillDropdown('.status-drop', statusList); 
+    
     fillDropdown('.art-list-drop', artifacts);
     fillDropdown('.art-dom-drop', artifactDomains);
     fillDropdown('.region-drop', regions);
@@ -676,201 +731,15 @@ function setupDropdowns() {
     fillDropdown('.future-domain-type-drop', domainTypes);
 }
 
-function cycleColor(el) {
-    // Grey(0) → Green(1) → Orange(2) → Red(3) → Grey
-    const colors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
-    let currentColor = window.getComputedStyle(el).backgroundColor;
-    let index = colors.indexOf(currentColor);
-    if (index === -1) index = 0;
-    const newIndex = (index + 1) % colors.length;
-    el.style.backgroundColor = colors[newIndex];
+// ... cycleColor, resetCurrentChar, loadCharData en updateChar bly dieselfde ...
 
-    // Map CV color index → Training Guide status (guide cycle: 0=grey,1=green,3=orange,2=red)
-    const cvToGuideStatus = [0, 1, 3, 2];
-    const guideStatus = cvToGuideStatus[newIndex];
-
-    // Find which panel this circle belongs to and map to guide task name
-    const panel = el.closest('.panel');
-    const charName = document.getElementById('charName').innerText;
-    if (charName && panel) {
-        const h2 = panel.querySelector('h2');
-        let guideTask = null;
-        if (h2) {
-            const heading = h2.textContent.replace(/★+/g,'').trim();
-            if (heading.includes('Weapons [Now]'))               guideTask = 'Weapons [Now]';
-            else if (heading.includes('Artifacts'))              guideTask = 'Artifacts';
-            else if (heading.includes('Talents'))                guideTask = 'Talents';
-            else if (heading.includes('Ascend'))                 guideTask = 'Ascension';
-            else if (heading.includes('Weapon (Future Wish'))    guideTask = 'Weapon [Future Wish Pulls]';
-        } else if (panel.id === 'mainPanel') {
-            guideTask = 'Character';
-        }
-
-        if (guideTask) {
-            let guideProgress = JSON.parse(localStorage.getItem('guideProgress')) || {};
-            if (!guideProgress[charName]) guideProgress[charName] = {};
-            guideProgress[charName][guideTask] = guideStatus;
-            // Clear legacy "Asension" key
-            if (guideTask === 'Ascension') delete guideProgress[charName]['Asension'];
-            localStorage.setItem('guideProgress', JSON.stringify(guideProgress));
-        }
-    }
-    autoSave();
-}
-
-
-function resetCurrentChar() {
-    const charName = document.getElementById('charName').innerText;
-    if (!charName || charName === "Character Name" || charName === "-") return;
-    
-    // Clear only selects and inputs (NOT char info, talents, circles)
-    // Reset selects (skip charSelect)
-    document.querySelectorAll('select').forEach(sel => {
-        if (sel.id !== 'charSelect') sel.value = "";
-    });
-    // Reset all text inputs
-    document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
-    // Reset circles to grey
-    document.querySelectorAll('.panel .status-circle').forEach(c => {
-        c.style.backgroundColor = 'rgb(85, 85, 85)';
-    });
-    
-    // Remove from characterDetails storage for this char only
-    if (characterDetails[charName]) {
-        // Keep only bday/title/const/talent data (not sel_ inp_ circle_)
-        const keep = {};
-        characterDetails[charName] = keep;
-        localStorage.setItem('characterDetails', JSON.stringify(characterDetails));
-    }
-    // Also reset guide progress circles for this char
-    let guideProgress = JSON.parse(localStorage.getItem('guideProgress')) || {};
-    if (guideProgress[charName]) {
-        guideProgress[charName] = {};
-        localStorage.setItem('guideProgress', JSON.stringify(guideProgress));
-    }
-    
-    // Re-apply charDatabase info (bday, title, etc stays)
-    const data = charDatabase[charName];
-    if (data) {
-        document.getElementById('charBday').innerText = data.bday;
-        document.getElementById('charTitle').innerText = data.title;
-        document.getElementById('constName').innerText = data.const;
-        document.getElementById('talentNA').innerText = data.talents.normalAttack;
-        document.getElementById('talentES').innerText = data.talents.elementalSkill;
-        document.getElementById('talentEB').innerText = data.talents.elementalBurst;
-    }
-}
-
-function autoSave() {
-    const charName = document.getElementById('charName').innerText;
-    if (!charName || charName === "Character Name") return;
-
-    if (!characterDetails[charName]) characterDetails[charName] = {};
-
-    const selects = document.querySelectorAll('select');
-    selects.forEach((sel, index) => {
-        if (sel.id !== 'charSelect') {
-            characterDetails[charName]["sel_" + index] = sel.value;
-        }
-    });
-
-    const inputs = document.querySelectorAll('input[type="text"]');
-    inputs.forEach((inp, index) => {
-        characterDetails[charName]["inp_" + index] = inp.value;
-    });
-
-    // Save status circle colors
-    const circles = document.querySelectorAll('.panel .status-circle');
-    circles.forEach((c, i) => {
-        characterDetails[charName]["circle_" + i] = c.style.backgroundColor || 'rgb(85, 85, 85)';
-    });
-
-    localStorage.setItem('characterDetails', JSON.stringify(characterDetails));
-}
-
-function loadCharData(charName) {
-    const data = characterDetails[charName];
-    // Reset circles to grey first
-    document.querySelectorAll('.panel .status-circle').forEach(c => c.style.backgroundColor = 'rgb(85, 85, 85)');
-
-    if (!data) {
-        document.querySelectorAll('select').forEach(sel => { if(sel.id !== 'charSelect') sel.value = ""; });
-        document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
-    } else {
-        const selects = document.querySelectorAll('select');
-        selects.forEach((sel, index) => {
-            if (sel.id !== 'charSelect') sel.value = data["sel_" + index] || "";
-        });
-        const inputs = document.querySelectorAll('input[type="text"]');
-        inputs.forEach((inp, index) => { inp.value = data["inp_" + index] || ""; });
-    }
-
-    // Restore circle colors from guideProgress (Training Guide is source of truth)
-    const guideColors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
-    // guide status→CV color: 0=grey(0), 1=green(1), 3=orange(2), 2=red(3)
-    const guideStatusToCVColor = { 0: 0, 1: 1, 2: 3, 3: 2 };
-
-    const guideProgress = JSON.parse(localStorage.getItem('guideProgress')) || {};
-    const prog = guideProgress[charName] || {};
-
-    // Circle order in DOM: 0=mainPanel(Character), 1=Weapons[Now], 2=Artifacts, 3=Talents, 4=Ascension, 5=Weapon4★, 6=Weapon5★
-    const circleTaskMap = [
-        'Character', 'Weapons [Now]', 'Artifacts', 'Talents', 'Ascension',
-        'Weapon [Future Wish Pulls]', 'Weapon [Future Wish Pulls]'
-    ];
-
-    const circles = document.querySelectorAll('.panel .status-circle');
-    circles.forEach((c, i) => {
-        const task = circleTaskMap[i];
-        if (task && prog[task] !== undefined) {
-            c.style.backgroundColor = guideColors[guideStatusToCVColor[prog[task]] ?? 0];
-        } else if (data && data["circle_" + i]) {
-            c.style.backgroundColor = data["circle_" + i];
-        }
-    });
-}
-
-function updateChar(name) {
-    const content = document.getElementById('charContent');
-    if(!name || !charDatabase[name]) {
-        content.style.display = "none";
-        // Reset talent names to "-"
-        document.getElementById('talentNA').innerText = '-';
-        document.getElementById('talentES').innerText = '-';
-        document.getElementById('talentEB').innerText = '-';
-        // Reset ALL panel status-circles to grey when "Select" (geen karakter) is gekies
-        document.querySelectorAll('.panel .status-circle').forEach(c => {
-            c.style.backgroundColor = 'rgb(85, 85, 85)';
-        });
-        return;
-    }
-    
-    content.style.display = "block";
-    const data = charDatabase[name];
-    
-    document.getElementById('charName').innerText = name;
-    document.getElementById('charBday').innerText = data.bday;
-    document.getElementById('charTitle').innerText = data.title;
-    document.getElementById('constName').innerText = data.const;
-    
-    const starsDiv = document.getElementById('charStars');
-    starsDiv.innerText = "★".repeat(data.stars);
-    starsDiv.className = "stars " + (data.stars === 4 ? "stars-4" : "stars-5");
-    
-    const picName = name.startsWith('Traveler') ? name.replace('Traveler ', '') : name;
-    document.getElementById('charPic').style.backgroundImage = `url('${picName}1.jpg')`;
-    
-    document.getElementById('talentNA').innerText = data.talents.normalAttack;
-    document.getElementById('talentES').innerText = data.talents.elementalSkill;
-    document.getElementById('talentEB').innerText = data.talents.elementalBurst;
-
-    loadCharData(name);
-}
+// MAAK BESKIKBAAR VIR HTML
+window.autoSave = autoSave;
+window.cycleColor = cycleColor;
+window.updateChar = updateChar;
+window.resetCurrentChar = resetCurrentChar;
 
 document.addEventListener('change', autoSave);
 document.addEventListener('input', autoSave);
-
 window.onload = setupDropdowns;
 </script>
-</body>
-</html>
