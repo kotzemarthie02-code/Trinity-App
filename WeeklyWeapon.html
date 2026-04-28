@@ -168,7 +168,9 @@
         onValue(ref(db, 'users/' + currentUsername + '/ownedCharacters'), (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                localStorage.setItem('ownedCharacters', JSON.stringify(data));
+                // Firebase stuur arrays as objects terug — omskep na array
+                const arr = Array.isArray(data) ? data : Object.values(data);
+                localStorage.setItem('ownedCharacters', JSON.stringify(arr));
                 loadWeaponCalendar();
             }
         });
@@ -185,7 +187,9 @@
     <script>
         function loadWeaponCalendar() {
             const characterDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
-            const owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+            const rawOwned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+            // Verseker owned is altyd 'n regte array (nie 'n object nie)
+            const owned = Array.isArray(rawOwned) ? rawOwned : Object.values(rawOwned);
             
             const listMon = document.getElementById('list-mon');
             const listTue = document.getElementById('list-tue');
