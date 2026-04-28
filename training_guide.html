@@ -34,6 +34,7 @@
         }
         .char-icon { width: 100%; height: 80px; background-size: cover; background-position: center; }
         
+        /* Regmerk sirkel posisie */
         .done-check { 
             position: absolute; 
             bottom: 4px; 
@@ -45,12 +46,13 @@
         }
         .all-done .done-check { display: flex; }
 
+        /* LV teks skuif 'n bietjie regs as daar 'n regmerk is */
         .card-lv {
             font-size: 15px !important; 
             font-weight: 900 !important; 
             color: #000 !important; 
             margin-top: 2px;
-            margin-left: 22px; 
+            margin-left: 22px; /* Skuif dit regs sodat dit nie oor die groen sirkel lê nie */
             width: 100%;
             text-align: left;
         }
@@ -80,7 +82,6 @@
     </style>
 </head>
 <body>
-
 <div class="main-container">
     <div class="grid-wrapper">
         <div class="filters">
@@ -111,98 +112,129 @@
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-<script>
-    // Firebase Konfigurasie
     const firebaseConfig = {
-        apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
-        authDomain: "trinityapp-28019.firebaseapp.com",
-        databaseURL: "https://trinityapp-28019-default-rtdb.firebaseio.com",
-        projectId: "trinityapp-28019",
-        storageBucket: "trinityapp-28019.firebasestorage.app",
-        messagingSenderId: "72035223407",
-        appId: "1:72035223407:web:b1a40d9ce96ae479be4a9a"
+        apiKey: "JOU_API_KEY",
+        authDomain: "JOU_PROJECT.firebaseapp.com",
+        databaseURL: "https://JOU_PROJECT-default-rtdb.firebaseio.com",
+        projectId: "JOU_PROJECT",
+        storageBucket: "JOU_PROJECT.appspot.com",
+        messagingSenderId: "JOU_ID",
+        appId: "JOU_APP_ID"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
 
-    const characters = { "Aino":{r:4,e:"Hydro",o:false},"Albedo":{r:5,e:"Geo",o:false},"Alhaitham":{r:5,e:"Dendro",o:false},"Aloy":{r:5,e:"Cryo",o:false},"Amber":{r:4,e:"Pyro",o:false},"Arataki Itto":{r:5,e:"Geo",o:false},"Arlecchino":{r:5,e:"Pyro",o:false},"Baizhu":{r:5,e:"Dendro",o:false},"Barbara":{r:4,e:"Hydro",o:false},"Beidou":{r:4,e:"Electro",o:false},"Bennett":{r:4,e:"Pyro",o:false},"Candace":{r:4,e:"Hydro",o:false},"Charlotte":{r:4,e:"Cryo",o:false},"Chasca":{r:5,e:"Anemo",o:false},"Chevreuse":{r:4,e:"Pyro",o:false},"Chiori":{r:5,e:"Geo",o:false},"Chongyun":{r:4,e:"Cryo",o:false},"Citlali":{r:5,e:"Cryo",o:false},"Clorinde":{r:5,e:"Electro",o:false},"Collei":{r:4,e:"Dendro",o:false},"Columbina":{r:5,e:"Hydro",o:false},"Cyno":{r:5,e:"Electro",o:false},"Dahlia":{r:4,e:"Hydro",o:false},"Dehya":{r:5,e:"Pyro",o:false},"Diluc":{r:5,e:"Pyro",o:false},"Diona":{r:4,e:"Cryo",o:false},"Dori":{r:4,e:"Electro",o:false},"Durin":{r:5,e:"Pyro",o:false},"Emilie":{r:5,e:"Dendro",o:false},"Escoffier":{r:5,e:"Cryo",o:false},"Eula":{r:5,e:"Cryo",o:false},"Faruzan":{r:4,e:"Anemo",o:false},"Fischl":{r:4,e:"Electro",o:false},"Flins":{r:5,e:"Electro",o:false},"Freminet":{r:4,e:"Cryo",o:false},"Furina":{r:5,e:"Hydro",o:false},"Gaming":{r:4,e:"Pyro",o:false},"Ganyu":{r:5,e:"Cryo",o:false},"Gorou":{r:4,e:"Geo",o:false},"Hu Tao":{r:5,e:"Pyro",o:false},"Iansan":{r:4,e:"Electro",o:false},"Ifa":{r:4,e:"Anemo",o:false},"Illuga":{r:4,e:"Geo",o:false},"Ineffa":{r:5,e:"Electro",o:false},"Jahoda":{r:4,e:"Anemo",o:false},"Jean":{r:5,e:"Anemo",o:false},"Kachina":{r:4,e:"Geo",o:false},"Kaedehara Kazuha":{r:5,e:"Anemo",o:false},"Kaeya":{r:4,e:"Cryo",o:false},"Kamisato Ayaka":{r:5,e:"Cryo",o:false},"Kamisato Ayato":{r:5,e:"Hydro",o:false},"Kaveh":{r:4,e:"Dendro",o:false},"Keqing":{r:5,e:"Electro",o:false},"Kinich":{r:5,e:"Dendro",o:false},"Kirara":{r:4,e:"Dendro",o:false},"Klee":{r:5,e:"Pyro",o:false},"Kujou Sara":{r:4,e:"Electro",o:false},"Kuki Shinobu":{r:4,e:"Electro",o:false},"Lan Yan":{r:4,e:"Anemo",o:false},"Lauma":{r:5,e:"Dendro",o:false},"Layla":{r:4,e:"Cryo",o:false},"Lisa":{r:4,e:"Electro",o:false},"Lynette":{r:4,e:"Anemo",o:false},"Lyney":{r:5,e:"Pyro",o:false},"Mavuika":{r:5,e:"Pyro",o:false},"Mika":{r:4,e:"Cryo",o:false},"Mona":{r:5,e:"Hydro",o:false},"Mualani":{r:5,e:"Hydro",o:false},"Nahida":{r:5,e:"Dendro",o:false},"Navia":{r:5,e:"Geo",o:false},"Nefer":{r:5,e:"Dendro",o:false},"Neuvillette":{r:5,e:"Hydro",o:false},"Nilou":{r:5,e:"Hydro",o:false},"Ningguang":{r:4,e:"Geo",o:false},"Noelle":{r:4,e:"Geo",o:false},"Ororon":{r:4,e:"Electro",o:false},"Qiqi":{r:5,e:"Cryo",o:false},"Raiden Shogun":{r:5,e:"Electro",o:false},"Razor":{r:4,e:"Electro",o:false},"Rosaria":{r:4,e:"Cryo",o:false},"Sangonomiya Kokomi":{r:5,e:"Hydro",o:false},"Sayu":{r:4,e:"Anemo",o:false},"Sethos":{r:4,e:"Electro",o:false},"Shenhe":{r:5,e:"Cryo",o:false},"Shikanoin Heizou":{r:4,e:"Anemo",o:false},"Sigewinne":{r:5,e:"Hydro",o:false},"Skirk":{r:5,e:"Cryo",o:false},"Sucrose":{r:4,e:"Anemo",o:false},"Tartaglia":{r:5,e:"Hydro",o:false},"Thoma":{r:4,e:"Pyro",o:false},"Tighnari":{r:5,e:"Dendro",o:false},"Traveler Anemo":{r:5,e:"Anemo",o:false},"Traveler Geo":{r:5,e:"Geo",o:false},"Traveler Electro":{r:5,e:"Electro",o:false},"Traveler Hydro":{r:5,e:"Hydro",o:false},"Traveler Pyro":{r:5,e:"Pyro",o:false},"Traveler Dendro":{r:5,e:"Dendro",o:false},"Varesa":{r:5,e:"Electro",o:false},"Varka":{r:5,e:"Anemo",o:false},"Venti":{r:5,e:"Anemo",o:false},"Wanderer":{r:5,e:"Anemo",o:false},"Wriothesley":{r:5,e:"Cryo",o:false},"Xiangling":{r:4,e:"Pyro",o:false},"Xianyun":{r:5,e:"Anemo",o:false},"Xiao":{r:5,e:"Anemo",o:false},"Xilonen":{r:5,e:"Geo",o:false},"Xingqiu":{r:4,e:"Hydro",o:false},"Xinyan":{r:4,e:"Pyro",o:false},"Yae Miko":{r:5,e:"Electro",o:false},"Yanfei":{r:4,e:"Pyro",o:false},"Yaoyao":{r:4,e:"Dendro",o:false},"Yelan":{r:5,e:"Hydro",o:false},"Yoimiya":{r:5,e:"Pyro",o:false},"Yumemizuki Mizuki":{r:5,e:"Anemo",o:false},"Yun Jin":{r:4,e:"Geo",o:false},"Zhongli":{r:5,e:"Geo",o:false},"Zibai":{r:5,e:"Geo",o:false},"Linnea":{r:5,e:"Geo",o:false} };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    let current = null;
-    let userPath = "";
-
-    // Wag vir user om in te log
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            userPath = `users/${user.uid}`;
-            syncFromFirebase();
-        } else {
-            window.location.href = "login.html";
+    // Luister vir data vanaf Firebase
+    onValue(ref(db, 'ownedCharacters'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            localStorage.setItem('ownedCharacters', JSON.stringify(data));
+            ownedFromStorage = data;
+            Object.keys(characters).forEach(name => {
+                characters[name].o = ownedFromStorage.includes(name);
+            });
+            filter();
         }
     });
 
-    function syncFromFirebase() {
-        db.ref(userPath).on('value', snapshot => {
-            const data = snapshot.val() || {};
-            const owned = data.ownedCharacters || [];
-            const details = data.characterDetails || {};
-            
-            // Update character owned status
-            Object.keys(characters).forEach(name => {
-                characters[name].o = owned.includes(name);
-                updateCardLV(name, details[name]);
-                checkAllDoneUI(name, data.guideProgress?.[name]);
-            });
-            
-            if (current) {
-                updateOwnedUI();
-                updateGuideLV(current, details[current]);
-                refreshTasks(data.guideProgress?.[current], details[current]);
-            }
+    onValue(ref(db, 'characterDetails'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            localStorage.setItem('characterDetails', JSON.stringify(data));
             filter();
-        });
+        }
+    });
+
+    // Funksie om te sync na Firebase
+    window.syncFirebase = function() {
+        const owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+        set(ref(db, 'ownedCharacters'), owned);
+    };
+</script>
+
+<script>
+    const characters = { "Aino":{r:4,e:"Hydro",o:false},"Albedo":{r:5,e:"Geo",o:false},"Alhaitham":{r:5,e:"Dendro",o:false},"Aloy":{r:5,e:"Cryo",o:false},"Amber":{r:4,e:"Pyro",o:false},"Arataki Itto":{r:5,e:"Geo",o:false},"Arlecchino":{r:5,e:"Pyro",o:false},"Baizhu":{r:5,e:"Dendro",o:false},"Barbara":{r:4,e:"Hydro",o:false},"Beidou":{r:4,e:"Electro",o:false},"Bennett":{r:4,e:"Pyro",o:false},"Candace":{r:4,e:"Hydro",o:false},"Charlotte":{r:4,e:"Cryo",o:false},"Chasca":{r:5,e:"Anemo",o:false},"Chevreuse":{r:4,e:"Pyro",o:false},"Chiori":{r:5,e:"Geo",o:false},"Chongyun":{r:4,e:"Cryo",o:false},"Citlali":{r:5,e:"Cryo",o:false},"Clorinde":{r:5,e:"Electro",o:false},"Collei":{r:4,e:"Dendro",o:false},"Columbina":{r:5,e:"Hydro",o:false},"Cyno":{r:5,e:"Electro",o:false},"Dahlia":{r:4,e:"Hydro",o:false},"Dehya":{r:5,e:"Pyro",o:false},"Diluc":{r:5,e:"Pyro",o:false},"Diona":{r:4,e:"Cryo",o:false},"Dori":{r:4,e:"Electro",o:false},"Durin":{r:5,e:"Pyro",o:false},"Emilie":{r:5,e:"Dendro",o:false},"Escoffier":{r:5,e:"Cryo",o:false},"Eula":{r:5,e:"Cryo",o:false},"Faruzan":{r:4,e:"Anemo",o:false},"Fischl":{r:4,e:"Electro",o:false},"Flins":{r:5,e:"Electro",o:false},"Freminet":{r:4,e:"Cryo",o:false},"Furina":{r:5,e:"Hydro",o:false},"Gaming":{r:4,e:"Pyro",o:false},"Ganyu":{r:5,e:"Cryo",o:false},"Gorou":{r:4,e:"Geo",o:false},"Hu Tao":{r:5,e:"Pyro",o:false},"Iansan":{r:4,e:"Electro",o:false},"Ifa":{r:4,e:"Anemo",o:false},"Illuga":{r:4,e:"Geo",o:false},"Ineffa":{r:5,e:"Electro",o:false},"Jahoda":{r:4,e:"Anemo",o:false},"Jean":{r:5,e:"Anemo",o:false},"Kachina":{r:4,e:"Geo",o:false},"Kaedehara Kazuha":{r:5,e:"Anemo",o:false},"Kaeya":{r:4,e:"Cryo",o:false},"Kamisato Ayaka":{r:5,e:"Cryo",o:false},"Kamisato Ayato":{r:5,e:"Hydro",o:false},"Kaveh":{r:4,e:"Dendro",o:false},"Keqing":{r:5,e:"Electro",o:false},"Kinich":{r:5,e:"Dendro",o:false},"Kirara":{r:4,e:"Dendro",o:false},"Klee":{r:5,e:"Pyro",o:false},"Kujou Sara":{r:4,e:"Electro",o:false},"Kuki Shinobu":{r:4,e:"Electro",o:false},"Lan Yan":{r:4,e:"Anemo",o:false},"Lauma":{r:5,e:"Dendro",o:false},"Layla":{r:4,e:"Cryo",o:false},"Lisa":{r:4,e:"Electro",o:false},"Lynette":{r:4,e:"Anemo",o:false},"Lyney":{r:5,e:"Pyro",o:false},"Mavuika":{r:5,e:"Pyro",o:false},"Mika":{r:4,e:"Cryo",o:false},"Mona":{r:5,e:"Hydro",o:false},"Mualani":{r:5,e:"Hydro",o:false},"Nahida":{r:5,e:"Dendro",o:false},"Navia":{r:5,e:"Geo",o:false},"Nefer":{r:5,e:"Dendro",o:false},"Neuvillette":{r:5,e:"Hydro",o:false},"Nilou":{r:5,e:"Hydro",o:false},"Ningguang":{r:4,e:"Geo",o:false},"Noelle":{r:4,e:"Geo",o:false},"Ororon":{r:4,e:"Electro",o:false},"Qiqi":{r:5,e:"Cryo",o:false},"Raiden Shogun":{r:5,e:"Electro",o:false},"Razor":{r:4,e:"Electro",o:false},"Rosaria":{r:4,e:"Cryo",o:false},"Sangonomiya Kokomi":{r:5,e:"Hydro",o:false},"Sayu":{r:4,e:"Anemo",o:false},"Sethos":{r:4,e:"Electro",o:false},"Shenhe":{r:5,e:"Cryo",o:false},"Shikanoin Heizou":{r:4,e:"Anemo",o:false},"Sigewinne":{r:5,e:"Hydro",o:false},"Skirk":{r:5,e:"Cryo",o:false},"Sucrose":{r:4,e:"Anemo",o:false},"Tartaglia":{r:5,e:"Hydro",o:false},"Thoma":{r:4,e:"Pyro",o:false},"Tighnari":{r:5,e:"Dendro",o:false},"Traveler Anemo":{r:5,e:"Anemo",o:false},"Traveler Geo":{r:5,e:"Geo",o:false},"Traveler Electro":{r:5,e:"Electro",o:false},"Traveler Hydro":{r:5,e:"Hydro",o:false},"Traveler Pyro":{r:5,e:"Pyro",o:false},"Traveler Dendro":{r:5,e:"Dendro",o:false},"Varesa":{r:5,e:"Electro",o:false},"Varka":{r:5,e:"Anemo",o:false},"Venti":{r:5,e:"Anemo",o:false},"Wanderer":{r:5,e:"Anemo",o:false},"Wriothesley":{r:5,e:"Cryo",o:false},"Xiangling":{r:4,e:"Pyro",o:false},"Xianyun":{r:5,e:"Anemo",o:false},"Xiao":{r:5,e:"Anemo",o:false},"Xilonen":{r:5,e:"Geo",o:false},"Xingqiu":{r:4,e:"Hydro",o:false},"Xinyan":{r:4,e:"Pyro",o:false},"Yae Miko":{r:5,e:"Electro",o:false},"Yanfei":{r:4,e:"Pyro",o:false},"Yaoyao":{r:4,e:"Dendro",o:false},"Yelan":{r:5,e:"Hydro",o:false},"Yoimiya":{r:5,e:"Pyro",o:false},"Yumemizuki Mizuki":{r:5,e:"Anemo",o:false},"Yun Jin":{r:4,e:"Geo",o:false},"Zhongli":{r:5,e:"Geo",o:false},"Zibai":{r:5,e:"Geo",o:false},"Linnea":{r:5,e:"Geo",o:false} };
+
+    let ownedFromStorage = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+    let guideProgress = JSON.parse(localStorage.getItem('guideProgress')) || {};
+
+    Object.keys(characters).forEach(name => {
+        characters[name].o = ownedFromStorage.includes(name);
+    });
+
+    let current = null;
+
+    function getCharLV(name) {
+        const charDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
+        const data = charDetails[name];
+        if (!data) return null;
+        const lvFrom = data['sel_1'] || '';
+        const lvTo = data['sel_2'] || '';
+        if (lvFrom || lvTo) return { from: lvFrom, to: lvTo };
+        return null;
     }
 
-    function updateCardLV(name, charData) {
+    function updateCardLV(name) {
         const card = document.getElementById('card-'+name.replace(/\s+/g,'-'));
         if (!card) return;
         const lvDiv = card.querySelector('.card-lv');
-        if (characters[name].o && charData?.sel_1) {
+        if (!lvDiv) return;
+        if (characters[name].o) {
+            const lv = getCharLV(name);
             lvDiv.style.display = 'block';
-            lvDiv.textContent = `LV: ${charData.sel_1}`;
+            lvDiv.textContent = lv && lv.from ? `LV: ${lv.from}` : '';
         } else {
             lvDiv.style.display = 'none';
         }
     }
 
     function toggleOwned() {
-        if (!current || !userPath) return;
-        const newState = !characters[current].o;
-        db.ref(`${userPath}/ownedCharacters`).once('value', snap => {
-            let owned = snap.val() || [];
-            if (newState) {
-                if (!owned.includes(current)) owned.push(current);
-            } else {
-                owned = owned.filter(n => n !== current);
-            }
-            db.ref(`${userPath}/ownedCharacters`).set(owned);
-        });
+        if (!current) return;
+        characters[current].o = !characters[current].o;
+        let owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+        if (characters[current].o) {
+            if (!owned.includes(current)) owned.push(current);
+        } else {
+            owned = owned.filter(name => name !== current);
+        }
+        localStorage.setItem('ownedCharacters', JSON.stringify(owned));
+        
+        // Sync na Firebase
+        if (window.syncFirebase) window.syncFirebase();
+
+        updateOwnedUI();
+        updateCardLV(current);
+        updateGuideLV(current);
+        filter();
     }
 
     function updateOwnedUI() {
         const container = document.getElementById('main-owned-toggle');
-        container.classList.toggle('is-owned', characters[current].o);
+        if (characters[current].o) {
+            container.classList.add('is-owned');
+        } else {
+            container.classList.remove('is-owned');
+        }
     }
 
-    function updateGuideLV(name, charData) {
+    function updateGuideLV(name) {
         const lvEl = document.getElementById('guide-lv');
-        if (characters[name].o && charData?.sel_1) {
-            lvEl.textContent = charData.sel_2 ? `LV: ${charData.sel_1} → ${charData.sel_2}` : `LV: ${charData.sel_1}`;
-            lvEl.style.display = 'block';
+        if (!lvEl) return;
+        if (characters[name] && characters[name].o) {
+            const lv = getCharLV(name);
+            if (lv && lv.from) {
+                lvEl.textContent = lv.to ? `LV: ${lv.from} → ${lv.to}` : `LV: ${lv.from}`;
+                lvEl.style.fontSize = '18px';
+                lvEl.style.display = '';
+                lvEl.style.color = '#fff';
+            } else {
+                lvEl.style.display = 'none';
+            }
         } else {
             lvEl.style.display = 'none';
         }
@@ -219,10 +251,11 @@
             const mE = e==='all' || characters[name].e===e;
             const mO = o==='all' || (o==='owned'?characters[name].o:!characters[name].o);
             card.style.display = (mR && mE && mO) ? 'flex' : 'none';
+            checkAllDoneUI(name);
+            updateCardLV(name);
         });
     }
 
-    // Bou die grid
     Object.keys(characters).forEach(name => {
         const card = document.createElement('div');
         card.className = 'char-card'; card.id = 'card-'+name.replace(/\s+/g,'-');
@@ -239,46 +272,67 @@
             document.getElementById('guide-box').style.display='block';
             document.getElementById('active-name').innerText = name;
             document.getElementById('p-pic').style.backgroundImage = `url('${name.includes("Traveler")?characters[name].e+".jpg":name+".jpg"}')`;
-            syncFromFirebase(); 
+            
+            updateOwnedUI();
+
+            const cvDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
+            const cvData = cvDetails[name] || {};
+
+            const tBox = document.getElementById('tasks'); tBox.innerHTML = '';
+            const taskList = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension", "Weapon [Future] ★★★★", "Weapon [Future] ★★★★★"];
+            
+            let savedStatus = guideProgress[current] || {};
+
+            taskList.forEach(t => {
+                const statusNum = savedStatus[t] ?? 0;
+                const row = document.createElement('div'); 
+                row.className = `guide-item-row status-${statusNum}`;
+                row.setAttribute('data-task', t);
+                row.innerHTML = `
+                    <div style="font-size:20px; font-weight:bold;">${t}</div>
+                    <div class="status-circle" id="tg-circle-${t.replace(/\s+/g,'-').replace(/[★]/g,'s')}" style="cursor:default;" title="Wys kleur van CharacterView"></div>`;
+                tBox.appendChild(row);
+            });
+
+            updateGuideLV(name);
+            
+            setTimeout(() => {
+                const cvCircleColors = ['rgb(85, 85, 85)','rgb(76, 175, 80)','rgb(255, 152, 0)','rgb(244, 67, 54)'];
+                Object.keys(taskToCircleIndex).forEach(t => {
+                    const idx = taskToCircleIndex[t];
+                    const stored = cvData['circle_' + idx];
+                    const circleId = 'tg-circle-' + t.replace(/\s+/g,'-').replace(/[★]/g,'s');
+                    const circleEl = document.getElementById(circleId);
+                    if (circleEl && stored) {
+                        circleEl.style.backgroundColor = stored;
+                        circleEl.style.borderColor = stored;
+                    }
+                });
+            }, 50);
         };
         document.getElementById('grid').appendChild(card);
     });
 
     const taskToCircleIndex = {
-        "Character": 0, "Weapons [Now]": 1, "Artifacts": 2, "Talents": 3, "Ascension": 4, "Weapon [Future] ★★★★": 5, "Weapon [Future] ★★★★★": 6
+        "Character": 0,
+        "Weapons [Now]": 1,
+        "Artifacts": 2,
+        "Talents": 3,
+        "Ascension": 4,
+        "Weapon [Future] ★★★★": 5,
+        "Weapon [Future] ★★★★★": 6
     };
 
-    function refreshTasks(prog, cvData) {
-        const tBox = document.getElementById('tasks'); tBox.innerHTML = '';
-        const taskList = Object.keys(taskToCircleIndex);
-        
-        taskList.forEach(t => {
-            const row = document.createElement('div'); 
-            row.className = `guide-item-row`;
-            row.innerHTML = `
-                <div style="font-size:20px; font-weight:bold;">${t}</div>
-                <div class="status-circle" id="tg-circle-${t.replace(/\s+/g,'-').replace(/[★]/g,'s')}" style="cursor:default;"></div>`;
-            tBox.appendChild(row);
-
-            // Kleur die sirkel gebaseer op CharacterView data
-            const idx = taskToCircleIndex[t];
-            const color = cvData?.['circle_' + idx] || 'rgb(85, 85, 85)';
-            const circleEl = document.getElementById('tg-circle-' + t.replace(/\s+/g,'-').replace(/[★]/g,'s'));
-            if (circleEl) {
-                circleEl.style.backgroundColor = color;
-                circleEl.style.borderColor = color;
-            }
-        });
-    }
-
-    function checkAllDoneUI(charName, prog) {
+    function checkAllDoneUI(charName) {
         const card = document.getElementById('card-'+charName.replace(/\s+/g,'-'));
         if (!card) return;
-        // In hierdie weergawe kyk ons of die core tasks op Firebase as voltooi gemerk is
+        const prog = guideProgress[charName] || {};
         const coreTasks = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension"];
-        const allGreen = coreTasks.every(t => prog?.[t] === 1);
+        const allGreen = coreTasks.every(t => prog[t] === 1);
         card.classList.toggle('all-done', allGreen);
     }
+    
+    filter();
 </script>
 </body>
 </html>
