@@ -151,6 +151,8 @@ onValue(ref(db, 'users/' + currentUsername + '/guideProgress'), (snapshot) => {
         localStorage.setItem('guideProgress', JSON.stringify(data));
         window.guideProgress = data;
         if (typeof window.filter === "function") window.filter();
+        // Refresh circles for currently open character
+        if (window.refreshCurrentCircles) window.refreshCurrentCircles();
     }
 });
 
@@ -243,6 +245,24 @@ window.syncFirebase = function() {
         }
     }
 
+    // Expose current character for Firebase listener refresh
+    window.refreshCurrentCircles = function() {
+        if (!current) return;
+        const guideColors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
+        const charProg = window.guideProgress[current] || {};
+        const taskList = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension", "Weapon [Future] ★★★★", "Weapon [Future] ★★★★★"];
+        taskList.forEach(t => {
+            const circleId = 'tg-circle-' + t.replace(/\s+/g,'-').replace(/[★]/g,'s');
+            const circleEl = document.getElementById(circleId);
+            if (circleEl) {
+                const colorIdx = charProg[t];
+                const color = (colorIdx !== undefined) ? guideColors[colorIdx] : 'rgb(85, 85, 85)';
+                circleEl.style.backgroundColor = color;
+                circleEl.style.borderColor = color;
+            }
+        });
+    };
+
     window.filter = function() {
         const r = document.getElementById('f-rarity').value;
         const e = document.getElementById('f-element').value;
@@ -278,9 +298,6 @@ window.syncFirebase = function() {
             
             updateOwnedUI();
 
-            const cvDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
-            const cvData = cvDetails[name] || {};
-
             const tBox = document.getElementById('tasks'); tBox.innerHTML = '';
             const taskList = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension", "Weapon [Future] ★★★★", "Weapon [Future] ★★★★★"];
             
@@ -296,31 +313,24 @@ window.syncFirebase = function() {
 
             updateGuideLV(name);
             
-            setTimeout(() => {
-                Object.keys(taskToCircleIndex).forEach(t => {
-                    const idx = taskToCircleIndex[t];
-                    const stored = cvData['circle_' + idx];
-                    const circleId = 'tg-circle-' + t.replace(/\s+/g,'-').replace(/[★]/g,'s');
-                    const circleEl = document.getElementById(circleId);
-                    if (circleEl && stored) {
-                        circleEl.style.backgroundColor = stored;
-                        circleEl.style.borderColor = stored;
-                    }
-                });
-            }, 50);
+            // Read colors from guideProgress (synced from CharacterView via Firebase)
+            const guideColors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
+            const charProg = window.guideProgress[name] || {};
+            taskList.forEach(t => {
+                const circleId = 'tg-circle-' + t.replace(/\s+/g,'-').replace(/[★]/g,'s');
+                const circleEl = document.getElementById(circleId);
+                if (circleEl) {
+                    const colorIdx = charProg[t];
+                    const color = (colorIdx !== undefined) ? guideColors[colorIdx] : 'rgb(85, 85, 85)';
+                    circleEl.style.backgroundColor = color;
+                    circleEl.style.borderColor = color;
+                }
+            });
         };
         document.getElementById('grid').appendChild(card);
     });
 
-    const taskToCircleIndex = {
-        "Character": 0,
-        "Weapons [Now]": 1,
-        "Artifacts": 2,
-        "Talents": 3,
-        "Ascension": 4,
-        "Weapon [Future] ★★★★": 5,
-        "Weapon [Future] ★★★★★": 6
-    };
+    // taskToCircleIndex no longer needed - colors read from guideProgress
 
     function checkAllDoneUI(charName) {
         const card = document.getElementById('card-'+charName.replace(/\s+/g,'-'));
