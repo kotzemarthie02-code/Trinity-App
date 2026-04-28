@@ -5,7 +5,6 @@
     <title>Genshin Impact - Login</title>
     <style>
         body {
-            /* FIX: Punt-komma verwyder sodat die agtergrond werk */
             background: url('Login.jpg') no-repeat center center fixed;
             background-size: cover; 
             font-family: 'Segoe UI', sans-serif;
@@ -55,9 +54,75 @@
         #user-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid #333; }
         #user-list li:hover { background: #555; }
         
-        .btn { background: white; color: black; width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn { background: white; color: black; width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .link { margin-top: 15px; display: block; color: #ccc; cursor: pointer; text-decoration: underline; }
     </style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
+            authDomain: "trinityapp-28019.firebaseapp.com",
+            projectId: "trinityapp-28019",
+            storageBucket: "trinityapp-28019.firebasestorage.app",
+            messagingSenderId: "72035223407",
+            appId: "1:72035223407:web:b1a40d9ce96ae479be4a9a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // Maak funksies beskikbaar vir die knoppies
+        window.togglePass = (id) => {
+            const x = document.getElementById(id);
+            x.type = (x.type === "password") ? "text" : "password";
+        };
+
+        window.toggle = (mode) => {
+            document.getElementById('login-box').style.display = (mode === 'login' ? 'block' : 'none');
+            document.getElementById('reg-box').style.display = (mode === 'reg' ? 'block' : 'none');
+        };
+
+        window.register = async () => {
+            const email = document.getElementById('r-email').value;
+            const pass = document.getElementById('r-pass').value;
+            const nick = document.getElementById('r-nick').value;
+            const uid = document.getElementById('r-uid').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+                
+                // Stoor ekstra info in die databasis
+                await set(ref(db, 'users/' + user.uid), {
+                    nickname: nick,
+                    uid: uid,
+                    email: email
+                });
+
+                alert("Account created! Log in now.");
+                toggle('login');
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        };
+
+        window.login = async () => {
+            const email = document.getElementById('l-email').value;
+            const pass = document.getElementById('l-pass').value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.location.href = "Dashboard.html";
+            } catch (error) {
+                alert("Login failed: " + error.message);
+            }
+        };
+    </script>
 </head>
 <body>
 
@@ -65,8 +130,7 @@
     <h2>Genshin Impact</h2>
     <div id="login-box">
         <div class="input-group">
-            <input type="text" id="l-email" placeholder="Email" onfocus="showUsers()" autocomplete="off">
-            <ul id="user-list"></ul>
+            <input type="text" id="l-email" placeholder="Email" autocomplete="off">
         </div>
         <div class="input-group">
             <input type="password" id="l-pass" placeholder="Password">
@@ -77,9 +141,9 @@
     </div>
 
     <div id="reg-box" style="display:none;">
-        <input type="text" id="r-email" placeholder="Email">
-        <input type="text" id="r-nick" placeholder="Nickname">
-        <input type="text" id="r-uid" placeholder="UID">
+        <div class="input-group"><input type="text" id="r-email" placeholder="Email"></div>
+        <div class="input-group"><input type="text" id="r-nick" placeholder="Nickname"></div>
+        <div class="input-group"><input type="text" id="r-uid" placeholder="UID"></div>
         <div class="input-group">
             <input type="password" id="r-pass" placeholder="Password">
             <span class="eye-icon" onclick="togglePass('r-pass')">👁️</span>
@@ -89,76 +153,5 @@
     </div>
 </div>
 
-<script>
-    function togglePass(id) {
-        const x = document.getElementById(id);
-        x.type = (x.type === "password") ? "text" : "password";
-    }
-
-    function toggle(mode) {
-        document.getElementById('login-box').style.display = (mode === 'login' ? 'block' : 'none');
-        document.getElementById('reg-box').style.display = (mode === 'reg' ? 'block' : 'none');
-    }
-
-    function showUsers() {
-        const users = JSON.parse(localStorage.getItem("allUsers") || "[]");
-        const list = document.getElementById("user-list");
-        if(users.length > 0) {
-            list.innerHTML = "";
-            users.forEach(email => {
-                let li = document.createElement("li");
-                li.innerText = email;
-                li.onmousedown = function() {
-                    document.getElementById("l-email").value = email;
-                    list.style.display = "none";
-                };
-                list.appendChild(li);
-            });
-            list.style.display = "block";
-        }
-    }
-
-    window.onclick = function(event) {
-        if (!event.target.matches('#l-email')) {
-            document.getElementById("user-list").style.display = "none";
-        }
-    }
-
-    function register() {
-        const email = document.getElementById('r-email').value;
-        const nick = document.getElementById('r-nick').value;
-        const uid = document.getElementById('r-uid').value;
-        const pass = document.getElementById('r-pass').value;
-        
-        if(email && nick && uid && pass) {
-            const user = { email, nick, uid, password: pass };
-            localStorage.setItem("user_" + email, JSON.stringify(user));
-            
-            let allUsers = JSON.parse(localStorage.getItem("allUsers") || "[]");
-            if(!allUsers.includes(email)) {
-                allUsers.push(email);
-                localStorage.setItem("allUsers", JSON.stringify(allUsers));
-            }
-            
-            alert("Registered! You can now log in.");
-            toggle('login');
-        } else { alert("Please fill in all fields!"); }
-    }
-
-    function login() {
-        const email = document.getElementById('l-email').value;
-        const pass = document.getElementById('l-pass').value;
-        const data = localStorage.getItem("user_" + email);
-
-        if(data) {
-            const user = JSON.parse(data);
-            if(user.password === pass) {
-                localStorage.setItem("currentUser", JSON.stringify(user));
-                // FIX: Gaan na Dashboard
-                window.location.href = "Dashboard.html";
-            } else { alert("Wrong password!"); }
-        } else { alert("User not found! Did you register?"); }
-    }
-</script>
 </body>
 </html>
