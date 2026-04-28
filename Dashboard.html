@@ -78,22 +78,16 @@
         .cal-day:hover { background: rgba(255,255,255,0.07); }
         .cal-day.today { background: rgba(243,209,139,0.22); font-weight: 900; color: #f3d18b; }
         .cal-day.other-month { color: rgba(255,255,255,0.2); }
-.cal-note-dots {
-    display: flex;
-    gap: 2px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 2px;
-    width: 100%;
-}
+        
+        .cal-note-dots {
+            display: flex; gap: 2px; flex-wrap: wrap; justify-content: center;
+            margin-top: 2px; width: 100%;
+        }
 
-.cal-note-dot {
-    width: 5px;   /* Die grootte van die kolletjie */
-    height: 5px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Laat hom uitstaan */
-}
+        .cal-note-dot {
+            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
 
         .links-box {
             position: absolute; bottom: 40px; right: 40px;
@@ -163,7 +157,6 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        // Laai data van Firebase af sodra jy inboek
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 onValue(ref(db, 'users/' + user.uid), (snapshot) => {
@@ -179,7 +172,6 @@
             }
         });
 
-        // Global functions sodat jou knoppies werk
         window.logout = () => { signOut(auth).then(() => { window.location.href = "index.html"; }); };
 
         window.changePic = (event) => {
@@ -258,7 +250,6 @@
     </div>
 
     <script>
-        /* HIER IS JOU CALENDAR LOGIC - NET SOOS JY DIT HET */
         let calOpen = false;
         let calYear, calMonth;
         const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -287,76 +278,86 @@
             renderCal();
         }
 
-function renderCal() {
-    // 1. Gebruik dieselfde key as die Calendar: 'cal_save_data'
-    const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
-    
-    const lbl = document.getElementById('calMonthLblText'); 
-    if(lbl) lbl.textContent = MONTHS[calMonth] + ' ' + calYear;
-    
-    const grid = document.getElementById('calGrid');
-    grid.innerHTML = '';
-    
-    DAYS.forEach(d => {
-        const el = document.createElement('div');
-        el.className = 'cal-dow'; el.textContent = d;
-        grid.appendChild(el);
-    });
-
-    const firstDay = new Date(calYear, calMonth, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-    for (let i = 0; i < firstDay; i++) {
-        const el = document.createElement('div'); 
-        el.className = 'cal-day other-month'; 
-        grid.appendChild(el);
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-        const el = document.createElement('div'); 
-        el.className = 'cal-day'; 
-        el.textContent = d;
-        
-        const now = new Date();
-        if (d === now.getDate() && calMonth === now.getMonth() && calYear === now.getFullYear()) {
-            el.classList.add('today');
-        }
-
-        // --- SIRKEL LOGIKA REGMAAK VIR JOU DATA STRUKTUUR ---
-        // Let wel: Jou Calendar stoor maande sonder 'padStart' (bv. 2026-4-1)
-        const dateKey = `${calYear}-${calMonth + 1}-${d}`;
-        const dayNotes = allNotes[dateKey]; // Dit is 'n array van notas
-
-        if (dayNotes && dayNotes.length > 0) {
-            const dotsContainer = document.createElement('div');
-            dotsContainer.className = 'cal-note-dots';
+        function renderCal() {
+            // Kry private notas van LocalStorage
+            const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
             
-            dayNotes.forEach(note => {
-                const dot = document.createElement('div');
-                dot.className = 'cal-note-dot';
-                // Gebruik die kleur van die nota
-                dot.style.backgroundColor = note.color; 
-                dotsContainer.appendChild(dot);
+            const lbl = document.getElementById('calMonthLblText'); 
+            if(lbl) lbl.textContent = MONTHS[calMonth] + ' ' + calYear;
+            
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+            
+            DAYS.forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'cal-dow'; el.textContent = d;
+                grid.appendChild(el);
             });
-            el.appendChild(dotsContainer);
-        }
-        grid.appendChild(el);
-    }
-}        
+
+            const firstDay = new Date(calYear, calMonth, 1).getDay();
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const el = document.createElement('div'); 
+                el.className = 'cal-day other-month'; 
+                grid.appendChild(el);
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const el = document.createElement('div'); 
+                el.className = 'cal-day'; 
+                el.textContent = d;
+                
+                const now = new Date();
+                if (d === now.getDate() && calMonth === now.getMonth() && calYear === now.getFullYear()) {
+                    el.classList.add('today');
+                }
+
+                const dotsContainer = document.createElement('div');
+                dotsContainer.className = 'cal-note-dots';
+
+                // --- 1. PUBLIEKE GITHUB UPDATES (Almal sien dit!) ---
+                // Hierdie is waar jy die sirkeltjies "hardcode" vir almal
+                if (calYear === 2026 && calMonth === 3 && d === 28) { // 28 April
+                    const publicDot = document.createElement('div');
+                    publicDot.className = 'cal-note-dot';
+                    publicDot.style.backgroundColor = '#00ffff'; // Cyan kleur vir updates
+                    dotsContainer.appendChild(publicDot);
+                }
+
+                // --- 2. PRIVATE NOTAS (Net wat die gebruiker self tik) ---
+                const dateKey = `${calYear}-${calMonth + 1}-${d}`;
+                const dayNotes = allNotes[dateKey];
+                if (dayNotes && dayNotes.length > 0) {
+                    dayNotes.forEach(note => {
+                        const dot = document.createElement('div');
+                        dot.className = 'cal-note-dot';
+                        dot.style.backgroundColor = note.color; 
+                        dotsContainer.appendChild(dot);
+                    });
+                }
+
+                el.appendChild(dotsContainer);
+                grid.appendChild(el);
+            }
+        }        
+        
         function markCalRead() { document.getElementById('calBadge').classList.add('hidden'); }
 
-window.onload = () => {
-    const now = new Date();
-    calYear = now.getFullYear();
-    calMonth = now.getMonth();
-    
-    // Opsioneel: Kyk of daar vandag notas is en wys die "!" badge
-    const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
-    const todayKey = `${calYear}-${calMonth + 1}-${now.getDate()}`;
-    if (allNotes[todayKey] && allNotes[todayKey].length > 0) {
-        document.getElementById('calBadge').classList.remove('hidden');
-    }
-};
+        window.onload = () => {
+            const now = new Date();
+            calYear = now.getFullYear();
+            calMonth = now.getMonth();
+            
+            const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
+            const todayKey = `${calYear}-${calMonth + 1}-${now.getDate()}`;
+            
+            // Wys badge as daar vandag 'n private nota IS OF as dit 'n publieke update dag is
+            let hasPublicUpdate = (calYear === 2026 && calMonth === 3 && now.getDate() === 28);
+            if ((allNotes[todayKey] && allNotes[todayKey].length > 0) || hasPublicUpdate) {
+                document.getElementById('calBadge').classList.remove('hidden');
+            }
+        };
     </script>
 </body>
 </html>
