@@ -4,8 +4,37 @@
 <meta charset="UTF-8">
 <title>The Trinity News</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
+        authDomain: "trinityapp-28019.firebaseapp.com",
+        databaseURL: "https://trinityapp-28019-default-rtdb.firebaseio.com",
+        projectId: "trinityapp-28019",
+        storageBucket: "trinityapp-28019.firebasestorage.app",
+        messagingSenderId: "72035223407",
+        appId: "1:72035223407:web:b1a40d9ce96ae479be4a9a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const currentUsername = localStorage.getItem('trinity_user') || "Admin";
+
+    // Lees nuus data van Firebase by opstarten
+    onValue(ref(db, 'users/' + currentUsername + '/newsData'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            Object.keys(data).forEach(k => localStorage.setItem('tnews_final_' + k, JSON.stringify(data[k])));
+        }
+    });
+
+    // Maak saveToFirebase globaal beskikbaar
+    window.saveToFirebase = function(key, value) {
+        set(ref(db, 'users/' + currentUsername + '/newsData/' + key), value);
+    };
+</script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Nunito:wght@300;400;600;700;800&display=swap');
@@ -329,14 +358,7 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
         <div class="lr"><input type="text" id="code-inp" placeholder="Type code here..."><button class="btn btn-g" onclick="addCode()">+ Add</button>
 
 <script>
-// --- FIREBASE SETUP ---
-const firebaseConfig = {
-  apiKey: "JOU_API_KEY",
-  databaseURL: "https://jou-projek.firebaseio.com",
-  projectId: "jou-projek"
-};
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-const db = firebase.database();
+// --- FIREBASE SETUP --- (Firebase word bo via module script gelaai)
 
 var _unlocked = false;
 const MY_PASSWORD = "owner";
@@ -376,7 +398,7 @@ function setLocked(locked) {
   });
 }
 
-const P=(k,v)=>localStorage.setItem('tnews_final_'+k,JSON.stringify(v));
+const P=(k,v)=>{localStorage.setItem('tnews_final_'+k,JSON.stringify(v));if(window.saveToFirebase)window.saveToFirebase(k,v);};
 const G=k=>{try{return JSON.parse(localStorage.getItem('tnews_final_'+k));}catch{return null;}};
 function V(id){const e=document.getElementById(id);return e?e.value:'';}
 function SV(id,val){const e=document.getElementById(id);if(e&&val!=null)e.value=val;}
