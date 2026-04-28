@@ -78,8 +78,22 @@
         .cal-day:hover { background: rgba(255,255,255,0.07); }
         .cal-day.today { background: rgba(243,209,139,0.22); font-weight: 900; color: #f3d18b; }
         .cal-day.other-month { color: rgba(255,255,255,0.2); }
-        .cal-note-dots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
-        .cal-note-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.cal-note-dots {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+    width: 100%;
+}
+
+.cal-note-dot {
+    width: 5px;   /* Die grootte van die kolletjie */
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Laat hom uitstaan */
+}
 
         .links-box {
             position: absolute; bottom: 40px; right: 40px;
@@ -331,11 +345,18 @@ function renderCal() {
 }        
         function markCalRead() { document.getElementById('calBadge').classList.add('hidden'); }
 
-        window.onload = () => {
-            const now = new Date();
-            calYear = now.getFullYear();
-            calMonth = now.getMonth();
-        };
+window.onload = () => {
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+    
+    // Opsioneel: Kyk of daar vandag notas is en wys die "!" badge
+    const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
+    const todayKey = `${calYear}-${calMonth + 1}-${now.getDate()}`;
+    if (allNotes[todayKey] && allNotes[todayKey].length > 0) {
+        document.getElementById('calBadge').classList.remove('hidden');
+    }
+};
     </script>
 </body>
 </html>
