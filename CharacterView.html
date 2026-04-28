@@ -599,20 +599,20 @@ const enemyTypes = ["Slime","Landcruiser","Fatui Oprichnik","Nobushi","Clockwork
 
 const bossMaterials = ["Hurricane Seed","Lightning Prism","Hoarfrost Core","Crystalline Bloom","Basalt Pillar","Everflame Seed","Cleansing Heart","Juvenile Jade","Runic Fang","Cloudseam Scale","Marionette Core","Perpetual Heart","Smoldering Pearl","Dew of Repudiation","Storm Beads","Riftborn Regalia","Dragonheir's False Fin","Majestic Hooked Beak","Thunderclap Fruitcore","Perpetual Caliber","Light Guiding Tetrahedron","Quelled Creeper","Pseudo-Stamens","Evergloom Ring","Artificed Spare Clockwork Component - Coppelia","Artificed Spare Clockwork Component - Coppelius","Emperor's Resolution","Fontemer Unihorn","Tourbillon Device","Water That Failed to Transcend","Fragment of a Golden Melody","Mark of the Binding Blessing","Overripe Flamegranate","Gold-Inscribed Secret Source Core","Ensnaring Gaze","Talisman of the Enigmatic Land","Sparkless Statue Core","Lightbearing Scale-Feather","Radiant Antler","Remnant of the Dreadwing","Prismatic Severed Tail"];
 
-// Hierdie bly BUITE die script sodat die HTML dit kan sien
-const statusList = ["Done", "Not Yet", "Farming"];
+const statusList = ["Done","Not Yet","Farming"];
 
 <script type="module">
-// === FIREBASE SETUP ===
+// 1. Firebase "Plak" - Dit bind alles saam
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+// VUL HIERDIE IN met jou eie Firebase besonderhede vanaf die Console:
 const firebaseConfig = {
     apiKey: "JOU_API_KEY",
-    authDomain: "JOU_PROJECT.firebaseapp.com",
-    databaseURL: "https://JOU_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "JOU_PROJECT",
-    storageBucket: "JOU_PROJECT.appspot.com",
+    authDomain: "JOU_PROJEK.firebaseapp.com",
+    databaseURL: "JOU_DATABASE_URL",
+    projectId: "JOU_PROJEK_ID",
+    storageBucket: "JOU_PROJEK.appspot.com",
     messagingSenderId: "JOU_ID",
     appId: "JOU_APP_ID"
 };
@@ -620,54 +620,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// 1. Die Hoofdatabasis (Slegs characterDetails hier binne)
-let characterDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
+// LOGIN LOGIKA: Sodat elkeen sy eie data het
+let currentUsername = localStorage.getItem('trinity_user') || prompt("Tik jou naam vir login (bv. Admin of BF):");
+if (!currentUsername) currentUsername = "Guest";
+localStorage.setItem('trinity_user', currentUsername);
 
-// === DATA SINCHRONISASIE ===
-onValue(ref(db, 'characterDetails'), (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-        characterDetails = data;
-        localStorage.setItem('characterDetails', JSON.stringify(data));
-        
-        const currentChar = document.getElementById('charName').innerText;
-        if (currentChar && currentChar !== "Character Name" && currentChar !== "-") {
-            loadCharData(currentChar);
-        }
-    }
-});
+// Oorspronklike Hoofdatabasis
+let characterDetails = {};
 
-// GEKOMBINEERDE AUTOSAVE
-function autoSave() {
-    const charName = document.getElementById('charName').innerText;
-    if (!charName || charName === "Character Name" || charName === "-") return;
+// --- JOU OORSPRONKLIKE FUNKSIES (ONVERANDERD) ---
 
-    if (!characterDetails[charName]) characterDetails[charName] = {};
-
-    const selects = document.querySelectorAll('select');
-    selects.forEach((sel, index) => {
-        if (sel.id !== 'charSelect') {
-            characterDetails[charName]["sel_" + index] = sel.value;
-        }
-    });
-
-    const inputs = document.querySelectorAll('input[type="text"]');
-    inputs.forEach((inp, index) => {
-        characterDetails[charName]["inp_" + index] = inp.value;
-    });
-
-    const circles = document.querySelectorAll('.panel .status-circle');
-    circles.forEach((c, i) => {
-        characterDetails[charName]["circle_" + i] = c.style.backgroundColor || 'rgb(85, 85, 85)';
-    });
-
-    localStorage.setItem('characterDetails', JSON.stringify(characterDetails));
-    set(ref(db, 'characterDetails'), characterDetails);
-}
-
-// --- JOU ANDER FUNKSIES ---
-
-function fillDropdown(selector, list) {
+window.fillDropdown = function(selector, list) {
     document.querySelectorAll(selector).forEach(dropdown => {
         dropdown.innerHTML = '<option value="">Select</option>';
         list.forEach(item => {
@@ -679,7 +642,7 @@ function fillDropdown(selector, list) {
     });
 }
 
-function updateCharacterDropdown() {
+window.updateCharacterDropdown = function() {
     const selectBox = document.getElementById('charSelect');
     const owned = JSON.parse(localStorage.getItem('ownedCharacters')) || Object.keys(charDatabase);
     selectBox.innerHTML = '<option value="">Select</option>';
@@ -690,7 +653,7 @@ function updateCharacterDropdown() {
     });
 }
 
-function setupDropdowns() {
+window.setupDropdowns = function() {
     updateCharacterDropdown();
     fillDropdown('.lv-drop', Array.from({length: 90}, (_, i) => i + 1));
     fillDropdown('.const-drop', [0,1,2,3,4,5,6]);
@@ -705,10 +668,7 @@ function setupDropdowns() {
     fillDropdown('.domain-list-drop', domainTypes);
     fillDropdown('.days-drop', daysList);
     fillDropdown('.wea-days-drop', daysList);
-    
-    // Gebruik die statusList wat BUITE die script is
-    fillDropdown('.status-drop', statusList); 
-    
+    fillDropdown('.status-drop', statusList);
     fillDropdown('.art-list-drop', artifacts);
     fillDropdown('.art-dom-drop', artifactDomains);
     fillDropdown('.region-drop', regions);
@@ -731,15 +691,142 @@ function setupDropdowns() {
     fillDropdown('.future-domain-type-drop', domainTypes);
 }
 
-// ... cycleColor, resetCurrentChar, loadCharData en updateChar bly dieselfde ...
+window.cycleColor = function(el) {
+    const colors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
+    let currentColor = window.getComputedStyle(el).backgroundColor;
+    let index = colors.indexOf(currentColor);
+    if (index === -1) index = 0;
+    const newIndex = (index + 1) % colors.length;
+    el.style.backgroundColor = colors[newIndex];
 
-// MAAK BESKIKBAAR VIR HTML
-window.autoSave = autoSave;
-window.cycleColor = cycleColor;
-window.updateChar = updateChar;
-window.resetCurrentChar = resetCurrentChar;
+    const cvToGuideStatus = [0, 1, 3, 2];
+    const guideStatus = cvToGuideStatus[newIndex];
+
+    const panel = el.closest('.panel');
+    const charName = document.getElementById('charName').innerText;
+    if (charName && panel) {
+        const h2 = panel.querySelector('h2');
+        let guideTask = null;
+        if (h2) {
+            const heading = h2.textContent.replace(/★+/g,'').trim();
+            if (heading.includes('Weapons [Now]')) guideTask = 'Weapons [Now]';
+            else if (heading.includes('Artifacts')) guideTask = 'Artifacts';
+            else if (heading.includes('Talents')) guideTask = 'Talents';
+            else if (heading.includes('Ascend')) guideTask = 'Ascension';
+            else if (heading.includes('Weapon (Future Wish')) guideTask = 'Weapon [Future Wish Pulls]';
+        } else if (panel.id === 'mainPanel') {
+            guideTask = 'Character';
+        }
+
+        if (guideTask) {
+            let guideProgress = JSON.parse(localStorage.getItem('guideProgress')) || {};
+            if (!guideProgress[charName]) guideProgress[charName] = {};
+            guideProgress[charName][guideTask] = guideStatus;
+            localStorage.setItem('guideProgress', JSON.stringify(guideProgress));
+            // Save ook hier na Firebase
+            set(ref(db, 'users/' + currentUsername + '/guideProgress'), guideProgress);
+        }
+    }
+    autoSave();
+}
+
+window.resetCurrentChar = function() {
+    const charName = document.getElementById('charName').innerText;
+    if (!charName || charName === "Character Name" || charName === "-") return;
+    document.querySelectorAll('select').forEach(sel => { if (sel.id !== 'charSelect') sel.value = ""; });
+    document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
+    document.querySelectorAll('.panel .status-circle').forEach(c => { c.style.backgroundColor = 'rgb(85, 85, 85)'; });
+    
+    if (characterDetails[charName]) {
+        characterDetails[charName] = {};
+        autoSave();
+    }
+}
+
+// NUWE FIREBASE AUTO SAVE
+window.autoSave = function() {
+    const charName = document.getElementById('charName').innerText;
+    if (!charName || charName === "Character Name") return;
+
+    if (!characterDetails[charName]) characterDetails[charName] = {};
+
+    document.querySelectorAll('select').forEach((sel, index) => {
+        if (sel.id !== 'charSelect') characterDetails[charName]["sel_" + index] = sel.value;
+    });
+
+    document.querySelectorAll('input[type="text"]').forEach((inp, index) => {
+        characterDetails[charName]["inp_" + index] = inp.value;
+    });
+
+    document.querySelectorAll('.panel .status-circle').forEach((c, i) => {
+        characterDetails[charName]["circle_" + i] = c.style.backgroundColor || 'rgb(85, 85, 85)';
+    });
+
+    // Stoor in Firebase onder die Username
+    set(ref(db, 'users/' + currentUsername + '/characterDetails'), characterDetails);
+}
+
+// NUWE FIREBASE LOAD
+window.loadCharData = function(charName) {
+    onValue(ref(db, 'users/' + currentUsername + '/characterDetails'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            characterDetails = data;
+            const charData = data[charName];
+            if (charData) {
+                document.querySelectorAll('select').forEach((sel, index) => {
+                    if (sel.id !== 'charSelect') sel.value = charData["sel_" + index] || "";
+                });
+                document.querySelectorAll('input[type="text"]').forEach((inp, index) => {
+                    inp.value = charData["inp_" + index] || "";
+                });
+                document.querySelectorAll('.panel .status-circle').forEach((c, i) => {
+                    if (charData["circle_" + i]) c.style.backgroundColor = charData["circle_" + i];
+                });
+            } else {
+                // Maak skoon as geen data
+                document.querySelectorAll('select').forEach(sel => { if(sel.id !== 'charSelect') sel.value = ""; });
+                document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
+                document.querySelectorAll('.panel .status-circle').forEach(c => c.style.backgroundColor = 'rgb(85, 85, 85)');
+            }
+        }
+    }, { onlyOnce: true });
+}
+
+window.updateChar = function(name) {
+    const content = document.getElementById('charContent');
+    if(!name || !charDatabase[name]) {
+        content.style.display = "none";
+        document.getElementById('talentNA').innerText = '-';
+        document.getElementById('talentES').innerText = '-';
+        document.getElementById('talentEB').innerText = '-';
+        document.querySelectorAll('.panel .status-circle').forEach(c => { c.style.backgroundColor = 'rgb(85, 85, 85)'; });
+        return;
+    }
+    
+    content.style.display = "block";
+    const data = charDatabase[name];
+    document.getElementById('charName').innerText = name;
+    document.getElementById('charBday').innerText = data.bday;
+    document.getElementById('charTitle').innerText = data.title;
+    document.getElementById('constName').innerText = data.const;
+    
+    const starsDiv = document.getElementById('charStars');
+    starsDiv.innerText = "★".repeat(data.stars);
+    starsDiv.className = "stars " + (data.stars === 4 ? "stars-4" : "stars-5");
+    
+    const picName = name.startsWith('Traveler') ? name.replace('Traveler ', '') : name;
+    document.getElementById('charPic').style.backgroundImage = `url('${picName}1.jpg')`;
+    
+    document.getElementById('talentNA').innerText = data.talents.normalAttack;
+    document.getElementById('talentES').innerText = data.talents.elementalSkill;
+    document.getElementById('talentEB').innerText = data.talents.elementalBurst;
+
+    loadCharData(name);
+}
 
 document.addEventListener('change', autoSave);
 document.addEventListener('input', autoSave);
+
 window.onload = setupDropdowns;
 </script>
