@@ -2,6 +2,30 @@
 <html lang="af">
 <head>
 <meta charset="UTF-8">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
+    authDomain: "trinityapp-28019.firebaseapp.com",
+    projectId: "trinityapp-28019",
+    storageBucket: "trinityapp-28019.firebasestorage.app",
+    messagingSenderId: "72035223407",
+    appId: "1:72035223407:web:b1a40d9ce96ae479be4a9a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Hierdie wag vir die login status
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      // As niemand ingeteken is nie, stuur hulle terug na die login bladsy
+      window.location.href = "index.html";
+    }
+  });
+</script>
 <title>The Trinity News</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Nunito:wght@300;400;600;700;800&display=swap');
