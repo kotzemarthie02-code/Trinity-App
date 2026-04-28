@@ -186,8 +186,9 @@
         onValue(ref(db, 'users/' + currentUsername + '/ownedCharacters'), (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                localStorage.setItem('ownedCharacters', JSON.stringify(data));
-                // Herlaai die kalender outomaties as Firebase data verander
+                // Firebase stuur arrays as objects terug — omskep na array
+                const arr = Array.isArray(data) ? data : Object.values(data);
+                localStorage.setItem('ownedCharacters', JSON.stringify(arr));
                 loadCalendar();
             }
         });
