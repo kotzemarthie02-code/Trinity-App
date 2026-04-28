@@ -303,15 +303,25 @@
             renderCalendar();
         }
 
-        function deleteNote(dateKey, idx) {
-            if(isLocked) return;
-            if(confirm("Delete?")) {
-                let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
-                notesData[dateKey].splice(idx, 1);
-                localStorage.setItem('cal_save_data', JSON.stringify(notesData));
-                renderCalendar();
-            }
+function deleteNote(dateKey, idx) {
+    if(isLocked) return;
+    if(confirm("Delete hierdie nota?")) {
+        let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
+        
+        // 1. Verwyder die spesifieke nota
+        notesData[dateKey].splice(idx, 1);
+        
+        // 2. BELANGRIK: As daar geen notas meer oor is vir hierdie dag nie, 
+        // verwyder die hele datum-sleutel sodat die Dashboard nie 'n sirkel teken nie.
+        if (notesData[dateKey].length === 0) {
+            delete notesData[dateKey];
         }
+        
+        // 3. Stoor en refresh
+        localStorage.setItem('cal_save_data', JSON.stringify(notesData));
+        renderCalendar();
+    }
+}
     </script>
 </body>
 </html>
