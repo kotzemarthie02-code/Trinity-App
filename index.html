@@ -116,7 +116,10 @@
             const pass = document.getElementById('l-pass').value;
 
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
+                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+                // Stoor uid sodat ALLE lêers weet wie ingeteken is
+                localStorage.setItem('trinity_uid', user.uid);
                 window.location.href = "Dashboard.html";
             } catch (error) {
                 alert("Login failed: " + error.message);
