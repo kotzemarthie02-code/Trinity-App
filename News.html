@@ -609,14 +609,16 @@ function tickAll(){
     }
     const diff=new Date(v).getTime()-now;
     if(diff<=0){
-      // Tyd is verby — verwyder outomaties
       const inp=document.getElementById(t.inp);
-      if(inp) inp.value='';
-      t.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
-      // Reset display teks na —
-      const disp=document.getElementById(t.disp);
-      if(disp) disp.innerHTML=t.pre+': —';
-      saveDates(); // stoor leë datum na Firebase — almal sien dit verdwyn
+      if(inp && inp.value){
+        inp.value='';
+        t.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
+        const disp=document.getElementById(t.disp);
+        if(disp) disp.innerHTML=t.pre+': —';
+        if(typeof _unlocked!=='undefined'&&_unlocked) saveDates();
+      } else {
+        t.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
+      }
       return;
     }
     const parts=fmtCD(diff);
