@@ -511,6 +511,9 @@ function closeDT(){document.getElementById('dtm').classList.remove('open');_dtTa
 function clearDT(inpId,dispId,pre){
   var inp=document.getElementById(inpId);if(inp)inp.value='';
   var dp=document.getElementById(dispId);if(dp)dp.textContent=pre+': —';
+  // Reset timer digits na --
+  const ticker=tickers.find(t=>t.inp===inpId);
+  if(ticker)ticker.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
   saveDates();
 }
 function applyDT(){
@@ -545,7 +548,20 @@ function tickAll(){
   const now=Date.now();
   tickers.forEach(t=>{
     const v=V(t.inp);
-    const parts=v?fmtCD(new Date(v).getTime()-now):['--','--','--','--'];
+    if(!v){
+      t.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
+      return;
+    }
+    const diff=new Date(v).getTime()-now;
+    if(diff<=0){
+      // Tyd is verby — verwyder outomaties en stoor na Firebase
+      const inp=document.getElementById(t.inp);
+      if(inp) inp.value='';
+      t.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
+      saveDates(); // stoor leë datum na Firebase sodat almal dit sien
+      return;
+    }
+    const parts=fmtCD(diff);
     t.ids.forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=parts[i];});
   });
 }
