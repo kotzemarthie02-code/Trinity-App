@@ -33,21 +33,6 @@
         // Stoor alles in localStorage
         Object.keys(data).forEach(k => localStorage.setItem('tnews_final_' + k, JSON.stringify(data[k])));
 
-        // Herstel prente van Firebase data
-        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
-        imgKeys.forEach(id => {
-            const imgData = data['img_' + id];
-            if (imgData) {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.style.backgroundImage = 'url("' + imgData + '")';
-                    // Versteek placeholder as dit bestaan
-                    const phMap = {'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
-                    if (phMap[id]) { const ph = document.getElementById(phMap[id]); if(ph) ph.style.display='none'; }
-                }
-            }
-        });
-
         // Herstel timer inputs + display tekste van Firebase data
         const cds  = data.cds  || {};
         const pd   = data.pd   || {};
@@ -80,6 +65,29 @@
     window.saveToFirebase = function(key, value) {
         set(ref(db, 'sharedData/newsData/' + key), value);
     };
+
+    // Stoor prent URL na Firebase sodat almal dit sien
+    window.saveImageURL = function(id, url) {
+        set(ref(db, 'sharedData/newsData/img_' + id), url);
+    };
+
+    // Herstel prente van Firebase
+    onValue(ref(db, 'sharedData/newsData'), (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
+        const phMap = {'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
+        imgKeys.forEach(id => {
+            const url = data['img_' + id];
+            if (url) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.backgroundImage = 'url("' + url + '")';
+                    if (phMap[id]) { const ph = document.getElementById(phMap[id]); if(ph) ph.style.display='none'; }
+                }
+            }
+        });
+    });
 </script>
 
 <style>
@@ -619,31 +627,46 @@ window.tickAll=tickAll;
 setInterval(tickAll,1000);
 
 // ── IMAGES ──
+// Verklein prent na klein base64 string (max ~200KB)
+function compressImg(file, cb) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const MAX = 800;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      cb(compressed);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function chBg(i,id){
   if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}
   if(i.files&&i.files[0]){
-    const r=new FileReader();
-    r.onload=e=>{
-      const dataUrl=e.target.result;
-      document.getElementById(id).style.backgroundImage='url("'+dataUrl+'")';
-      // Stoor prent in Firebase + localStorage sodat dit bly
-      P('img_'+id, dataUrl);
-    };
-    r.readAsDataURL(i.files[0]);
+    compressImg(i.files[0], url => {
+      document.getElementById(id).style.backgroundImage='url("'+url+'")';
+      localStorage.setItem('tnews_final_img_'+id, JSON.stringify(url));
+      if(window.saveImageURL) window.saveImageURL(id, url);
+    });
   }
 }
 function chPic(i,w,p){
   if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}
   if(i.files&&i.files[0]){
-    const r=new FileReader();
-    r.onload=e=>{
-      const dataUrl=e.target.result;
-      document.getElementById(w).style.backgroundImage='url("'+dataUrl+'")';
+    compressImg(i.files[0], url => {
+      document.getElementById(w).style.backgroundImage='url("'+url+'")';
       const ph=document.getElementById(p);if(ph)ph.style.display='none';
-      // Stoor prent in Firebase + localStorage sodat dit bly
-      P('img_'+w, dataUrl);
-    };
-    r.readAsDataURL(i.files[0]);
+      localStorage.setItem('tnews_final_img_'+w, JSON.stringify(url));
+      if(window.saveImageURL) window.saveImageURL(w, url);
+    });
   }
 }
 
@@ -681,21 +704,21 @@ window.onload=()=>{
   const s=G('ss')||'';if(s)setSave(s);
   codes=G('codes')||[];renderCodes();
   updVer();
-
-  // Herstel prente van localStorage (voor Firebase laai)
-  const imgKeys=['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
-  const phMap={'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
-  imgKeys.forEach(id=>{
-    const imgData=G('img_'+id);
-    if(imgData){
-      const el=document.getElementById(id);
-      if(el){
-        el.style.backgroundImage='url("'+imgData+'")';
-        if(phMap[id]){const ph=document.getElementById(phMap[id]);if(ph)ph.style.display='none';}
+  // Herstel prente van localStorage
+  const _imgKeys=['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
+  const _phMap={'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
+  _imgKeys.forEach(id=>{
+    try{
+      const url=JSON.parse(localStorage.getItem('tnews_final_img_'+id));
+      if(url){
+        const el=document.getElementById(id);
+        if(el){
+          el.style.backgroundImage='url("'+url+'")';
+          if(_phMap[id]){const ph=document.getElementById(_phMap[id]);if(ph)ph.style.display='none';}
+        }
       }
-    }
+    }catch(e){}
   });
-
   tickAll();
   setLocked(true);
 };
