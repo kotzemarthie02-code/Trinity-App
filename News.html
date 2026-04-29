@@ -33,6 +33,21 @@
         // Stoor alles in localStorage
         Object.keys(data).forEach(k => localStorage.setItem('tnews_final_' + k, JSON.stringify(data[k])));
 
+        // Herstel prente van Firebase data
+        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
+        imgKeys.forEach(id => {
+            const imgData = data['img_' + id];
+            if (imgData) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.backgroundImage = 'url("' + imgData + '")';
+                    // Versteek placeholder as dit bestaan
+                    const phMap = {'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
+                    if (phMap[id]) { const ph = document.getElementById(phMap[id]); if(ph) ph.style.display='none'; }
+                }
+            }
+        });
+
         // Herstel timer inputs + display tekste van Firebase data
         const cds  = data.cds  || {};
         const pd   = data.pd   || {};
@@ -604,8 +619,33 @@ window.tickAll=tickAll;
 setInterval(tickAll,1000);
 
 // ── IMAGES ──
-function chBg(i,id){if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}if(i.files&&i.files[0]){const r=new FileReader();r.onload=e=>document.getElementById(id).style.backgroundImage='url("'+e.target.result+'")';r.readAsDataURL(i.files[0]);}}
-function chPic(i,w,p){if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}if(i.files&&i.files[0]){const r=new FileReader();r.onload=e=>{document.getElementById(w).style.backgroundImage='url("'+e.target.result+'")';const ph=document.getElementById(p);if(ph)ph.style.display='none';};r.readAsDataURL(i.files[0]);}}
+function chBg(i,id){
+  if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}
+  if(i.files&&i.files[0]){
+    const r=new FileReader();
+    r.onload=e=>{
+      const dataUrl=e.target.result;
+      document.getElementById(id).style.backgroundImage='url("'+dataUrl+'")';
+      // Stoor prent in Firebase + localStorage sodat dit bly
+      P('img_'+id, dataUrl);
+    };
+    r.readAsDataURL(i.files[0]);
+  }
+}
+function chPic(i,w,p){
+  if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}
+  if(i.files&&i.files[0]){
+    const r=new FileReader();
+    r.onload=e=>{
+      const dataUrl=e.target.result;
+      document.getElementById(w).style.backgroundImage='url("'+dataUrl+'")';
+      const ph=document.getElementById(p);if(ph)ph.style.display='none';
+      // Stoor prent in Firebase + localStorage sodat dit bly
+      P('img_'+w, dataUrl);
+    };
+    r.readAsDataURL(i.files[0]);
+  }
+}
 
 // ── CODES ──
 let codes=[];
@@ -641,6 +681,21 @@ window.onload=()=>{
   const s=G('ss')||'';if(s)setSave(s);
   codes=G('codes')||[];renderCodes();
   updVer();
+
+  // Herstel prente van localStorage (voor Firebase laai)
+  const imgKeys=['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
+  const phMap={'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
+  imgKeys.forEach(id=>{
+    const imgData=G('img_'+id);
+    if(imgData){
+      const el=document.getElementById(id);
+      if(el){
+        el.style.backgroundImage='url("'+imgData+'")';
+        if(phMap[id]){const ph=document.getElementById(phMap[id]);if(ph)ph.style.display='none';}
+      }
+    }
+  });
+
   tickAll();
   setLocked(true);
 };
