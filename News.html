@@ -24,9 +24,37 @@
     // News is GEDEELD — selfde vir almal, lees van sharedData/
     onValue(ref(db, 'sharedData/newsData'), (snapshot) => {
         const data = snapshot.val();
-        if (data) {
-            Object.keys(data).forEach(k => localStorage.setItem('tnews_final_' + k, JSON.stringify(data[k])));
-        }
+        if (!data) return;
+
+        // Stoor alles in localStorage
+        Object.keys(data).forEach(k => localStorage.setItem('tnews_final_' + k, JSON.stringify(data[k])));
+
+        // Herstel timer inputs + display tekste van Firebase data
+        const cds  = data.cds  || {};
+        const pd   = data.pd   || {};
+        const lv   = data.live || {};
+
+        const dispMap = [
+            { inp:'cd1',       val:cds.d1,  disp:'d1',    pre:'Release Date & Time'  },
+            { inp:'cd2',       val:cds.d2,  disp:'d2',    pre:'Release Date & Time'  },
+            { inp:'p1d',       val:pd.p1,   disp:'dp1',   pre:'Expected Date & Time' },
+            { inp:'p2d',       val:pd.p2,   disp:'dp2',   pre:'Expected Date & Time' },
+            { inp:'live-date', val:lv.date, disp:'dlive', pre:'Release Date & Time'  }
+        ];
+
+        dispMap.forEach(m => {
+            const inp  = document.getElementById(m.inp);
+            const disp = document.getElementById(m.disp);
+            if (!inp || !disp) return;
+            if (m.val) {
+                inp.value = m.val;
+                disp.innerHTML = m.pre + ': ' + fmtFull(m.val) +
+                    '<button class="clr-btn" onclick="event.stopPropagation();clearDT(\'' +
+                    m.inp + '\',\'' + m.disp + '\',\'' + m.pre + '\')" title="Skrap datum">✕</button>';
+            }
+        });
+
+        if (window.tickAll) window.tickAll();
     });
 
     // Stoor ook na sharedData/ (net Admin update dit via GitHub)
@@ -537,11 +565,11 @@ function fmtCD(ms){
 }
 
 const tickers=[
-  {inp:'cd1', ids:['t1d','t1h','t1m','t1s']},
-  {inp:'cd2', ids:['t2d','t2h','t2m','t2s']},
-  {inp:'p1d', ids:['p1dd','p1dh','p1dm','p1ds']},
-  {inp:'p2d', ids:['p2dd','p2dh','p2dm','p2ds']},
-  {inp:'live-date',ids:['lcd','lch','lcm','lcs']}
+  {inp:'cd1',       ids:['t1d','t1h','t1m','t1s'],   disp:'d1',    pre:'Release Date & Time'},
+  {inp:'cd2',       ids:['t2d','t2h','t2m','t2s'],   disp:'d2',    pre:'Release Date & Time'},
+  {inp:'p1d',       ids:['p1dd','p1dh','p1dm','p1ds'],disp:'dp1',  pre:'Expected Date & Time'},
+  {inp:'p2d',       ids:['p2dd','p2dh','p2dm','p2ds'],disp:'dp2',  pre:'Expected Date & Time'},
+  {inp:'live-date', ids:['lcd','lch','lcm','lcs'],    disp:'dlive', pre:'Release Date & Time'}
 ];
 
 function tickAll(){
@@ -554,17 +582,21 @@ function tickAll(){
     }
     const diff=new Date(v).getTime()-now;
     if(diff<=0){
-      // Tyd is verby — verwyder outomaties en stoor na Firebase
+      // Tyd is verby — verwyder outomaties
       const inp=document.getElementById(t.inp);
       if(inp) inp.value='';
       t.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
-      saveDates(); // stoor leë datum na Firebase sodat almal dit sien
+      // Reset display teks na —
+      const disp=document.getElementById(t.disp);
+      if(disp) disp.innerHTML=t.pre+': —';
+      saveDates(); // stoor leë datum na Firebase — almal sien dit verdwyn
       return;
     }
     const parts=fmtCD(diff);
     t.ids.forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=parts[i];});
   });
 }
+window.tickAll=tickAll;
 setInterval(tickAll,1000);
 
 // ── IMAGES ──
