@@ -180,7 +180,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const currentUsername = localStorage.getItem('trinity_user') || "Admin";
+        const currentUsername = localStorage.getItem('trinity_uid') || "Admin";
 
         // Luister vir opgedateerde 'owned' karakters vanaf Firebase
         onValue(ref(db, 'users/' + currentUsername + '/ownedCharacters'), (snapshot) => {
