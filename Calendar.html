@@ -5,10 +5,12 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
       import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+      import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
         authDomain: "trinityapp-28019.firebaseapp.com",
+        databaseURL: "https://trinityapp-28019-default-rtdb.firebaseio.com",
         projectId: "trinityapp-28019",
         storageBucket: "trinityapp-28019.firebasestorage.app",
         messagingSenderId: "72035223407",
@@ -17,12 +19,27 @@
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
+      const db = getDatabase(app);
 
       onAuthStateChanged(auth, (user) => {
         if (!user) {
           window.location.href = "index.html";
+        } else {
+          localStorage.setItem('trinity_uid', user.uid);
         }
       });
+
+      // Luister vir gedeelde kalender notes — alle gebruikers sien dieselfde
+      onValue(ref(db, 'sharedData/calendarNotes'), (snapshot) => {
+        const data = snapshot.val();
+        localStorage.setItem('cal_save_data', JSON.stringify(data || {}));
+        if (window.renderCalendar) window.renderCalendar();
+      });
+
+      // Stoor notes na Firebase sharedData — almal sien update outomaties
+      window.saveCalendarToFirebase = function(notesData) {
+        set(ref(db, 'sharedData/calendarNotes'), notesData);
+      };
     </script>
 
     <title>Genshin Event Calendar</title>
@@ -190,6 +207,7 @@
     </div>
 
     <script>
+        window.renderCalendar = renderCalendar;
         window.onload = () => {
             localStorage.setItem('calUnread', 'false');
             localStorage.setItem('calRead_April2026', 'true');
@@ -263,18 +281,6 @@
                 
                 let notesHtml = '';
 
-                if (dateKey === "2026-4-1") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Operation Stronghold Defense End</div></div>`; }
-                if (dateKey === "2026-4-5") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Overflowing Abundance End</div></div>`; }
-                if (dateKey === "2026-4-6") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Luna V Stygian Onslaught End</div></div>`; }
-                if (dateKey === "2026-4-7") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Skirk and Escoffier Banners End</div></div><div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Version 6.4 End</div></div>`; }
-                if (dateKey === "2026-4-8") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ffcc00"></div><div class="note-text">Linnea and Chasca Banners Start</div></div><div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">Version 6.5 Start</div></div>`; }
-                if (dateKey === "2026-4-10") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#00d4ff"></div><div class="note-text">Surveying & Mapping Studies Start</div></div>`; }
-                if (dateKey === "2026-4-15") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#33ff77"></div><div class="note-text">Luna VI Stygian Onslaught Start</div></div><div class="note-item"><div class="note-pin" style="background:#33ff77"></div><div class="note-text">Spiral Abyss Reset</div></div>`; }
-                if (dateKey === "2026-4-24") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ff4d4d"></div><div class="note-text">🎉 Arlecchino Banner!</div></div>`; }
-                if (dateKey === "2026-4-27") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#ffcc00"></div><div class="note-text">Where Waves Meet Start</div></div>`; }
-                if (dateKey === "2026-4-28") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#00d4ff"></div><div class="note-text">Lauma and Neferon se dag</div></div>`; }
-                if (dateKey === "2026-4-30") { notesHtml += `<div class="note-item"><div class="note-pin" style="background:#33ff77"></div><div class="note-text">Imaginarium Theater Reset</div></div>`; }
-
                 if(notesData[dateKey]) {
                     notesData[dateKey].forEach((n, idx) => {
                         notesHtml += `<div class="note-item" onclick="deleteNote('${dateKey}', ${idx})"><div class="note-pin" style="background-color: ${n.color}"></div><div class="note-text">${n.text}</div></div>`;
@@ -300,6 +306,8 @@
             if(!notesData[dateKey]) notesData[dateKey] = [];
             notesData[dateKey].push({ text: text, color: color });
             localStorage.setItem('cal_save_data', JSON.stringify(notesData));
+            // Stoor na Firebase — almal sien dit outomaties
+            if(window.saveCalendarToFirebase) window.saveCalendarToFirebase(notesData);
             renderCalendar();
         }
 
@@ -307,18 +315,13 @@ function deleteNote(dateKey, idx) {
     if(isLocked) return;
     if(confirm("Delete hierdie nota?")) {
         let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
-        
-        // 1. Verwyder die spesifieke nota
         notesData[dateKey].splice(idx, 1);
-        
-        // 2. BELANGRIK: As daar geen notas meer oor is vir hierdie dag nie, 
-        // verwyder die hele datum-sleutel sodat die Dashboard nie 'n sirkel teken nie.
         if (notesData[dateKey].length === 0) {
             delete notesData[dateKey];
         }
-        
-        // 3. Stoor en refresh
         localStorage.setItem('cal_save_data', JSON.stringify(notesData));
+        // Stoor na Firebase — almal sien dit outomaties
+        if(window.saveCalendarToFirebase) window.saveCalendarToFirebase(notesData);
         renderCalendar();
     }
 }
