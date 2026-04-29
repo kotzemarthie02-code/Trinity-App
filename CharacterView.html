@@ -648,12 +648,17 @@ function fillDropdown(selector, list) {
 
 async function updateCharacterDropdown() {
     const selectBox = document.getElementById('charSelect');
-    // Show ALL characters from database in dropdown (not just owned)
+    // Wys NET owned karakters in dropdown
+    const rawOwned = JSON.parse(localStorage.getItem('ownedCharacters') || '[]');
+    const owned = Array.isArray(rawOwned) ? rawOwned : Object.values(rawOwned);
+
     selectBox.innerHTML = '<option value="">Select</option>';
     Object.keys(charDatabase).forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name; opt.textContent = name;
-        selectBox.appendChild(opt);
+        if (owned.includes(name)) {
+            const opt = document.createElement('option');
+            opt.value = name; opt.textContent = name;
+            selectBox.appendChild(opt);
+        }
     });
 }
 
@@ -905,9 +910,17 @@ window.cycleColor = cycleColor;
 window.updateWeaponPic = updateWeaponPic;
 
 window.onload = async () => {
-    // Laai characterDetails uit Firebase by startup
+    // Laai characterDetails uit Firebase
     const saved = await fbGet('characterDetails');
     if (saved) characterDetails = saved;
+
+    // Laai ownedCharacters uit Firebase sodat dropdown net owned wys
+    const ownedData = await fbGet('ownedCharacters');
+    if (ownedData) {
+        const arr = Array.isArray(ownedData) ? ownedData : Object.values(ownedData);
+        localStorage.setItem('ownedCharacters', JSON.stringify(arr));
+    }
+
     await setupDropdowns();
 };
 
