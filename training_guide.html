@@ -121,15 +121,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Gebruik dieselfde user as CharacterView
-let currentUsername = localStorage.getItem('trinity_user') || "Admin";
+// Gebruik die ingetekende gebruiker se uid
+let currentUsername = localStorage.getItem('trinity_uid') || "Admin";
 
 // Luister vir data vanaf Firebase
 onValue(ref(db, 'users/' + currentUsername + '/ownedCharacters'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
-        localStorage.setItem('ownedCharacters', JSON.stringify(data));
-        window.ownedFromStorage = data;
+        const arr = Array.isArray(data) ? data : Object.values(data);
+        localStorage.setItem('ownedCharacters', JSON.stringify(arr));
+        window.ownedFromStorage = arr;
         Object.keys(window.characters).forEach(name => {
             window.characters[name].o = window.ownedFromStorage.includes(name);
         });
@@ -151,7 +152,6 @@ onValue(ref(db, 'users/' + currentUsername + '/guideProgress'), (snapshot) => {
         localStorage.setItem('guideProgress', JSON.stringify(data));
         window.guideProgress = data;
         if (typeof window.filter === "function") window.filter();
-        // Refresh circles for currently open character
         if (window.refreshCurrentCircles) window.refreshCurrentCircles();
     }
 });
