@@ -169,6 +169,14 @@
                         if (data.profilePic) document.getElementById("avatar").src = data.profilePic;
                     }
                 });
+
+                // Luister na gedeelde kalender notes van Firebase — almal sien dieselfde
+                onValue(ref(db, 'sharedData/calendarNotes'), (snapshot) => {
+                    const data = snapshot.val();
+                    localStorage.setItem('cal_save_data', JSON.stringify(data || {}));
+                    if (window.renderCal) window.renderCal();
+                });
+
             } else {
                 window.location.href = "index.html";
             }
@@ -325,23 +333,14 @@
                 const dotsContainer = document.createElement('div');
                 dotsContainer.className = 'cal-note-dots';
 
-                // --- 1. PUBLIEKE GITHUB UPDATES (Almal sien dit!) ---
-                // Hierdie is waar jy die sirkeltjies "hardcode" vir almal
-                if (calYear === 2026 && calMonth === 3 && d === 28) { // 28 April
-                    const publicDot = document.createElement('div');
-                    publicDot.className = 'cal-note-dot';
-                    publicDot.style.backgroundColor = '#00ffff'; // Cyan kleur vir updates
-                    dotsContainer.appendChild(publicDot);
-                }
-
-                // --- 2. PRIVATE NOTAS (Net wat die gebruiker self tik) ---
+                // Wys sirkels VAN FIREBASE sharedData — almal sien dieselfde
                 const dateKey = `${calYear}-${calMonth + 1}-${d}`;
                 const dayNotes = allNotes[dateKey];
                 if (dayNotes && dayNotes.length > 0) {
                     dayNotes.forEach(note => {
                         const dot = document.createElement('div');
                         dot.className = 'cal-note-dot';
-                        dot.style.backgroundColor = note.color; 
+                        dot.style.backgroundColor = note.color;
                         dotsContainer.appendChild(dot);
                     });
                 }
@@ -353,19 +352,13 @@
         
         function markCalRead() { document.getElementById('calBadge').classList.add('hidden'); }
 
+        window.renderCal = renderCal;
+
         window.onload = () => {
             const now = new Date();
             calYear = now.getFullYear();
             calMonth = now.getMonth();
-            
-            const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
-            const todayKey = `${calYear}-${calMonth + 1}-${now.getDate()}`;
-            
-            // Wys badge as daar vandag 'n private nota IS OF as dit 'n publieke update dag is
-            let hasPublicUpdate = (calYear === 2026 && calMonth === 3 && now.getDate() === 28);
-            if ((allNotes[todayKey] && allNotes[todayKey].length > 0) || hasPublicUpdate) {
-                document.getElementById('calBadge').classList.remove('hidden');
-            }
+            renderCal();
         };
     </script>
 </body>
