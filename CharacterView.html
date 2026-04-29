@@ -617,8 +617,8 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db = getDatabase(fbApp);
 
-// Firebase helper functions (vervang localStorage)
-const currentUsername = localStorage.getItem('trinity_user') || "Admin";
+// Firebase helper functions
+const currentUsername = localStorage.getItem('trinity_uid') || "Admin";
 
 async function fbGet(key) {
     const snap = await get(ref(db, 'users/' + currentUsername + '/' + key));
