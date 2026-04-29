@@ -159,11 +159,13 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Stoor uid vir alle ander lêers
+                localStorage.setItem('trinity_uid', user.uid);
                 onValue(ref(db, 'users/' + user.uid), (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
                         document.getElementById("n-display").innerText = data.nickname || "Traveler";
-                        document.getElementById("u-display").innerText = data.uid || "--------";
+                        document.getElementById("u-display").innerText = data.genshinUid || data.uid || "--------";
                         if (data.profilePic) document.getElementById("avatar").src = data.profilePic;
                     }
                 });
@@ -172,7 +174,14 @@
             }
         });
 
-        window.logout = () => { signOut(auth).then(() => { window.location.href = "index.html"; }); };
+        window.logout = () => { 
+            signOut(auth).then(() => { 
+                localStorage.removeItem('trinity_uid');
+                localStorage.removeItem('ownedCharacters');
+                localStorage.removeItem('characterDetails');
+                window.location.href = "index.html"; 
+            }); 
+        };
 
         window.changePic = (event) => {
             const file = event.target.files[0];
