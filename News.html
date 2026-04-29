@@ -20,19 +20,18 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const currentUsername = localStorage.getItem('trinity_user') || "Admin";
 
-    // Lees nuus data van Firebase by opstarten
-    onValue(ref(db, 'users/' + currentUsername + '/newsData'), (snapshot) => {
+    // News is GEDEELD — selfde vir almal, lees van sharedData/
+    onValue(ref(db, 'sharedData/newsData'), (snapshot) => {
         const data = snapshot.val();
         if (data) {
             Object.keys(data).forEach(k => localStorage.setItem('tnews_final_' + k, JSON.stringify(data[k])));
         }
     });
 
-    // Maak saveToFirebase globaal beskikbaar
+    // Stoor ook na sharedData/ (net Admin update dit via GitHub)
     window.saveToFirebase = function(key, value) {
-        set(ref(db, 'users/' + currentUsername + '/newsData/' + key), value);
+        set(ref(db, 'sharedData/newsData/' + key), value);
     };
 </script>
 
