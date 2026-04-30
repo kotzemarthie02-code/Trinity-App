@@ -71,47 +71,31 @@
         set(ref(db, 'sharedData/newsData/img_' + id), url);
     };
 
-    // Bday prent: eie aparte Firebase node
+    // Bday prent: eie aparte Firebase node sodat dit NOOIT verdwyn nie
     window.saveBdayImg = function(url) {
         set(ref(db, 'sharedData/bdayImg'), url);
     };
-    // Boss prent: eie aparte Firebase node
-    window.saveBossImg = function(url) {
-        set(ref(db, 'sharedData/bossImg'), url);
-    };
 
-    // Luister vir bday — stoor localStorage sodat dit bly na refresh/logout
+    // Luister apart vir bday prent — onafhanklik van newsData
     onValue(ref(db, 'sharedData/bdayImg'), (snap) => {
         const url = snap.val();
         if (!url) return;
-        localStorage.setItem('tnews_final_img_bday-wrap', JSON.stringify(url));
         const el = document.getElementById('bday-wrap');
         const ph = document.getElementById('bday-ph');
         if (el) el.style.backgroundImage = 'url("' + url + '")';
         if (ph) ph.style.display = 'none';
+        localStorage.setItem('tnews_final_img_bday-wrap', JSON.stringify(url));
     });
 
-    // Luister vir boss — stoor localStorage sodat dit bly na refresh/logout
-    onValue(ref(db, 'sharedData/bossImg'), (snap) => {
-        const url = snap.val();
-        if (!url) return;
-        localStorage.setItem('tnews_final_img_boss-wrap', JSON.stringify(url));
-        const el = document.getElementById('boss-wrap');
-        const ph = document.getElementById('boss-ph');
-        if (el) el.style.backgroundImage = 'url("' + url + '")';
-        if (ph) ph.style.display = 'none';
-    });
-
-    // Herstel ander prente van newsData — ook stoor in localStorage
+    // Herstel prente van Firebase
     onValue(ref(db, 'sharedData/newsData'), (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
-        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap'];
-        const phMap = {'maps-wrap':'maps-ph'};
+        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
+        const phMap = {'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
         imgKeys.forEach(id => {
             const url = data['img_' + id];
             if (url) {
-                localStorage.setItem('tnews_final_img_' + id, JSON.stringify(url));
                 const el = document.getElementById(id);
                 if (el) {
                     el.style.backgroundImage = 'url("' + url + '")';
@@ -218,8 +202,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
     <div class="ver-bar">
       <div style="font-family:'Cinzel',serif;font-weight:900;color:var(--green);letter-spacing:1px;">GENSHIN IMPACT</div>
       <div style="display:flex;gap:10px;align-items:center;">
-        <input type="text" id="ver-input" placeholder="6.5" style="width:60px;text-align:center;" oninput="saveNews();updVer()">
-        <input type="text" id="title-input" placeholder="Update Title..." style="width:200px;" oninput="saveNews()">
+        <input type="text" id="ver-input" placeholder="6.5" style="width:80px;text-align:center;font-weight:900;color:#ffe08a;background:rgba(255,224,138,0.1);border:1px solid rgba(255,224,138,0.4);font-size:15px;" oninput="saveNews();updVer()">
+        <input type="text" id="title-input" placeholder="Update Title..." style="width:320px;font-weight:800;color:#ffe08a;background:rgba(255,224,138,0.1);border:1px solid rgba(255,224,138,0.4);font-size:14px;" oninput="saveNews()">
         <div style="color:var(--green);font-size:10px;font-weight:800;">● ACTIVE</div>
       </div>
     </div>
@@ -389,8 +373,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
           <input type="text" id="weekly-boss" placeholder="Boss name..." oninput="saveBattle()">
           <div class="lr" style="margin-top:8px;"><input type="text" id="boss-link" placeholder="Guide..."><button class="btn btn-r pub-btn" onclick="openL('boss-link')">🔗 Open</button></div>
         </div>
-        <div class="pw" id="boss-wrap" style="border:1px solid rgba(255,100,100,0.3);height:200px;background-size:cover;background-position:center;" onclick="document.getElementById('boss-file').click()">
-          <span id="boss-ph" style="font-size:11px;opacity:0.5;">👹 Click to add Weekly Boss picture</span>
+        <div class="pw" id="boss-wrap" style="border:1px solid rgba(255,100,100,0.3);height:200px;background-size:cover;background-position:center;background-image:url('NewBoss.png');" onclick="if(_unlocked)document.getElementById('boss-file').click()">
+          <span id="boss-ph" style="font-size:11px;opacity:0.5;display:none;">👹 Click to add Weekly Boss picture</span>
         </div>
         <input type="file" id="boss-file" style="display:none" accept="image/*" onchange="chPic(this,'boss-wrap','boss-ph')">
       </div>
@@ -421,7 +405,7 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
             <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:5px;justify-content:center;">
               📺 GENSHIN IMPACT
               <input type="text" id="live-ver" placeholder="6.5"
-                style="width:52px;background:none;border:none;border-bottom:1px solid var(--gold);color:white;text-align:center;font-size:11px;padding:0 3px;"
+                style="width:52px;background:none;border:none;border-bottom:1px solid var(--gold);color:#ffe08a;text-align:center;font-size:11px;padding:0 3px;font-weight:900;"
                 oninput="saveLive()" onclick="event.stopPropagation()">
               LIVESTREAM
             </div>
@@ -692,29 +676,21 @@ function chBg(i,id){
   }
 }
 function chPic(i,w,p){
-  if(!_unlocked){alert('\uD83D\uDD12 Unlock via Settings to change picture.');i.value='';return;}
+  if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}
   if(i.files&&i.files[0]){
+    // Bday prent: sterker kompressie sodat Firebase dit aanvaar
     const isBday = (w === 'bday-wrap');
-    const isBoss = (w === 'boss-wrap');
-    const isSpecial = isBday || isBoss;
-    // Gebruik sterker kompressie vir bday en boss — itereer kleiner as nog te groot
-    function tryCompress(maxPx, qual) {
-      compressImg(i.files[0], url => {
-        if(isSpecial && url.length > 750000 && qual > 0.2) {
-          tryCompress(Math.round(maxPx * 0.8), Math.max(qual - 0.1, 0.2));
-          return;
-        }
-        const el = document.getElementById(w);
-        if(el) el.style.backgroundImage='url("'+url+'")';
-        const ph=document.getElementById(p);if(ph)ph.style.display='none';
-        localStorage.setItem('tnews_final_img_'+w, JSON.stringify(url));
-        // Stoor na eie Firebase node — nie deel van newsData nie
-        if(isBday && window.saveBdayImg) window.saveBdayImg(url);
-        else if(isBoss && window.saveBossImg) window.saveBossImg(url);
-        else if(window.saveImageURL) window.saveImageURL(w, url);
-      }, isSpecial ? 500 : 800, isSpecial ? 0.5 : 0.7);
-    }
-    tryCompress(isSpecial ? 500 : 800, isSpecial ? 0.5 : 0.7);
+    const maxPx = isBday ? 600 : 800;
+    const qual  = isBday ? 0.55 : 0.7;
+    compressImg(i.files[0], url => {
+      const el = document.getElementById(w);
+      if(el) el.style.backgroundImage='url("'+url+'")';
+      const ph=document.getElementById(p);if(ph)ph.style.display='none';
+      localStorage.setItem('tnews_final_img_'+w, JSON.stringify(url));
+      if(window.saveImageURL) window.saveImageURL(w, url);
+      // Bday: stoor ook apart sodat dit nooit deur ander data oorskryf word nie
+      if(isBday && window.saveBdayImg) window.saveBdayImg(url);
+    }, maxPx, qual);
   }
 }
 
