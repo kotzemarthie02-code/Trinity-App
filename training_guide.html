@@ -48,6 +48,29 @@
         }
         .all-done .done-check { display: flex; }
 
+        /* Owned merksie — bo-regs sodat element ikoon sigbaar bly */
+        .owned-toggle-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            background: rgba(0,0,0,0.55);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 10;
+            transition: 0.2s;
+            color: rgba(255,255,255,0.25);
+        }
+        .owned-toggle-btn.is-owned {
+            background: #2e7d32;
+            border-color: #4caf50;
+            color: white;
+        }
+        .owned-toggle-btn:hover { transform: scale(1.2); }
+
         .card-lv {
             font-size: 15px !important; 
             font-weight: 900 !important; 
@@ -203,6 +226,21 @@ window.syncFirebase = function() {
         }
     }
 
+    // Vinnige owned toggle van prentjie klik
+    window.quickToggleOwned = function(name) {
+        let owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
+        const isOwned = owned.includes(name);
+        if (isOwned) owned = owned.filter(n => n !== name);
+        else owned.push(name);
+        localStorage.setItem('ownedCharacters', JSON.stringify(owned));
+        window.ownedFromStorage = owned;
+        if (window.characters[name]) window.characters[name].o = !isOwned;
+        const btn = document.getElementById('own-btn-' + name.replace(/\s+/g, '-'));
+        if (btn) { if (!isOwned) btn.classList.add('is-owned'); else btn.classList.remove('is-owned'); }
+        if (window.syncFirebase) window.syncFirebase();
+        if (current === name) updateOwnedUI();
+    };
+
     window.toggleOwned = function() {
         if (!current) return;
         window.characters[current].o = !window.characters[current].o;
@@ -287,8 +325,13 @@ window.syncFirebase = function() {
         const card = document.createElement('div');
         card.className = 'char-card'; card.id = 'card-'+name.replace(/\s+/g,'-');
         const img = name.includes("Traveler") ? window.characters[name].e + "1.jpg" : name + "1.jpg";
+        const isOwned = window.characters[name].o;
         card.innerHTML = `
             <div class="done-check">✓</div>
+            <div class="owned-toggle-btn ${isOwned ? 'is-owned' : ''}" 
+                id="own-btn-${name.replace(/\s+/g,'-')}"
+                onclick="event.stopPropagation(); quickToggleOwned('${name}')" 
+                title="Toggle Owned">✓</div>
             <div class="char-icon" style="background-image:url('${img}')"></div>
             <div style="padding:5px; width:100%; box-sizing:border-box;">
                 <div class="card-lv" style="display:none;"></div>
