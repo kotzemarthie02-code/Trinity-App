@@ -43,6 +43,8 @@
       // Stoor notes na Firebase sharedData — almal sien update outomaties
       window.saveCalendarToFirebase = function(notesData) {
         set(ref(db, 'sharedData/calendarNotes'), notesData);
+        // Timestamp — Dashboard wys ! vir almal
+        set(ref(db, 'sharedData/lastUpdated/calendar'), Date.now());
       };
     </script>
 

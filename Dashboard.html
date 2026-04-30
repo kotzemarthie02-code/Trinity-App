@@ -146,7 +146,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
@@ -179,6 +179,36 @@
                     const data = snapshot.val();
                     localStorage.setItem('cal_save_data', JSON.stringify(data || {}));
                     if (window.renderCal) window.renderCal();
+                });
+
+                // Luister vir News update timestamp — wys ! as admin iets nuuts gestoor het
+                onValue(ref(db, 'sharedData/lastUpdated/news'), (snap) => {
+                    const updated = snap.val();
+                    if (!updated) return;
+                    const uid = localStorage.getItem('trinity_uid');
+                    get(ref(db, 'users/' + uid + '/lastRead/news')).then(r => {
+                        const lastRead = r.val() || 0;
+                        if (updated > lastRead) {
+                            document.getElementById('newsBadge').classList.remove('hidden');
+                        } else {
+                            document.getElementById('newsBadge').classList.add('hidden');
+                        }
+                    });
+                });
+
+                // Luister vir Calendar update timestamp — wys ! as admin iets nuuts gestoor het
+                onValue(ref(db, 'sharedData/lastUpdated/calendar'), (snap) => {
+                    const updated = snap.val();
+                    if (!updated) return;
+                    const uid = localStorage.getItem('trinity_uid');
+                    get(ref(db, 'users/' + uid + '/lastRead/calendar')).then(r => {
+                        const lastRead = r.val() || 0;
+                        if (updated > lastRead) {
+                            document.getElementById('calBadge').classList.remove('hidden');
+                        } else {
+                            document.getElementById('calBadge').classList.add('hidden');
+                        }
+                    });
                 });
 
             } else {
@@ -240,7 +270,7 @@
         </div>
         <div class="profile-right">
             <div class="nickname" id="n-display">Traveler</div>
-            <a class="news-btn" href="News.html">
+            <a class="news-btn" href="News.html" onclick="markNewsRead()">
                 📰 NEWS <span class="news-badge hidden" id="newsBadge">!</span>
             </a>
         </div>
@@ -354,7 +384,17 @@
             }
         }        
         
-        function markCalRead() { document.getElementById('calBadge').classList.add('hidden'); }
+        function markCalRead() {
+            document.getElementById('calBadge').classList.add('hidden');
+            const uid = localStorage.getItem('trinity_uid');
+            if (uid) set(ref(db, 'users/' + uid + '/lastRead/calendar'), Date.now());
+        }
+
+        function markNewsRead() {
+            document.getElementById('newsBadge').classList.add('hidden');
+            const uid = localStorage.getItem('trinity_uid');
+            if (uid) set(ref(db, 'users/' + uid + '/lastRead/news'), Date.now());
+        }
 
         window.renderCal = renderCal;
 

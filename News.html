@@ -64,6 +64,8 @@
     // Stoor ook na sharedData/ (net Admin update dit via GitHub)
     window.saveToFirebase = function(key, value) {
         set(ref(db, 'sharedData/newsData/' + key), value);
+        // Timestamp — Dashboard wys ! vir almal
+        set(ref(db, 'sharedData/lastUpdated/news'), Date.now());
     };
 
     // Stoor prent URL na Firebase sodat almal dit sien
