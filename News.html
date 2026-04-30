@@ -71,33 +71,47 @@
         set(ref(db, 'sharedData/newsData/img_' + id), url);
     };
 
-    // Bday prent: eie aparte Firebase node sodat dit NOOIT verdwyn nie
+    // Bday prent: eie aparte Firebase node
     window.saveBdayImg = function(url) {
         set(ref(db, 'sharedData/bdayImg'), url);
     };
+    // Boss prent: eie aparte Firebase node
+    window.saveBossImg = function(url) {
+        set(ref(db, 'sharedData/bossImg'), url);
+    };
 
-    // Luister apart vir bday prent — onafhanklik van newsData
+    // Luister vir bday — stoor localStorage sodat dit bly na refresh/logout
     onValue(ref(db, 'sharedData/bdayImg'), (snap) => {
         const url = snap.val();
         if (!url) return;
-        // Stoor in localStorage sodat dit bly na refresh
         localStorage.setItem('tnews_final_img_bday-wrap', JSON.stringify(url));
-        // Wys op skerm
         const el = document.getElementById('bday-wrap');
         const ph = document.getElementById('bday-ph');
         if (el) el.style.backgroundImage = 'url("' + url + '")';
         if (ph) ph.style.display = 'none';
     });
 
-    // Herstel prente van Firebase
+    // Luister vir boss — stoor localStorage sodat dit bly na refresh/logout
+    onValue(ref(db, 'sharedData/bossImg'), (snap) => {
+        const url = snap.val();
+        if (!url) return;
+        localStorage.setItem('tnews_final_img_boss-wrap', JSON.stringify(url));
+        const el = document.getElementById('boss-wrap');
+        const ph = document.getElementById('boss-ph');
+        if (el) el.style.backgroundImage = 'url("' + url + '")';
+        if (ph) ph.style.display = 'none';
+    });
+
+    // Herstel ander prente van newsData — ook stoor in localStorage
     onValue(ref(db, 'sharedData/newsData'), (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
-        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
-        const phMap = {'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
+        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap'];
+        const phMap = {'maps-wrap':'maps-ph'};
         imgKeys.forEach(id => {
             const url = data['img_' + id];
             if (url) {
+                localStorage.setItem('tnews_final_img_' + id, JSON.stringify(url));
                 const el = document.getElementById(id);
                 if (el) {
                     el.style.backgroundImage = 'url("' + url + '")';
@@ -678,14 +692,15 @@ function chBg(i,id){
   }
 }
 function chPic(i,w,p){
-  if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}
+  if(!_unlocked){alert('\uD83D\uDD12 Unlock via Settings to change picture.');i.value='';return;}
   if(i.files&&i.files[0]){
     const isBday = (w === 'bday-wrap');
-    // Bday: baie klein kompressie om seker te maak Firebase dit aanvaar
+    const isBoss = (w === 'boss-wrap');
+    const isSpecial = isBday || isBoss;
+    // Gebruik sterker kompressie vir bday en boss — itereer kleiner as nog te groot
     function tryCompress(maxPx, qual) {
       compressImg(i.files[0], url => {
-        // As bday prent nog te groot is (>800KB base64), probeer nog kleiner
-        if(isBday && url.length > 800000 && qual > 0.2) {
+        if(isSpecial && url.length > 750000 && qual > 0.2) {
           tryCompress(Math.round(maxPx * 0.8), Math.max(qual - 0.1, 0.2));
           return;
         }
@@ -693,11 +708,13 @@ function chPic(i,w,p){
         if(el) el.style.backgroundImage='url("'+url+'")';
         const ph=document.getElementById(p);if(ph)ph.style.display='none';
         localStorage.setItem('tnews_final_img_'+w, JSON.stringify(url));
-        if(window.saveImageURL) window.saveImageURL(w, url);
+        // Stoor na eie Firebase node — nie deel van newsData nie
         if(isBday && window.saveBdayImg) window.saveBdayImg(url);
-      }, maxPx, qual);
+        else if(isBoss && window.saveBossImg) window.saveBossImg(url);
+        else if(window.saveImageURL) window.saveImageURL(w, url);
+      }, isSpecial ? 500 : 800, isSpecial ? 0.5 : 0.7);
     }
-    tryCompress(isBday ? 500 : 800, isBday ? 0.5 : 0.7);
+    tryCompress(isSpecial ? 500 : 800, isSpecial ? 0.5 : 0.7);
   }
 }
 
