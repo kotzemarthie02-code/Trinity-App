@@ -146,7 +146,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
@@ -163,30 +163,45 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Stoor uid vir alle ander lêers
                 localStorage.setItem('trinity_uid', user.uid);
+
+                // Nickname/UID — stoor in localStorage sodat dit bly na refresh
                 onValue(ref(db, 'users/' + user.uid), (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        document.getElementById("n-display").innerText = data.nickname || "Traveler";
-                        document.getElementById("u-display").innerText = data.genshinUid || data.uid || "--------";
-                        if (data.profilePic) document.getElementById("avatar").src = data.profilePic;
+                        const nick = data.nickname || "Traveler";
+                        const uid  = data.genshinUid || data.uid || "--------";
+                        document.getElementById("n-display").innerText = nick;
+                        document.getElementById("u-display").innerText = uid;
+                        // Stoor in localStorage sodat refresh dit behou
+                        localStorage.setItem('trinity_nickname', nick);
+                        localStorage.setItem('trinity_genshinuid', uid);
+                        if (data.profilePic) {
+                            document.getElementById("avatar").src = data.profilePic;
+                            localStorage.setItem('trinity_profilepic', data.profilePic);
+                        }
                     }
                 });
 
-                // Luister na gedeelde kalender notes van Firebase — almal sien dieselfde
+                // Wys nickname/uid van localStorage terwyl Firebase laai
+                const cachedNick = localStorage.getItem('trinity_nickname');
+                const cachedUid  = localStorage.getItem('trinity_genshinuid');
+                const cachedPic  = localStorage.getItem('trinity_profilepic');
+                if (cachedNick) document.getElementById("n-display").innerText = cachedNick;
+                if (cachedUid)  document.getElementById("u-display").innerText = cachedUid;
+                if (cachedPic)  document.getElementById("avatar").src = cachedPic;
+
+                // Luister na kalender notes
                 onValue(ref(db, 'sharedData/calendarNotes'), (snapshot) => {
                     const data = snapshot.val();
                     localStorage.setItem('cal_save_data', JSON.stringify(data || {}));
                     if (window.renderCal) window.renderCal();
                 });
 
-                // Luister vir News update timestamp — wys ! as admin iets nuuts gestoor het
+                // News badge — luister vir lastUpdated en vergelyk met lastRead
                 onValue(ref(db, 'sharedData/lastUpdated/news'), (snap) => {
-                    const updated = snap.val();
-                    if (!updated) return;
-                    const uid = localStorage.getItem('trinity_uid');
-                    get(ref(db, 'users/' + uid + '/lastRead/news')).then(r => {
+                    const updated = snap.val() || 0;
+                    onValue(ref(db, 'users/' + user.uid + '/lastRead/news'), (r) => {
                         const lastRead = r.val() || 0;
                         if (updated > lastRead) {
                             document.getElementById('newsBadge').classList.remove('hidden');
@@ -196,12 +211,10 @@
                     });
                 });
 
-                // Luister vir Calendar update timestamp — wys ! as admin iets nuuts gestoor het
+                // Calendar badge — luister vir lastUpdated en vergelyk met lastRead
                 onValue(ref(db, 'sharedData/lastUpdated/calendar'), (snap) => {
-                    const updated = snap.val();
-                    if (!updated) return;
-                    const uid = localStorage.getItem('trinity_uid');
-                    get(ref(db, 'users/' + uid + '/lastRead/calendar')).then(r => {
+                    const updated = snap.val() || 0;
+                    onValue(ref(db, 'users/' + user.uid + '/lastRead/calendar'), (r) => {
                         const lastRead = r.val() || 0;
                         if (updated > lastRead) {
                             document.getElementById('calBadge').classList.remove('hidden');
