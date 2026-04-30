@@ -202,8 +202,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
     <div class="ver-bar">
       <div style="font-family:'Cinzel',serif;font-weight:900;color:var(--green);letter-spacing:1px;">GENSHIN IMPACT</div>
       <div style="display:flex;gap:10px;align-items:center;">
-        <input type="text" id="ver-input" placeholder="6.5" style="width:80px;text-align:center;font-weight:900;color:#ffe08a;background:rgba(255,224,138,0.1);border:1px solid rgba(255,224,138,0.4);font-size:15px;" oninput="saveNews();updVer()">
-        <input type="text" id="title-input" placeholder="Update Title..." style="width:320px;font-weight:800;color:#ffe08a;background:rgba(255,224,138,0.1);border:1px solid rgba(255,224,138,0.4);font-size:14px;" oninput="saveNews()">
+        <input type="text" id="ver-input" placeholder="6.5" style="width:80px;text-align:center;font-weight:900;color:#a5ffad;background:rgba(165,255,173,0.1);border:1px solid rgba(165,255,173,0.4);font-size:15px;" oninput="saveNews();updVer()">
+        <input type="text" id="title-input" placeholder="Update Title..." style="width:320px;font-weight:800;color:#a5ffad;background:rgba(165,255,173,0.1);border:1px solid rgba(165,255,173,0.4);font-size:14px;" oninput="saveNews()">
         <div style="color:var(--green);font-size:10px;font-weight:800;">● ACTIVE</div>
       </div>
     </div>
@@ -388,8 +388,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
       <div class="card">
         <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:12px;">🎂 UPCOMING BIRTHDAYS</div>
         <div id="bday-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div class="pw" id="bday-wrap" style="margin-top:12px;border:2px solid rgba(0,195,255,0.35);height:180px;background-size:cover;background-position:center;" onclick="document.getElementById('bday-file').click()">
-          <span id="bday-ph" style="font-size:11px;opacity:0.5;">🎂 Click to add birthday picture</span>
+        <div class="pw" id="bday-wrap" style="margin-top:12px;border:2px solid rgba(0,195,255,0.35);height:180px;background-size:cover;background-position:center;background-image:url('May b-day.png');" onclick="if(_unlocked)document.getElementById('bday-file').click()">
+          <span id="bday-ph" style="font-size:11px;opacity:0.5;display:none;">🎂 Click to add birthday picture</span>
         </div>
         <input type="file" id="bday-file" style="display:none" accept="image/*" onchange="chPic(this,'bday-wrap','bday-ph')">
       </div>
@@ -405,7 +405,7 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
             <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:5px;justify-content:center;">
               📺 GENSHIN IMPACT
               <input type="text" id="live-ver" placeholder="6.5"
-                style="width:52px;background:none;border:none;border-bottom:1px solid var(--gold);color:#ffe08a;text-align:center;font-size:11px;padding:0 3px;font-weight:900;"
+                style="width:52px;background:none;border:none;border-bottom:1px solid var(--gold);color:white;text-align:center;font-size:11px;padding:0 3px;"
                 oninput="saveLive()" onclick="event.stopPropagation()">
               LIVESTREAM
             </div>
