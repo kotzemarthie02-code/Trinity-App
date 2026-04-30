@@ -80,11 +80,13 @@
     onValue(ref(db, 'sharedData/bdayImg'), (snap) => {
         const url = snap.val();
         if (!url) return;
+        // Stoor in localStorage sodat dit bly na refresh
+        localStorage.setItem('tnews_final_img_bday-wrap', JSON.stringify(url));
+        // Wys op skerm
         const el = document.getElementById('bday-wrap');
         const ph = document.getElementById('bday-ph');
         if (el) el.style.backgroundImage = 'url("' + url + '")';
         if (ph) ph.style.display = 'none';
-        localStorage.setItem('tnews_final_img_bday-wrap', JSON.stringify(url));
     });
 
     // Herstel prente van Firebase
@@ -678,19 +680,24 @@ function chBg(i,id){
 function chPic(i,w,p){
   if(!_unlocked){alert('🔒 Unlock via Settings to change picture.');i.value='';return;}
   if(i.files&&i.files[0]){
-    // Bday prent: sterker kompressie sodat Firebase dit aanvaar
     const isBday = (w === 'bday-wrap');
-    const maxPx = isBday ? 600 : 800;
-    const qual  = isBday ? 0.55 : 0.7;
-    compressImg(i.files[0], url => {
-      const el = document.getElementById(w);
-      if(el) el.style.backgroundImage='url("'+url+'")';
-      const ph=document.getElementById(p);if(ph)ph.style.display='none';
-      localStorage.setItem('tnews_final_img_'+w, JSON.stringify(url));
-      if(window.saveImageURL) window.saveImageURL(w, url);
-      // Bday: stoor ook apart sodat dit nooit deur ander data oorskryf word nie
-      if(isBday && window.saveBdayImg) window.saveBdayImg(url);
-    }, maxPx, qual);
+    // Bday: baie klein kompressie om seker te maak Firebase dit aanvaar
+    function tryCompress(maxPx, qual) {
+      compressImg(i.files[0], url => {
+        // As bday prent nog te groot is (>800KB base64), probeer nog kleiner
+        if(isBday && url.length > 800000 && qual > 0.2) {
+          tryCompress(Math.round(maxPx * 0.8), Math.max(qual - 0.1, 0.2));
+          return;
+        }
+        const el = document.getElementById(w);
+        if(el) el.style.backgroundImage='url("'+url+'")';
+        const ph=document.getElementById(p);if(ph)ph.style.display='none';
+        localStorage.setItem('tnews_final_img_'+w, JSON.stringify(url));
+        if(window.saveImageURL) window.saveImageURL(w, url);
+        if(isBday && window.saveBdayImg) window.saveBdayImg(url);
+      }, maxPx, qual);
+    }
+    tryCompress(isBday ? 500 : 800, isBday ? 0.5 : 0.7);
   }
 }
 
