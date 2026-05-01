@@ -187,6 +187,59 @@
             margin-top: 15px; padding: 6px; font-weight: bold;
         }
         .unlocked .add-note-btn { display: block; }
+
+        /* Note Modal */
+        .note-modal-overlay {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.7); z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        .note-modal-overlay.open { display: flex; }
+        .note-modal {
+            background: #1a1a2e; border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px; padding: 24px; width: 380px; max-width: 95vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        .note-modal h3 { margin: 0 0 16px; color: var(--gold); font-size: 16px; }
+        .note-modal input[type=text] {
+            width: 100%; padding: 10px 12px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05);
+            color: white; font-size: 14px; box-sizing: border-box; margin-bottom: 16px;
+        }
+        .note-modal input[type=text]:focus { outline: none; border-color: var(--gold); }
+        .modal-section-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+
+        /* Kleur swatches */
+        .color-swatches {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+        }
+        .color-swatch {
+            width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+            border: 3px solid transparent; transition: 0.15s; flex-shrink: 0;
+        }
+        .color-swatch:hover { transform: scale(1.2); }
+        .color-swatch.selected { border-color: white; transform: scale(1.15); }
+
+        /* Emoji picker */
+        .emoji-grid {
+            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+            max-height: 120px; overflow-y: auto;
+        }
+        .emoji-btn {
+            width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05); cursor: pointer; font-size: 18px;
+            display: flex; align-items: center; justify-content: center; transition: 0.15s;
+        }
+        .emoji-btn:hover, .emoji-btn.selected { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+
+        .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+        .modal-btn {
+            padding: 9px 20px; border-radius: 8px; border: none; font-weight: bold;
+            cursor: pointer; font-size: 14px; transition: 0.2s;
+        }
+        .modal-btn.cancel { background: rgba(255,255,255,0.1); color: white; }
+        .modal-btn.confirm { background: var(--gold); color: black; }
+        .modal-btn:hover { opacity: 0.85; }
         
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
@@ -212,22 +265,123 @@
         <div class="calendar-grid" id="calendarGrid"></div>
     </div>
 
+    <!-- Note Modal -->
+    <div class="note-modal-overlay" id="noteModalOverlay">
+        <div class="note-modal">
+            <h3>📝 Voeg Note By</h3>
+            <input type="text" id="modalNoteText" placeholder="Skryf jou note...">
+
+            <div class="modal-section-label">🎨 Kies Kleur</div>
+            <div class="color-swatches" id="colorSwatches"></div>
+
+            <div class="modal-section-label">😊 Voeg Emoji By (opsioneel)</div>
+            <div class="emoji-grid" id="emojiGrid"></div>
+
+            <div class="modal-btns">
+                <button class="modal-btn cancel" onclick="closeNoteModal()">Kanselleer</button>
+                <button class="modal-btn confirm" onclick="confirmNote()">✓ Stoor</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         window.renderCalendar = renderCalendar;
         window.onload = () => {
-            localStorage.setItem('calUnread', 'false');
-            localStorage.setItem('calRead_April2026', 'true');
-            renderCalendar(); 
+            buildModal();
+            renderCalendar();
         };
 
         let isLocked = true;
-        let currentViewDate = new Date(2026, 3, 1); 
-        
-        const _0x4f2a = "b3duZXI="; 
+        let currentViewDate = new Date();
+        let _pendingDateKey = null;
+        let _selectedColor = '#ffcc00';
+        let _selectedEmoji = '';
 
-        const colorList = {
-            "1": "#00d4ff", "2": "#ffcc00", "3": "#33ff77", "4": "#ff4d4d", "5": "#cc66ff"
-        };
+        const _0x4f2a = "b3duZXI=";
+
+        // Alle kleure soos Word colour picker
+        const allColors = [
+            '#ff4d4d','#ff8c42','#ffcc00','#ffe08a','#a5ffad','#33ff77','#00d4ff',
+            '#4da6ff','#cc66ff','#ff66b3','#ffffff','#aaaaaa','#555555','#1a1a2e',
+            '#ff6b6b','#ffd700','#00ffcc','#7b2fff','#ff3cac','#2de2e6','#f5a623',
+            '#43e97b','#fa709a','#4facfe','#a18cd1','#ffecd2','#c471ed','#30cfd0'
+        ];
+
+        // Emoji lys
+        const emojiList = [
+            '🎉','🎂','🎁','⚔️','🛡️','🌟','💎','🔥','❄️','⚡',
+            '🌸','🎯','📅','⏰','🏆','💫','🌙','☀️','🌊','🎮',
+            '✅','❌','⚠️','📌','💡','🔔','🎪','🌈','💜','💛',
+            '❤️','💚','💙','🖤','🤍','🎵','🎶','🍰','🥳','🏅'
+        ];
+
+        function buildModal() {
+            // Bou kleur swatches
+            const sw = document.getElementById('colorSwatches');
+            allColors.forEach(c => {
+                const d = document.createElement('div');
+                d.className = 'color-swatch' + (c === _selectedColor ? ' selected' : '');
+                d.style.background = c;
+                d.onclick = () => {
+                    _selectedColor = c;
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                    d.classList.add('selected');
+                };
+                sw.appendChild(d);
+            });
+            // Bou emoji grid
+            const eg = document.getElementById('emojiGrid');
+            // Leë opsie
+            const none = document.createElement('div');
+            none.className = 'emoji-btn selected'; none.textContent = '✕';
+            none.title = 'Geen emoji';
+            none.onclick = () => { _selectedEmoji = ''; document.querySelectorAll('.emoji-btn').forEach(e=>e.classList.remove('selected')); none.classList.add('selected'); };
+            eg.appendChild(none);
+            emojiList.forEach(em => {
+                const b = document.createElement('div');
+                b.className = 'emoji-btn'; b.textContent = em;
+                b.onclick = () => {
+                    _selectedEmoji = em;
+                    document.querySelectorAll('.emoji-btn').forEach(e => e.classList.remove('selected'));
+                    b.classList.add('selected');
+                };
+                eg.appendChild(b);
+            });
+        }
+
+        function addNote(dateKey) {
+            if (isLocked) return;
+            _pendingDateKey = dateKey;
+            _selectedEmoji = '';
+            document.getElementById('modalNoteText').value = '';
+            // Reset emoji selection
+            document.querySelectorAll('.emoji-btn').forEach(e => e.classList.remove('selected'));
+            document.querySelector('.emoji-btn').classList.add('selected');
+            document.getElementById('noteModalOverlay').classList.add('open');
+            setTimeout(() => document.getElementById('modalNoteText').focus(), 100);
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModalOverlay').classList.remove('open');
+        }
+
+        function confirmNote() {
+            const rawText = document.getElementById('modalNoteText').value.trim();
+            if (!rawText) { alert('Skryf eers \'n note!'); return; }
+            const text = _selectedEmoji ? _selectedEmoji + ' ' + rawText : rawText;
+            let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
+            if (!notesData[_pendingDateKey]) notesData[_pendingDateKey] = [];
+            notesData[_pendingDateKey].push({ text, color: _selectedColor });
+            localStorage.setItem('cal_save_data', JSON.stringify(notesData));
+            if (window.saveCalendarToFirebase) window.saveCalendarToFirebase(notesData);
+            closeNoteModal();
+            renderCalendar();
+        }
+
+        // Sluit modal as jy buite klik
+        document.getElementById('noteModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeNoteModal();
+        });
 
         function toggleLock() {
             if (isLocked) {
@@ -302,22 +456,7 @@
             }
         }
 
-        function addNote(dateKey) {
-            if(isLocked) return;
-            const text = prompt("Note:");
-            if(!text) return;
-            const choice = prompt("1:Blue, 2:Goud, 3:Green, 4:Red, 5:Purple");
-            const color = colorList[choice] || colorList["2"];
-            let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');
-            if(!notesData[dateKey]) notesData[dateKey] = [];
-            notesData[dateKey].push({ text: text, color: color });
-            localStorage.setItem('cal_save_data', JSON.stringify(notesData));
-            // Stoor na Firebase — almal sien dit outomaties
-            if(window.saveCalendarToFirebase) window.saveCalendarToFirebase(notesData);
-            renderCalendar();
-        }
-
-function deleteNote(dateKey, idx) {
+        function deleteNote(dateKey, idx) {
     if(isLocked) return;
     if(confirm("Delete hierdie nota?")) {
         let notesData = JSON.parse(localStorage.getItem('cal_save_data') || '{}');

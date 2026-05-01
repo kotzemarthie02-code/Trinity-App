@@ -698,16 +698,72 @@ function buildPlan() {
   for (let i = 0; i < PLAN_ROWS; i++) {
     const row = document.createElement('div');
     row.className = 'plan-item' + (data.checks[i] ? ' item-done' : '');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+
     const cb = document.createElement('div');
     cb.className = 'plan-cb' + (data.checks[i] ? ' checked' : '');
     cb.onclick = () => togglePlanItem(i);
+
     const inp = document.createElement('input');
     inp.type = 'text'; inp.placeholder = 'To-do…';
     inp.value = data.texts[i] || '';
+    inp.style.cssText = 'flex:1;';
     inp.oninput = () => savePlanText(i, inp.value);
-    row.appendChild(cb); row.appendChild(inp);
+
+    // Emoji knoppie
+    const emojiBtn = document.createElement('button');
+    emojiBtn.textContent = '😊';
+    emojiBtn.title = 'Voeg emoji by';
+    emojiBtn.style.cssText = 'background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;cursor:pointer;font-size:16px;padding:2px 6px;color:white;flex-shrink:0;';
+    emojiBtn.onclick = (e) => { e.stopPropagation(); showEmojiPicker(inp, emojiBtn); };
+
+    row.appendChild(cb); row.appendChild(inp); row.appendChild(emojiBtn);
     container.appendChild(row);
   }
+}
+
+// Emoji picker vir Trinity
+const trinityEmojis = [
+  '😊','😎','🥳','😍','🤩','💪','🔥','⚡','🌟','💫',
+  '🎯','🏆','💎','⚔️','🛡️','🎮','🎉','🎁','🌸','🌈',
+  '✅','📌','💡','🔔','⏰','📅','🗒️','💜','❤️','💛',
+  '💚','💙','🤍','🖤','🌙','☀️','🌊','🍰','🥰','😂'
+];
+
+let _activePicker = null;
+function showEmojiPicker(inp, btn) {
+    // Sluit as al oop
+    if (_activePicker) { _activePicker.remove(); _activePicker = null; return; }
+    const picker = document.createElement('div');
+    picker.style.cssText = 'position:absolute;background:#1a1a2e;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:10px;display:flex;flex-wrap:wrap;gap:5px;z-index:9999;width:260px;box-shadow:0 10px 30px rgba(0,0,0,0.8);';
+    trinityEmojis.forEach(em => {
+        const b = document.createElement('button');
+        b.textContent = em;
+        b.style.cssText = 'background:none;border:none;font-size:20px;cursor:pointer;padding:3px;border-radius:4px;';
+        b.onmouseover = () => b.style.background = 'rgba(255,255,255,0.15)';
+        b.onmouseout = () => b.style.background = 'none';
+        b.onclick = () => {
+            // Voeg emoji by op cursor posisie of einde
+            const pos = inp.selectionStart;
+            const val = inp.value;
+            inp.value = val.slice(0, pos) + em + val.slice(pos);
+            inp.focus();
+            inp.selectionStart = inp.selectionEnd = pos + em.length;
+            inp.dispatchEvent(new Event('input'));
+            picker.remove(); _activePicker = null;
+        };
+        picker.appendChild(b);
+    });
+    // Posisioneer naby die knoppie
+    const rect = btn.getBoundingClientRect();
+    picker.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+    picker.style.left = Math.max(0, rect.left - 100) + 'px';
+    document.body.appendChild(picker);
+    _activePicker = picker;
+    // Sluit as buite klik
+    setTimeout(() => document.addEventListener('click', function h(e) {
+        if (!picker.contains(e.target) && e.target !== btn) { picker.remove(); _activePicker = null; document.removeEventListener('click', h); }
+    }), 10);
 }
 
 function savePlan() {
