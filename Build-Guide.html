@@ -608,73 +608,56 @@ body::after {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // ── Karakters stoor (Admin) ──
+  // Karakters stoor (Admin skryf, almal lees)
   window.fbSaveChars = async function(arr) {
     try {
       await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(arr) });
-    } catch(e) { console.error('fbSaveChars fout:', e); }
+    } catch(e) { console.error('fbSaveChars:', e); }
   };
 
-  // ── Karakters laai ──
-  window.fbLoadChars = async function() {
-    try {
-      const snap = await get(ref(db, 'buildguide/characters'));
-      if (snap.exists()) return JSON.parse(snap.val().chars || '[]');
-    } catch(e) { console.error('fbLoadChars fout:', e); }
-    return [];
-  };
-
-  // ── Live sync — almal sien wysigings dadelik ──
-  window.fbWatchChars = function(callback) {
-    onValue(ref(db, 'buildguide/characters'), (snap) => {
-      if (snap.exists()) {
-        try { callback(JSON.parse(snap.val().chars || '[]')); } catch(e) {}
-      }
-    });
-  };
-
-  // ── Owned stoor per gebruiker ──
+  // Owned stoor per gebruiker apart
   window.fbSaveOwned = async function(uid, arr) {
     try {
       await set(ref(db, 'buildguide_owned/' + uid), { owned: JSON.stringify(arr) });
-    } catch(e) { console.error('fbSaveOwned fout:', e); }
+    } catch(e) { console.error('fbSaveOwned:', e); }
   };
 
-  // ── Owned laai per gebruiker ──
-  window.fbLoadOwned = async function(uid) {
-    try {
-      const snap = await get(ref(db, 'buildguide_owned/' + uid));
-      if (snap.exists()) return JSON.parse(snap.val().owned || '[]');
-    } catch(e) { console.error('fbLoadOwned fout:', e); }
-    return [];
-  };
-
-  // ── Init: laai alles van Firebase by bladsy oopmaak ──
+  // Laai alles by bladsy oopmaak
   (async () => {
-    const uid = localStorage.getItem('trinity_uid') || 'Admin';
+    try {
+      const uid = localStorage.getItem('trinity_uid') || 'Admin';
 
-    // Laai karakters van Firebase
-    const chars = await window.fbLoadChars();
-    if (chars.length > 0) {
-      localStorage.setItem('bg_chars_v3', JSON.stringify(chars));
-    }
-
-    // Laai owned vir hierdie gebruiker
-    const owned = await window.fbLoadOwned(uid);
-    localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned));
-    localStorage.setItem('bg_owned_v3', JSON.stringify(owned));
-
-    // Live watch — as admin voeg karakter by, sien almal dit dadelik
-    window.fbWatchChars((updatedChars) => {
-      localStorage.setItem('bg_chars_v3', JSON.stringify(updatedChars));
-      if (window.myChars !== undefined && typeof rebuildRoster === 'function') {
-        window.myChars = updatedChars;
-        myChars = updatedChars;
-        rebuildRoster();
+      // Karakters
+      const cSnap = await get(ref(db, 'buildguide/characters'));
+      if (cSnap.exists()) {
+        const chars = JSON.parse(cSnap.val().chars || '[]');
+        if (chars.length > 0) localStorage.setItem('bg_chars_v3', JSON.stringify(chars));
       }
-    });
 
-    console.log('✅ Firebase Realtime DB gereed | Gebruiker:', uid, '| Karakters:', chars.length);
+      // Owned vir hierdie gebruiker
+      const oSnap = await get(ref(db, 'buildguide_owned/' + uid));
+      if (oSnap.exists()) {
+        const owned = JSON.parse(oSnap.val().owned || '[]');
+        localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned));
+        localStorage.setItem('bg_owned_v3', JSON.stringify(owned));
+      }
+
+      // Live watch — as admin wysig, sien almal dit dadelik
+      onValue(ref(db, 'buildguide/characters'), (snap) => {
+        if (!snap.exists()) return;
+        try {
+          const chars = JSON.parse(snap.val().chars || '[]');
+          localStorage.setItem('bg_chars_v3', JSON.stringify(chars));
+          if (typeof myChars !== 'undefined' && typeof rebuildRoster === 'function') {
+            myChars.length = 0;
+            chars.forEach(c => myChars.push(c));
+            rebuildRoster();
+          }
+        } catch(e) {}
+      });
+
+      console.log('✅ Firebase gereed | Gebruiker:', uid);
+    } catch(e) { console.error('Firebase init fout:', e); }
   })();
 </script>
 
@@ -1954,22 +1937,19 @@ function loadChars() {
   try { return JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) { return []; }
 }
 function saveChars(arr) {
-  // Stoor lokaal (dadelik) + Firebase (sync vir almal)
   localStorage.setItem('bg_chars_v3', JSON.stringify(arr));
   if (typeof window.fbSaveChars === 'function') window.fbSaveChars(arr);
 }
 function getOwned() {
   try {
     const uid = localStorage.getItem('trinity_uid') || 'Admin';
-    const val = localStorage.getItem('bg_owned_' + uid) || localStorage.getItem('bg_owned_v3') || '[]';
-    return JSON.parse(val);
+    return JSON.parse(localStorage.getItem('bg_owned_' + uid) || localStorage.getItem('bg_owned_v3') || '[]');
   } catch(e) { return []; }
 }
 function setOwned(arr) {
   const uid = localStorage.getItem('trinity_uid') || 'Admin';
   localStorage.setItem('bg_owned_' + uid, JSON.stringify(arr));
   localStorage.setItem('bg_owned_v3', JSON.stringify(arr));
-  // Stoor op Firebase ook
   if (typeof window.fbSaveOwned === 'function') window.fbSaveOwned(uid, arr);
 }
 function isOwned(key) { return getOwned().includes(key); }
@@ -2325,42 +2305,47 @@ function collectTals() {
 
 // ── Save char ──
 function saveChar() {
-  const name=document.getElementById('m-name').value.trim();
-  if(!name){alert('Name is required!');return;}
-  const stars=parseInt(document.getElementById('m-stars').value)||5;
-  const data={
-    name, title:document.getElementById('m-title').value.trim(),
-    tier:document.getElementById('m-tier').value.trim()||'S-Tier',
-    elem:_selEl, weapon:_selWep, stars,
-    charImg:_pendingImgs['char']||'',
-    weapons:collectWeps(), artSets:collectArts(),
-    artSlots:{
-      flower:'HP', plume:'ATK',
-      sands:(document.getElementById('slot-sands')||{}).value||'',
-      goblet:(document.getElementById('slot-goblet')||{}).value||'',
-      circlet:(document.getElementById('slot-circlet')||{}).value||''
-    },
-    substats:document.getElementById('m-subs').value,
-    teams:collectTeams(), talents:collectTals(),
-    notes:document.getElementById('m-notes').value.trim(),
-    bossImg:_pendingImgs['boss']||'',
-    bossName:document.getElementById('m-boss').value.trim(),
-    bossLocation:document.getElementById('m-boss-loc').value.trim(),
-    bossFightLink:document.getElementById('m-boss-link').value.trim(),
-    linkYt:document.getElementById('m-link-yt').value.trim(),
-    linkTt:document.getElementById('m-link-tt').value.trim(),
-    linkBuild:document.getElementById('m-link-build').value.trim(),
-    linkTrailer:document.getElementById('m-link-trailer').value.trim(),
-    linkMisc:document.getElementById('m-link-misc').value.trim(),
-    linkWiki:document.getElementById('m-link-wiki').value.trim()
-  };
-  if(_editIdx!==null) { myChars[_editIdx]=data; }
-  else { myChars.push(data); }
-  saveChars(myChars);
-  closeModal();
-  rebuildRoster();
-  if(_editIdx===null) showMyChar(myChars.length-1);
-  else showMyChar(_editIdx);
+  try {
+    const name=document.getElementById('m-name').value.trim();
+    if(!name){alert('Name is required!');return;}
+    const stars=parseInt(document.getElementById('m-stars').value)||5;
+    const data={
+      name, title:document.getElementById('m-title').value.trim(),
+      tier:document.getElementById('m-tier').value.trim()||'S-Tier',
+      elem:_selEl, weapon:_selWep, stars,
+      charImg:_pendingImgs['char']||'',
+      weapons:collectWeps(), artSets:collectArts(),
+      artSlots:{
+        flower:'HP', plume:'ATK',
+        sands:(document.getElementById('slot-sands')||{}).value||'',
+        goblet:(document.getElementById('slot-goblet')||{}).value||'',
+        circlet:(document.getElementById('slot-circlet')||{}).value||''
+      },
+      substats:document.getElementById('m-subs').value,
+      teams:collectTeams(), talents:collectTals(),
+      notes:document.getElementById('m-notes').value.trim(),
+      bossImg:_pendingImgs['boss']||'',
+      bossName:document.getElementById('m-boss').value.trim(),
+      bossLocation:document.getElementById('m-boss-loc').value.trim(),
+      bossFightLink:document.getElementById('m-boss-link').value.trim(),
+      linkYt:document.getElementById('m-link-yt').value.trim(),
+      linkTt:document.getElementById('m-link-tt').value.trim(),
+      linkBuild:document.getElementById('m-link-build').value.trim(),
+      linkTrailer:document.getElementById('m-link-trailer').value.trim(),
+      linkMisc:document.getElementById('m-link-misc').value.trim(),
+      linkWiki:document.getElementById('m-link-wiki').value.trim()
+    };
+    if(_editIdx!==null) { myChars[_editIdx]=data; }
+    else { myChars.push(data); }
+    saveChars(myChars);
+    closeModal();
+    rebuildRoster();
+    if(_editIdx===null) showMyChar(myChars.length-1);
+    else showMyChar(_editIdx);
+  } catch(err) {
+    alert('❌ Save fout: ' + err.message);
+    console.error('saveChar fout:', err);
+  }
 }
 
 function deleteChar(idx) {
@@ -2670,7 +2655,7 @@ function bgOwnedKey() {
 // Is admin unlocked (kan edit/add/delete)?
 let _bgUnlocked = false;
 
-// ── Owned: gebruik die hoofsisteem funksies (bo gedefinieer met Firebase support) ──
+// ── Owned: gebruik hoofsisteem funksies bo (het Firebase support) ──
 
 // ── Owned tellers ──
 function bgGetOwnedCount() {
