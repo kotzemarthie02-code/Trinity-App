@@ -590,6 +590,94 @@ body::after {
   </div>
 </div>
 
+<!-- Firebase Realtime Database -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoCKHkd1FhfNeFMnJInkqqgiX0GCjAJAQ",
+    authDomain: "trinityapp-28019.firebaseapp.com",
+    databaseURL: "https://trinityapp-28019-default-rtdb.firebaseio.com",
+    projectId: "trinityapp-28019",
+    storageBucket: "trinityapp-28019.firebasestorage.app",
+    messagingSenderId: "72035223407",
+    appId: "1:72035223407:web:b1a40d9ce96ae479be4a9a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // ── Karakters stoor (Admin) ──
+  window.fbSaveChars = async function(arr) {
+    try {
+      await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(arr) });
+    } catch(e) { console.error('fbSaveChars fout:', e); }
+  };
+
+  // ── Karakters laai ──
+  window.fbLoadChars = async function() {
+    try {
+      const snap = await get(ref(db, 'buildguide/characters'));
+      if (snap.exists()) return JSON.parse(snap.val().chars || '[]');
+    } catch(e) { console.error('fbLoadChars fout:', e); }
+    return [];
+  };
+
+  // ── Live sync — almal sien wysigings dadelik ──
+  window.fbWatchChars = function(callback) {
+    onValue(ref(db, 'buildguide/characters'), (snap) => {
+      if (snap.exists()) {
+        try { callback(JSON.parse(snap.val().chars || '[]')); } catch(e) {}
+      }
+    });
+  };
+
+  // ── Owned stoor per gebruiker ──
+  window.fbSaveOwned = async function(uid, arr) {
+    try {
+      await set(ref(db, 'buildguide_owned/' + uid), { owned: JSON.stringify(arr) });
+    } catch(e) { console.error('fbSaveOwned fout:', e); }
+  };
+
+  // ── Owned laai per gebruiker ──
+  window.fbLoadOwned = async function(uid) {
+    try {
+      const snap = await get(ref(db, 'buildguide_owned/' + uid));
+      if (snap.exists()) return JSON.parse(snap.val().owned || '[]');
+    } catch(e) { console.error('fbLoadOwned fout:', e); }
+    return [];
+  };
+
+  // ── Init: laai alles van Firebase by bladsy oopmaak ──
+  (async () => {
+    const uid = localStorage.getItem('trinity_uid') || 'Admin';
+
+    // Laai karakters van Firebase
+    const chars = await window.fbLoadChars();
+    if (chars.length > 0) {
+      localStorage.setItem('bg_chars_v3', JSON.stringify(chars));
+    }
+
+    // Laai owned vir hierdie gebruiker
+    const owned = await window.fbLoadOwned(uid);
+    localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned));
+    localStorage.setItem('bg_owned_v3', JSON.stringify(owned));
+
+    // Live watch — as admin voeg karakter by, sien almal dit dadelik
+    window.fbWatchChars((updatedChars) => {
+      localStorage.setItem('bg_chars_v3', JSON.stringify(updatedChars));
+      if (window.myChars !== undefined && typeof rebuildRoster === 'function') {
+        window.myChars = updatedChars;
+        myChars = updatedChars;
+        rebuildRoster();
+      }
+    });
+
+    console.log('✅ Firebase Realtime DB gereed | Gebruiker:', uid, '| Karakters:', chars.length);
+  })();
+</script>
+
 <script>
 
 // ── CHARACTER DATA ──
@@ -1865,11 +1953,25 @@ const STAR_COLORS = { 5:'#c8a84b', 4:'#9b7fd4' };
 function loadChars() {
   try { return JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) { return []; }
 }
-function saveChars(arr) { localStorage.setItem('bg_chars_v3', JSON.stringify(arr)); }
-function getOwned() {
-  try { return JSON.parse(localStorage.getItem('bg_owned_v3') || '[]'); } catch(e) { return []; }
+function saveChars(arr) {
+  // Stoor lokaal (dadelik) + Firebase (sync vir almal)
+  localStorage.setItem('bg_chars_v3', JSON.stringify(arr));
+  if (typeof window.fbSaveChars === 'function') window.fbSaveChars(arr);
 }
-function setOwned(arr) { localStorage.setItem('bg_owned_v3', JSON.stringify(arr)); }
+function getOwned() {
+  try {
+    const uid = localStorage.getItem('trinity_uid') || 'Admin';
+    const val = localStorage.getItem('bg_owned_' + uid) || localStorage.getItem('bg_owned_v3') || '[]';
+    return JSON.parse(val);
+  } catch(e) { return []; }
+}
+function setOwned(arr) {
+  const uid = localStorage.getItem('trinity_uid') || 'Admin';
+  localStorage.setItem('bg_owned_' + uid, JSON.stringify(arr));
+  localStorage.setItem('bg_owned_v3', JSON.stringify(arr));
+  // Stoor op Firebase ook
+  if (typeof window.fbSaveOwned === 'function') window.fbSaveOwned(uid, arr);
+}
 function isOwned(key) { return getOwned().includes(key); }
 function toggleOwned(key) {
   let a = getOwned();
@@ -2568,18 +2670,7 @@ function bgOwnedKey() {
 // Is admin unlocked (kan edit/add/delete)?
 let _bgUnlocked = false;
 
-// ── Owned per gebruiker ──
-function getOwned() {
-  try { return JSON.parse(localStorage.getItem(bgOwnedKey()) || '[]'); } catch(e) { return []; }
-}
-function setOwned(arr) { localStorage.setItem(bgOwnedKey(), JSON.stringify(arr)); }
-function isOwned(key) { return getOwned().includes(key); }
-function toggleOwned(key) {
-  let a = getOwned();
-  a = a.includes(key) ? a.filter(k => k !== key) : [...a, key];
-  setOwned(a);
-  bgRefreshAllOwned();
-}
+// ── Owned: gebruik die hoofsisteem funksies (bo gedefinieer met Firebase support) ──
 
 // ── Owned tellers ──
 function bgGetOwnedCount() {
