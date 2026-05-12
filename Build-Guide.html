@@ -455,7 +455,7 @@ body::after {
 
   <!-- SIDEBAR -->
   <div id="sidebar">
-    <div id="logo-bar" style="cursor:default;">
+    <div id="logo-bar" style="cursor:pointer;" onclick="showView('dashboard')" title="Terug na Roster">
       <div id="logo-icon" style="background:transparent;border:none;padding:0;">
         <img src="favicon-32.png" style="width:34px;height:34px;object-fit:contain;border-radius:8px;">
       </div>
@@ -463,7 +463,7 @@ body::after {
         <div id="logo-text">TRINITY</div>
         <div id="logo-sub">Build Guide</div>
       </div>
-      <div onclick="window.location.href='Dashboard.html'" title="Terug na Dashboard" style="width:34px;height:34px;border-radius:8px;background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:20px;transition:background 0.2s;" onmouseover="this.style.background='rgba(200,168,75,0.35)'" onmouseout="this.style.background='rgba(200,168,75,0.15)'">
+      <div onclick="event.stopPropagation();window.location.href='Dashboard.html'" title="Terug na Dashboard" style="width:34px;height:34px;border-radius:8px;background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:20px;transition:background 0.2s;" onmouseover="this.style.background='rgba(200,168,75,0.35)'" onmouseout="this.style.background='rgba(200,168,75,0.15)'">
         🏠
       </div>
     </div>
@@ -608,41 +608,30 @@ body::after {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Karakters stoor (Admin skryf, almal lees)
   window.fbSaveChars = async function(arr) {
-    try {
-      await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(arr) });
-    } catch(e) { console.error('fbSaveChars:', e); }
+    try { await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(arr) }); }
+    catch(e) { console.error('fbSaveChars:', e); }
   };
 
-  // Owned stoor per gebruiker apart
   window.fbSaveOwned = async function(uid, arr) {
-    try {
-      await set(ref(db, 'buildguide_owned/' + uid), { owned: JSON.stringify(arr) });
-    } catch(e) { console.error('fbSaveOwned:', e); }
+    try { await set(ref(db, 'buildguide_owned/' + uid), { owned: JSON.stringify(arr) }); }
+    catch(e) { console.error('fbSaveOwned:', e); }
   };
 
-  // Laai alles by bladsy oopmaak
   (async () => {
     try {
       const uid = localStorage.getItem('trinity_uid') || 'Admin';
-
-      // Karakters
       const cSnap = await get(ref(db, 'buildguide/characters'));
       if (cSnap.exists()) {
         const chars = JSON.parse(cSnap.val().chars || '[]');
         if (chars.length > 0) localStorage.setItem('bg_chars_v3', JSON.stringify(chars));
       }
-
-      // Owned vir hierdie gebruiker
       const oSnap = await get(ref(db, 'buildguide_owned/' + uid));
       if (oSnap.exists()) {
         const owned = JSON.parse(oSnap.val().owned || '[]');
         localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned));
         localStorage.setItem('bg_owned_v3', JSON.stringify(owned));
       }
-
-      // Live watch — as admin wysig, sien almal dit dadelik
       onValue(ref(db, 'buildguide/characters'), (snap) => {
         if (!snap.exists()) return;
         try {
@@ -655,9 +644,7 @@ body::after {
           }
         } catch(e) {}
       });
-
-      console.log('✅ Firebase gereed | Gebruiker:', uid);
-    } catch(e) { console.error('Firebase init fout:', e); }
+    } catch(e) { console.error('Firebase init:', e); }
   })();
 </script>
 
@@ -2655,7 +2642,7 @@ function bgOwnedKey() {
 // Is admin unlocked (kan edit/add/delete)?
 let _bgUnlocked = false;
 
-// ── Owned: gebruik hoofsisteem funksies bo (het Firebase support) ──
+// ── Owned: gebruik hoofsisteem funksies (het Firebase support) ──
 
 // ── Owned tellers ──
 function bgGetOwnedCount() {
@@ -2739,13 +2726,12 @@ function bgApplyLockState() {
     lockBtn.style.borderColor = locked ? 'rgba(200,168,75,0.25)' : 'rgba(200,168,75,0.6)';
   }
 
-  // Add Character — slegs sigbaar as unlocked
+  // Add en Edit — ALTYD sigbaar (wagwoord beskerm slegs die stoor aksie)
   const addBtn = document.getElementById('add-char-dash-btn');
-  if(addBtn) addBtn.style.display = locked ? 'none' : '';
+  if(addBtn) addBtn.style.display = '';
 
-  // Edit knoppie op karakter view — slegs as unlocked
   const editBtn = document.getElementById('my-edit-btn');
-  if(editBtn) editBtn.style.display = locked ? 'none' : '';
+  if(editBtn) editBtn.style.display = '';
 
   bgRefreshAllOwned();
 }
