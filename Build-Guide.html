@@ -1290,11 +1290,7 @@ function showChar(id) {
       <div>
         <div class="t-type" style="color:var(--gold);font-weight:700;">#${i+1} — ${t.type}</div>
         <div class="t-label">${t.label}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;max-width:200px;line-height:1.4;">${t.desc}</div>
-      </div>
-    </div>
-    ${i < c.talents.length - 1 ? '<span class="talent-arrow">→</span>' : ''}
-  `).join('');
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>
 
   // Notes
   const nb = document.getElementById('notes-box');
@@ -1805,7 +1801,7 @@ showChar = function(id) {
           <div>
             <div class="t-type" style="color:var(--gold);font-weight:700;">#${i+1} — ${t.type}</div>
             <div class="t-label">${t.label}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;max-width:200px;line-height:1.4;">${t.desc}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>
           </div>
         </div>
         ${i < c.talents.length - 1 ? '<span class="talent-arrow">→</span>' : ''}`;
@@ -2532,7 +2528,7 @@ function showMyChar(idx) {
     grouped[r].push(a);
   });
   const rankColors = {'1st':'#f0d080','2nd':'#c090e0','3rd':'#4fc3a1','4th':'#9a8f78'};
-  let artHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;">';
+  let artHtml = '<div style="display:flex;flex-wrap:nowrap;gap:8px;align-items:flex-start;overflow-x:auto;padding-bottom:4px;">';
   rankOrder.forEach(rank => {
     if(!grouped[rank]) return;
     artHtml += `<div style="display:flex;align-items:flex-start;gap:6px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
@@ -2583,7 +2579,7 @@ function showMyChar(idx) {
       <div class="t-icon-wrap" style="${t.img?'padding:0;overflow:hidden;':''}">${t.img?`<img src="${t.img}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`:'✨'}</div>
       <div>
         <div class="t-type" style="color:var(--gold);font-weight:700;">#${t.priority||i+1} — ${t.label}</div>
-        ${t.desc?`<div style="font-size:11px;color:var(--muted);margin-top:2px;max-width:200px;line-height:1.4;">${t.desc}</div>`:''}
+        ${t.desc?`<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>`:''}
       </div>
     </div>${i<sorted.length-1?'<span class="talent-arrow">→</span>':''}`).join('');
 
