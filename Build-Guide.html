@@ -1156,7 +1156,7 @@ function renderBuildVariant(id, variantIdx) {
   const wg = document.getElementById('weapon-grid');
   wg.innerHTML = build.weapons.map(w => `
     <div class="weapon-slot">
-      <span class="w-tag ${w.tag}">${w.tag === 'bis' ? 'BiS' : 'F2P'}</span>
+      ${w.tag ? `<span class="w-tag ${w.tag}">${w.tag === 'bis' ? 'BiS' : 'F2P'}</span>` : ''}
       <div class="weapon-icon">${w.icon}</div>
       <div>
         <div class="w-name">${w.name}</div>
@@ -1719,7 +1719,7 @@ renderBuildVariant = function(id, variantIdx) {
         ? `<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${IC[wKey]}" style="width:100%;height:100%;object-fit:contain;" /></span>`
         : `<div class="weapon-icon">${w.icon}</div>`;
       return `<div class="weapon-slot">
-        <span class="w-tag ${w.tag}">${w.tag === 'bis' ? 'BiS' : 'F2P'}</span>
+        ${w.tag ? `<span class="w-tag ${w.tag}">${w.tag === 'bis' ? 'BiS' : 'F2P'}</span>` : ''}
         ${imgHtml}
         <div><div class="w-name">${w.name}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars)}</div></div>
       </div>`;
@@ -1924,8 +1924,38 @@ function loadChars() {
   try { return JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) { return []; }
 }
 function saveChars(arr) {
-  localStorage.setItem('bg_chars_v3', JSON.stringify(arr));
-  if (typeof window.fbSaveChars === 'function') window.fbSaveChars(arr);
+  function compressSync(dataUrl, maxSize, quality) {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) return dataUrl;
+    if (dataUrl.length < 20000) return dataUrl;
+    const canvas = document.createElement('canvas');
+    const img = new Image();
+    img.src = dataUrl;
+    if (!img.width) return dataUrl;
+    let w = img.width, h = img.height;
+    if (w > maxSize || h > maxSize) {
+      if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+      else { w = Math.round(w * maxSize / h); h = maxSize; }
+    }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', quality);
+  }
+  const compressed = arr.map(c => ({
+    ...c,
+    charImg: compressSync(c.charImg, 200, 0.70),
+    bossImg: compressSync(c.bossImg, 160, 0.70),
+    weapons: (c.weapons||[]).map(w => ({...w, img: compressSync(w.img, 160, 0.70)})),
+    artSets: (c.artSets||[]).map(a => ({...a, img: compressSync(a.img, 160, 0.70)})),
+    teams: (c.teams||[]).map(t => ({...t, members: (t.members||[]).map(m => ({...m, img: compressSync(m.img, 120, 0.65)}))})),
+    talents: (c.talents||[]).map(t => ({...t, img: compressSync(t.img, 120, 0.65)})),
+  }));
+  try {
+    localStorage.setItem('bg_chars_v3', JSON.stringify(compressed));
+  } catch(e) {
+    alert('Nog steeds te groot! Probeer minder fotos of kleiner beelde.\nFout: ' + e.message);
+    return;
+  }
+  if (typeof window.fbSaveChars === 'function') window.fbSaveChars(compressed);
 }
 function getOwned() {
   try {
@@ -2039,16 +2069,36 @@ function slotIcon(slotKey) {
     : `<span style="font-size:22px;">${emo}</span>`;
 }
 
+// ── Komprimeer beeld voor stoor (verklein na max 200px, JPEG 70%) ──
+function compressImage(dataUrl, maxSize, quality, callback) {
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    let w = img.width, h = img.height;
+    if (w > maxSize || h > maxSize) {
+      if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+      else { w = Math.round(w * maxSize / h); h = maxSize; }
+    }
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    callback(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.src = dataUrl;
+}
+
 // ── Load image from file ──
 function pbPick(inputId) { document.getElementById(inputId).click(); }
 function pbLoad(input, previewId, iconId, lblId, storeKey) {
   const file=input.files[0]; if(!file) return;
   const r=new FileReader();
   r.onload=e=>{
-    _pendingImgs[storeKey]=e.target.result;
-    const p=document.getElementById(previewId); if(p){p.src=e.target.result;p.style.display='block';}
-    const ic=document.getElementById(iconId); if(ic) ic.style.display='none';
-    const lb=document.getElementById(lblId); if(lb) lb.style.display='none';
+    compressImage(e.target.result, 200, 0.70, function(compressed) {
+      _pendingImgs[storeKey]=compressed;
+      const p=document.getElementById(previewId); if(p){p.src=compressed;p.style.display='block';}
+      const ic=document.getElementById(iconId); if(ic) ic.style.display='none';
+      const lb=document.getElementById(lblId); if(lb) lb.style.display='none';
+    });
   };
   r.readAsDataURL(file);
 }
@@ -2056,9 +2106,11 @@ function dynLoad(input, storeKey) {
   const file=input.files[0]; if(!file) return;
   const r=new FileReader();
   r.onload=e=>{
-    _pendingImgs[storeKey]=e.target.result;
-    const p=document.getElementById('dp-'+storeKey); if(p){p.src=e.target.result;p.style.display='block';}
-    const ic=document.getElementById('di-'+storeKey); if(ic) ic.style.display='none';
+    compressImage(e.target.result, 160, 0.70, function(compressed) {
+      _pendingImgs[storeKey]=compressed;
+      const p=document.getElementById('dp-'+storeKey); if(p){p.src=compressed;p.style.display='block';}
+      const ic=document.getElementById('di-'+storeKey); if(ic) ic.style.display='none';
+    });
   };
   r.readAsDataURL(file);
 }
@@ -2082,7 +2134,7 @@ function addWepRow(d) {
       <div class="dyn-pb" onclick="pbPick('wf-${k}')"><span id="di-wep-${k}">${dt.img?'':'⚔️'}</span><img id="dp-wep-${k}" src="${dt.img||''}" style="${dt.img?'':'display:none'}"></div>
       <input type="file" id="wf-${k}" accept="image/*" style="display:none" onchange="dynLoad(this,'wep-${k}')">
       <input class="mfi" id="wn-${k}" value="${dt.name||''}" placeholder="Weapon name" style="flex:1;min-width:110px;">
-      <select class="mfi" id="wt-${k}" style="width:62px;padding:7px 4px;"><option value="bis"${dt.tag==='bis'?' selected':''}>BiS</option><option value="f2p"${dt.tag==='f2p'?' selected':''}>F2P</option></select>
+      <select class="mfi" id="wt-${k}" style="width:62px;padding:7px 4px;"><option value=""${!dt.tag||dt.tag===''?' selected':''}></option><option value="bis"${dt.tag==='bis'?' selected':''}>BiS</option><option value="f2p"${dt.tag==='f2p'?' selected':''}>F2P</option></select>
       <select class="mfi" id="ws-${k}" style="width:54px;padding:7px 4px;"><option value="5"${dt.stars==5?' selected':''}>★5</option><option value="4"${dt.stars==4?' selected':''}>★4</option><option value="3"${dt.stars==3?' selected':''}>★3</option></select>
       <button class="rm-btn" onclick="document.getElementById('wr-${k}').remove()">✕</button>
     </div>`);
@@ -2097,7 +2149,7 @@ function addArtRow(d) {
       <div class="dyn-pb" onclick="pbPick('af-${k}')"><span id="di-art-${k}">${dt.img?'':'🎖️'}</span><img id="dp-art-${k}" src="${dt.img||''}" style="${dt.img?'':'display:none'}"></div>
       <input type="file" id="af-${k}" accept="image/*" style="display:none" onchange="dynLoad(this,'art-${k}')">
       <input class="mfi" id="an-${k}" value="${dt.name||''}" placeholder="Artifact set name" style="flex:1;">
-      <select class="mfi" id="ap-${k}" style="width:72px;padding:7px 4px;"><option value="4-pc"${(dt.pc==='4-pc'||!dt.pc)?' selected':''}>4-pc</option><option value="2-pc"${dt.pc==='2-pc'?' selected':''}>2-pc</option><option value="4/2PC"${dt.pc==='4/2PC'?' selected':''}>4/2PC</option></select>
+      <select class="mfi" id="ap-${k}" style="width:72px;padding:7px 4px;"><option value="4-pc"${(dt.pc==='4-pc'||!dt.pc)?' selected':''}>4-pc</option><option value="2-pc"${dt.pc==='2-pc'?' selected':''}>2-pc</option><option value="2/4-pc"${(dt.pc==='2/4-pc'||dt.pc==='4/2PC')?' selected':''}>2/4-pc</option></select>
       <button class="rm-btn" onclick="document.getElementById('ar-${k}').remove()">✕</button>
     </div>`);
   if(dt.img){const i=document.getElementById('di-art-'+k);if(i)i.style.display='none';}
@@ -2161,7 +2213,7 @@ function openAddModal(editIdx) {
   const SLOTS=['flower','plume','sands','goblet','circlet'];
 
   const elBtns=ELS.map(e=>`<button class="sel-btn${_selEl===e?' on':''}" onclick="selEl(this,'${e}')"><span>${elIcon(e,26)}</span><span class="sel-lbl">${e}</span></button>`).join('');
-  const wepBtns=WEPS.map(w=>`<button class="sel-btn${_selWep===w?' on':''}" onclick="selWep(this,'${w}')"><span>${wepIcon(w,26)}</span><span class="sel-lbl">${w}</span></button>`).join('');
+  const wepBtns=WEPS.map(w=>`<button class="sel-btn${_selWep===w?' on':''}" onclick="selWep(this,'${w}')" style="min-width:64px;padding:8px 6px;"><span style="display:block;width:38px;height:38px;margin:0 auto 4px;">${wepIcon(w,38)}</span><span class="sel-lbl">${w}</span></button>`).join('');
   const slotHtml=SLOTS.map(s=>`<div class="fixed-slot">
     <div class="fixed-slot-icon">${slotIcon(s)}</div>
     <input class="mfi slot-stat-input" id="slot-${s}" value="${c?.artSlots?.[s]||''}" placeholder="${SLOT_LABELS[s]}" ${s==='flower'||s==='plume'?'readonly style="color:#555a7a"':''}>
@@ -2265,7 +2317,7 @@ function openAddModal(editIdx) {
 function collectWeps() {
   return [...document.getElementById('m-weps').querySelectorAll('[id^="wr-"]')].map(r=>{
     const k=r.id.replace('wr-','');
-    return {img:_pendingImgs['wep-'+k]||'',name:(document.getElementById('wn-'+k)||{}).value||'',tag:(document.getElementById('wt-'+k)||{}).value||'bis',stars:parseInt((document.getElementById('ws-'+k)||{}).value||5)};
+    return {img:_pendingImgs['wep-'+k]||'',name:(document.getElementById('wn-'+k)||{}).value||'',tag:(document.getElementById('wt-'+k)||{}).value||'',stars:parseInt((document.getElementById('ws-'+k)||{}).value||5)};
   }).filter(w=>w.name);
 }
 function collectArts() {
@@ -2465,7 +2517,7 @@ function showMyChar(idx) {
   // Weapons
   document.getElementById('weapon-grid').innerHTML=(c.weapons||[]).map(w=>`
     <div class="weapon-slot">
-      <span class="w-tag ${w.tag||'bis'}">${w.tag==='f2p'?'F2P':'BiS'}</span>
+      ${w.tag ? `<span class="w-tag ${w.tag}">${w.tag==='f2p'?'F2P':'BiS'}</span>` : ''}
       ${w.img?`<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${w.img}" style="width:100%;height:100%;object-fit:contain;"></span>`:'<div class="weapon-icon">⚔️</div>'}
       <div><div class="w-name">${w.name}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars||4)}</div></div>
     </div>`).join('');
