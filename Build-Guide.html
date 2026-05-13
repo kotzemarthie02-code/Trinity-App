@@ -1216,6 +1216,9 @@ function renderTeamVariant(id, variantIdx) {
 }
 
 function showChar(id) {
+  // Blokkeer as edit modal oop is
+  const modal = document.getElementById('char-modal');
+  if (modal && modal.classList.contains('open')) return;
   const c = CHARS[id];
   if (!c) return;
 
@@ -1290,7 +1293,7 @@ function showChar(id) {
       <div>
         <div class="t-type" style="color:var(--gold);font-weight:700;">#${i+1} — ${t.type}</div>
         <div class="t-label">${t.label}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;max-width:200px;line-height:1.4;">${t.desc}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>
       </div>
     </div>
     ${i < c.talents.length - 1 ? '<span class="talent-arrow">→</span>' : ''}
@@ -1805,7 +1808,7 @@ showChar = function(id) {
           <div>
             <div class="t-type" style="color:var(--gold);font-weight:700;">#${i+1} — ${t.type}</div>
             <div class="t-label">${t.label}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;max-width:200px;line-height:1.4;">${t.desc}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>
           </div>
         </div>
         ${i < c.talents.length - 1 ? '<span class="talent-arrow">→</span>' : ''}`;
@@ -1924,38 +1927,55 @@ function loadChars() {
   try { return JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) { return []; }
 }
 function saveChars(arr) {
-  function compressSync(dataUrl, maxSize, quality) {
-    if (!dataUrl || !dataUrl.startsWith('data:image')) return dataUrl;
-    if (dataUrl.length < 20000) return dataUrl;
-    const canvas = document.createElement('canvas');
-    const img = new Image();
-    img.src = dataUrl;
-    if (!img.width) return dataUrl;
-    let w = img.width, h = img.height;
-    if (w > maxSize || h > maxSize) {
-      if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
-      else { w = Math.round(w * maxSize / h); h = maxSize; }
+  // Async kompresseer alle beelde, dan stoor
+  function compressOne(dataUrl, maxSize, quality) {
+    return new Promise(resolve => {
+      if (!dataUrl || !dataUrl.startsWith('data:image')) return resolve(dataUrl);
+      if (dataUrl.length < 15000) return resolve(dataUrl); // al klein genoeg
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  async function compressAll(arr) {
+    const out = [];
+    for (const c of arr) {
+      const charImg = await compressOne(c.charImg, 200, 0.70);
+      const bossImg = await compressOne(c.bossImg, 160, 0.70);
+      const weapons = await Promise.all((c.weapons||[]).map(async w => ({...w, img: await compressOne(w.img, 160, 0.70)})));
+      const artSets = await Promise.all((c.artSets||[]).map(async a => ({...a, img: await compressOne(a.img, 160, 0.70)})));
+      const teams = await Promise.all((c.teams||[]).map(async t => ({
+        ...t,
+        members: await Promise.all((t.members||[]).map(async m => ({...m, img: await compressOne(m.img, 120, 0.65)})))
+      })));
+      const talents = await Promise.all((c.talents||[]).map(async t => ({...t, img: await compressOne(t.img, 120, 0.65)})));
+      out.push({...c, charImg, bossImg, weapons, artSets, teams, talents});
     }
-    canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    return canvas.toDataURL('image/jpeg', quality);
+    return out;
   }
-  const compressed = arr.map(c => ({
-    ...c,
-    charImg: compressSync(c.charImg, 200, 0.70),
-    bossImg: compressSync(c.bossImg, 160, 0.70),
-    weapons: (c.weapons||[]).map(w => ({...w, img: compressSync(w.img, 160, 0.70)})),
-    artSets: (c.artSets||[]).map(a => ({...a, img: compressSync(a.img, 160, 0.70)})),
-    teams: (c.teams||[]).map(t => ({...t, members: (t.members||[]).map(m => ({...m, img: compressSync(m.img, 120, 0.65)}))})),
-    talents: (c.talents||[]).map(t => ({...t, img: compressSync(t.img, 120, 0.65)})),
-  }));
-  try {
-    localStorage.setItem('bg_chars_v3', JSON.stringify(compressed));
-  } catch(e) {
-    alert('Nog steeds te groot! Probeer minder fotos of kleiner beelde.\nFout: ' + e.message);
-    return;
-  }
-  if (typeof window.fbSaveChars === 'function') window.fbSaveChars(compressed);
+
+  compressAll(arr).then(compressed => {
+    try {
+      localStorage.setItem('bg_chars_v3', JSON.stringify(compressed));
+      console.log('✅ Gestoor! Grootte:', (JSON.stringify(compressed).length / 1024).toFixed(1) + 'KB');
+    } catch(e) {
+      alert('❌ Stoor het misluk — data te groot!\nProbeer kleiner foto\'s gebruik.\nFout: ' + e.message);
+      return;
+    }
+    if (typeof window.fbSaveChars === 'function') window.fbSaveChars(compressed);
+  });
 }
 function getOwned() {
   try {
@@ -2379,6 +2399,12 @@ function saveChar() {
     saveChars(myChars);
     closeModal();
     rebuildRoster();
+    // Wys bevestiging dat data gestoor is
+    const toast = document.createElement('div');
+    toast.textContent = '✅ Karakter gestoor!';
+    toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a2a1a;border:1px solid #4caf50;color:#4caf50;padding:12px 28px;border-radius:10px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
     if(_editIdx===null) showMyChar(myChars.length-1);
     else showMyChar(_editIdx);
   } catch(err) {
@@ -2466,6 +2492,9 @@ function refreshAllOwned() {
 
 // ── Show a user-added character build page ──
 function showMyChar(idx) {
+  // Blokkeer as edit modal oop is
+  const modal = document.getElementById('char-modal');
+  if (modal && modal.classList.contains('open')) return;
   const c=myChars[idx];
   if(!c) return;
   const key='my-'+idx;
@@ -2583,7 +2612,7 @@ function showMyChar(idx) {
       <div class="t-icon-wrap" style="${t.img?'padding:0;overflow:hidden;':''}">${t.img?`<img src="${t.img}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`:'✨'}</div>
       <div>
         <div class="t-type" style="color:var(--gold);font-weight:700;">#${t.priority||i+1} — ${t.label}</div>
-        ${t.desc?`<div style="font-size:11px;color:var(--muted);margin-top:2px;max-width:200px;line-height:1.4;">${t.desc}</div>`:''}
+        ${t.desc?`<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>`:''}
       </div>
     </div>${i<sorted.length-1?'<span class="talent-arrow">→</span>':''}`).join('');
 
