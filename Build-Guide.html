@@ -629,20 +629,25 @@ body::after {
       const cSnap = await get(ref(db, 'buildguide/characters'));
       if (cSnap.exists()) {
         const chars = JSON.parse(cSnap.val().chars || '[]');
-        if (chars.length > 0) localStorage.setItem('bg_chars_v3', JSON.stringify(chars));
+        if (chars.length > 0) {
+          try { localStorage.setItem('bg_chars_v3', JSON.stringify(chars)); } catch(e) { /* kwota vol — ignoreer */ }
+        }
       }
       const oSnap = await get(ref(db, 'buildguide_owned/' + uid));
       if (oSnap.exists()) {
         const owned = JSON.parse(oSnap.val().owned || '[]');
-        localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned));
-        localStorage.setItem('bg_owned_v3', JSON.stringify(owned));
+        try { localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned)); } catch(e) {}
+        try { localStorage.setItem('bg_owned_v3', JSON.stringify(owned)); } catch(e) {}
       }
       onValue(ref(db, 'buildguide/characters'), (snap) => {
         if (!snap.exists()) return;
         try {
           const chars = JSON.parse(snap.val().chars || '[]');
-          localStorage.setItem('bg_chars_v3', JSON.stringify(chars));
+          try { localStorage.setItem('bg_chars_v3', JSON.stringify(chars)); } catch(e) { /* kwota vol — ignoreer */ }
           if (typeof myChars !== 'undefined' && typeof rebuildRoster === 'function') {
+            window._waitingForFirebase = false;
+            const msg = document.getElementById('fb-loading-msg');
+            if (msg) msg.remove();
             myChars.length = 0;
             chars.forEach(c => myChars.push(c));
             rebuildRoster();
@@ -1927,8 +1932,13 @@ const SLOT_LABELS = { flower:'Flower', Plume:'Plume', sands:'Sands', goblet:'Gob
 const STAR_COLORS = { 5:'#c8a84b', 4:'#9b7fd4' };
 
 function loadChars() {
-  try { return JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) { return []; }
+  try {
+    const raw = localStorage.getItem('bg_chars_v3');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return []; // Firebase listener sal data laai
 }
+window._waitingForFirebase = !localStorage.getItem('bg_chars_v3');
 function saveChars(arr) {
   // Async kompresseer alle beelde, dan stoor
   function compressOne(dataUrl, maxSize, quality) {
@@ -1969,15 +1979,30 @@ function saveChars(arr) {
     return out;
   }
 
-  compressAll(arr).then(compressed => {
-    try {
-      localStorage.setItem('bg_chars_v3', JSON.stringify(compressed));
-      console.log('✅ Gestoor! Grootte:', (JSON.stringify(compressed).length / 1024).toFixed(1) + 'KB');
-    } catch(e) {
-      alert('❌ Stoor het misluk — data te groot!\nProbeer kleiner foto\'s gebruik.\nFout: ' + e.message);
-      return;
+  compressAll(arr).then(async compressed => {
+    const json = JSON.stringify(compressed);
+    const kb = (json.length / 1024).toFixed(1);
+
+    // 1) Firebase EERSTE — permanente stoor (bly oor logout heen)
+    if (typeof window.fbSaveChars === 'function') {
+      try {
+        await window.fbSaveChars(compressed);
+        console.log('Gestoor op Firebase! Grootte:', kb + 'KB');
+      } catch(e) {
+        console.error('Firebase stoor fout:', e);
+        alert('Firebase stoor het misluk — kyk jou internetverbinding.\nFout: ' + e.message);
+        return;
+      }
     }
-    if (typeof window.fbSaveChars === 'function') window.fbSaveChars(compressed);
+
+    // 2) localStorage as opsionele kas — stillerig faal as te groot
+    try {
+      localStorage.setItem('bg_chars_v3', json);
+    } catch(e) {
+      // Kwota oorskry — stil ignoreer, Firebase het reeds gestoor
+      console.warn('localStorage kwota vol — data is veilig op Firebase gestoor.');
+      try { localStorage.removeItem('bg_chars_v3'); } catch(e2) {}
+    }
   });
 }
 function getOwned() {
