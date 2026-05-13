@@ -353,23 +353,28 @@ body::after {
   .team-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
   /* Talents */
-  .talent-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .talent-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
   .talent-chip {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 10px;
     background: var(--panel2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 8px 12px;
+    border-radius: var(--radius-sm); padding: 10px 14px;
     font-size: 13px; font-weight: 600; color: var(--text);
+    position: relative;
   }
   .talent-chip .t-icon-wrap {
-    width: 38px; height: 38px; border-radius: 8px; 
+    width: 40px; height: 40px; border-radius: 8px; 
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; flex-shrink: 0;
+    font-size: 22px; flex-shrink: 0;
     background: var(--panel);
     border: 1px solid var(--border);
   }
-  .talent-chip .t-type { font-size: 13px; font-weight: 700; color: var(--text); }
-  .talent-chip .t-label { font-size: 11px; color: var(--muted); }
-  .talent-arrow { color: var(--gold); font-size: 16px; }
+  .talent-chip .t-type { font-size: 13px; font-weight: 700; color: var(--gold2); }
+  .talent-chip .t-label { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .talent-arrow {
+    color: var(--gold); font-size: 14px;
+    text-align: center; padding: 0 0 0 50px;
+    display: block; line-height: 1;
+  }
 
   /* Boss */
   .boss-row { display: flex; align-items: center; gap: 12px; }
@@ -1289,14 +1294,13 @@ function showChar(id) {
   const tr = document.getElementById('talent-row');
   tr.innerHTML = c.talents.map((t, i) => `
     <div class="talent-chip">
-      <div class="t-icon-wrap">${talentTypeIcons[t.type] || t.icon}</div>
-      <div>
-        <div class="t-type" style="color:var(--gold);font-weight:700;">#${i+1} — ${t.type}</div>
-        <div class="t-label">${t.label}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>
+      <div class="t-icon-wrap">${talentTypeIcons[t.type] || t.icon || '✨'}</div>
+      <div style="flex:1;">
+        <div class="t-type">#${i+1} — ${t.type}${t.label ? ' (' + t.label + ')' : ''}</div>
+        <div class="t-label">${t.desc || ''}</div>
       </div>
     </div>
-    ${i < c.talents.length - 1 ? '<span class="talent-arrow">→</span>' : ''}
+    ${i < c.talents.length - 1 ? '<span class="talent-arrow">↓</span>' : ''}
   `).join('');
 
   // Notes
@@ -1805,13 +1809,12 @@ showChar = function(id) {
       return `
         <div class="talent-chip">
           ${iconHtml}
-          <div>
-            <div class="t-type" style="color:var(--gold);font-weight:700;">#${i+1} — ${t.type}</div>
-            <div class="t-label">${t.label}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>
+          <div style="flex:1;">
+            <div class="t-type">#${i+1} — ${t.type}${t.label ? ' (' + t.label + ')' : ''}</div>
+            <div class="t-label">${t.desc || ''}</div>
           </div>
         </div>
-        ${i < c.talents.length - 1 ? '<span class="talent-arrow">→</span>' : ''}`;
+        ${i < c.talents.length - 1 ? '<span class="talent-arrow">↓</span>' : ''}`;
     }).join('');
   }
 
@@ -2624,11 +2627,11 @@ function showMyChar(idx) {
   document.getElementById('talent-row').innerHTML=sorted.map((t,i)=>`
     <div class="talent-chip">
       <div class="t-icon-wrap" style="${t.img?'padding:0;overflow:hidden;':''}">${t.img?`<img src="${t.img}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`:'✨'}</div>
-      <div>
-        <div class="t-type" style="color:var(--gold);font-weight:700;">#${t.priority||i+1} — ${t.label}</div>
-        ${t.desc?`<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;">${t.desc}</div>`:''}
+      <div style="flex:1;">
+        <div class="t-type">#${t.priority||i+1} — ${t.label}</div>
+        ${t.desc?`<div class="t-label">${t.desc}</div>`:''}
       </div>
-    </div>${i<sorted.length-1?'<span class="talent-arrow">→</span>':''}`).join('');
+    </div>${i<sorted.length-1?'<span class="talent-arrow">↓</span>':''}`).join('');
 
   // Notes / My Tips for You
   document.getElementById('notes-box').innerHTML=c.notes?`<div class="notes-title">📝 My Tips for You</div>${c.notes}`:'';
