@@ -2063,8 +2063,22 @@ let _wc=0, _ac=0, _tc=0, _talc=0;
   document.body.appendChild(ov);
 })();
 
-function openModal() { document.getElementById('char-modal').classList.add('open'); }
-function closeModal() { document.getElementById('char-modal').classList.remove('open'); }
+function openModal() { 
+  document.getElementById('char-modal').classList.add('open');
+  // Deaktiveer sidebar sodat roster klikke niks doen terwyl modal oop is
+  const sidebar = document.getElementById('char-list');
+  if (sidebar) sidebar.style.pointerEvents = 'none';
+  const dash = document.getElementById('add-char-dash-btn');
+  if (dash) dash.style.pointerEvents = 'none';
+}
+function closeModal() { 
+  document.getElementById('char-modal').classList.remove('open');
+  // Herstel sidebar
+  const sidebar = document.getElementById('char-list');
+  if (sidebar) sidebar.style.pointerEvents = '';
+  const dash = document.getElementById('add-char-dash-btn');
+  if (dash) dash.style.pointerEvents = '';
+}
 
 // ── Render element icon (img if file exists, fallback emoji) ──
 function elIcon(el, size=28) {
