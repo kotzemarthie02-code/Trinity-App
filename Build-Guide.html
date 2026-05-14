@@ -353,13 +353,13 @@ body::after {
   .team-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
   /* Talents */
-  .talent-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+  .talent-row { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0; margin-bottom: 6px; align-items: center; }
   .talent-chip {
     display: flex; align-items: center; gap: 10px;
     background: var(--panel2); border: 1px solid var(--border);
     border-radius: var(--radius-sm); padding: 10px 14px;
     font-size: 13px; font-weight: 600; color: var(--text);
-    position: relative;
+    position: relative; height: 100%;
   }
   .talent-chip .t-icon-wrap {
     width: 40px; height: 40px; border-radius: 8px; 
@@ -371,9 +371,10 @@ body::after {
   .talent-chip .t-type { font-size: 13px; font-weight: 700; color: var(--gold2); }
   .talent-chip .t-label { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .talent-arrow {
-    color: var(--gold); font-size: 14px;
-    text-align: center; padding: 0 0 0 50px;
-    display: block; line-height: 1;
+    color: var(--gold); font-size: 18px;
+    text-align: center; padding: 0 6px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1; flex-shrink: 0;
   }
 
   /* Boss */
@@ -1214,15 +1215,49 @@ function renderTeamVariant(id, variantIdx) {
   const build = c.builds[variantIdx];
   if (!build) return;
   const tb = document.getElementById('team-blocks');
-  tb.innerHTML = build.teams.map(t => `
-    <div class="team-block">
-      <div class="team-label">${t.label}</div>
-      <div class="team-icons">
-        ${t.icons.map(i => `<div class="team-icon">${i}</div>`).join('')}
-      </div>
-      <div class="team-tips" style="margin-top:8px;font-size:12px;color:var(--text-body);background:rgba(200,168,75,0.07);border:1px solid rgba(200,168,75,0.15);border-radius:5px;padding:7px 11px;line-height:1.6;"><span style="color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.5px;display:block;margin-bottom:3px;">📝 My Tips for You</span>${t.desc}</div>
-    </div>
-  `).join('');
+  const teams = build.teams;
+  if (!teams || !teams.length) { tb.innerHTML = ''; return; }
+
+  // Build toggle nav + single team panel
+  let activeTeam = (window._activeViewTeam && window._activeViewTeam[id+'-'+variantIdx]) || 0;
+  if (activeTeam >= teams.length) activeTeam = 0;
+
+  function renderViewTeam(tidx) {
+    window._activeViewTeam = window._activeViewTeam || {};
+    window._activeViewTeam[id+'-'+variantIdx] = tidx;
+    const t = teams[tidx];
+    // Update toggle buttons
+    teams.forEach((_, i) => {
+      const btn = document.getElementById('viewteambtn-'+i);
+      if (btn) {
+        btn.style.background = i===tidx ? 'rgba(200,168,75,0.15)' : 'var(--panel2)';
+        btn.style.color = i===tidx ? 'var(--gold)' : 'var(--muted)';
+        btn.style.borderColor = i===tidx ? 'var(--gold)' : 'rgba(200,168,75,0.22)';
+      }
+    });
+    const panel = document.getElementById('viewteam-panel');
+    if (panel) {
+      panel.innerHTML = `
+        <div class="team-block" style="margin-top:0;">
+          <div class="team-label">${t.label}</div>
+          <div class="team-icons">
+            ${t.icons.map(i => `<div class="team-icon">${i}</div>`).join('')}
+          </div>
+          <div class="team-tips" style="margin-top:8px;font-size:12px;color:var(--text-body);background:rgba(200,168,75,0.07);border:1px solid rgba(200,168,75,0.15);border-radius:5px;padding:7px 11px;line-height:1.6;"><span style="color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.5px;display:block;margin-bottom:3px;">📝 My Tips for You</span>${t.desc}</div>
+        </div>`;
+    }
+  }
+
+  // Render toggle nav
+  const navHtml = teams.length > 1
+    ? `<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+        ${teams.map((t,i) => `<button id="viewteambtn-${i}" onclick="window._renderViewTeamFn(${i})" style="padding:4px 14px;border-radius:6px;border:1px solid ${i===activeTeam?'var(--gold)':'rgba(200,168,75,0.22)'};background:${i===activeTeam?'rgba(200,168,75,0.15)':'var(--panel2)'};color:${i===activeTeam?'var(--gold)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;letter-spacing:.5px;transition:all .15s;">${t.label||('Team '+(i+1))}</button>`).join('')}
+      </div>`
+    : '';
+
+  tb.innerHTML = navHtml + `<div id="viewteam-panel"></div>`;
+  window._renderViewTeamFn = renderViewTeam;
+  renderViewTeam(activeTeam);
 }
 
 function showChar(id) {
@@ -2216,36 +2251,100 @@ function addArtRow(d) {
     </div>`);
   if(dt.img){const i=document.getElementById('di-art-'+k);if(i)i.style.display='none';}
 }
+// ── Team tabs state ──
+let _activeTeamTab = 0; // which team panel is visible (by index)
+let _teamKeys = []; // ordered list of tk values
+
+function _rebuildTeamTabsNav() {
+  const nav = document.getElementById('m-team-tabs-nav');
+  if (!nav) return;
+  const panels = [...document.getElementById('m-teams').querySelectorAll('[id^="tr-"]')];
+  _teamKeys = panels.map(p => p.id.replace('tr-',''));
+  if (_activeTeamTab >= _teamKeys.length) _activeTeamTab = Math.max(0, _teamKeys.length-1);
+  nav.innerHTML = _teamKeys.map((tk, idx) => {
+    const label = (document.getElementById('trl-'+tk)||{}).value || ('Team '+(idx+1));
+    const isActive = idx === _activeTeamTab;
+    return `<button type="button" onclick="teamSwitchTab(${idx})" id="teamtabnav-${idx}" style="padding:5px 13px;border-radius:6px;border:1px solid ${isActive?'var(--gold)':'rgba(200,168,75,0.22)'};background:${isActive?'rgba(200,168,75,0.15)':'var(--panel2)'};color:${isActive?'var(--gold)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;letter-spacing:.5px;transition:all .15s;">Team ${idx+1}</button>`;
+  }).join('');
+  // Show/hide panels
+  _teamKeys.forEach((tk, idx) => {
+    const panel = document.getElementById('tr-'+tk);
+    if (panel) panel.style.display = idx === _activeTeamTab ? 'block' : 'none';
+  });
+}
+
+function teamSwitchTab(idx) {
+  _activeTeamTab = idx;
+  _rebuildTeamTabsNav();
+}
+
 function addTeamRow(teamData) {
   const tk='t'+_tc++;
-  let teamLabel='', teamDesc='', ms;
+  let teamLabel='', teamDesc='', ms, tabCount=4;
   if(Array.isArray(teamData)) {
-    ms=teamData; teamLabel=''; teamDesc='';
+    ms=teamData; teamLabel=''; teamDesc=''; tabCount=ms.length||4;
   } else if(teamData && teamData.members) {
-    teamLabel=teamData.label||''; teamDesc=teamData.desc||''; ms=teamData.members;
+    teamLabel=teamData.label||''; teamDesc=teamData.desc||''; ms=teamData.members; tabCount=ms.length||4;
   } else {
-    ms=[]; teamLabel=''; teamDesc='';
+    ms=[]; teamLabel=''; teamDesc=''; tabCount=4;
   }
   if(!ms.length) ms=[{img:'',name:''},{img:'',name:''},{img:'',name:''},{img:'',name:''}];
+  while(ms.length<4) ms.push({img:'',name:''});
+
   const mHtml=ms.map((m,mi)=>{
     const mk=tk+'-m'+mi;
     if(m.img) _pendingImgs['tm-'+mk]=m.img;
-    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+    return `<div id="tmslot-${tk}-${mi}" style="display:flex;flex-direction:column;align-items:center;gap:3px;${mi>=tabCount?'display:none;':''}">
       <div class="dyn-pb" onclick="pbPick('tmf-${mk}')" style="width:50px;height:50px;border-radius:8px;"><span id="di-tm-${mk}" style="font-size:16px;">${m.img?'':'👤'}</span><img id="dp-tm-${mk}" src="${m.img||''}" style="${m.img?'':'display:none'}"></div>
       <input type="file" id="tmf-${mk}" accept="image/*" style="display:none" onchange="dynLoad(this,'tm-${mk}')">
       <input class="mfi" id="tmn-${mk}" value="${m.name||''}" placeholder="Name" style="width:62px;font-size:11px!important;padding:4px!important;text-align:center;">
     </div>`;
   }).join('');
+
+  // New index = current length
+  const newIdx = document.getElementById('m-teams').querySelectorAll('[id^="tr-"]').length;
+
   document.getElementById('m-teams').insertAdjacentHTML('beforeend',`
-    <div id="tr-${tk}" style="background:rgba(14,16,22,0.5);border:1px solid rgba(200,168,75,0.12);border-radius:8px;padding:10px;margin-bottom:10px;">
-      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
-        <input class="mfi" id="trl-${tk}" value="${teamLabel}" placeholder="Team label (e.g. Premium Vaporize)" style="flex:1;">
-        <button class="rm-btn" onclick="document.getElementById('tr-${tk}').remove()">✕</button>
+    <div id="tr-${tk}" style="background:rgba(14,16,22,0.5);border:1px solid rgba(200,168,75,0.18);border-radius:8px;padding:12px;margin-bottom:0;display:none;">
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">
+        <input class="mfi" id="trl-${tk}" value="${teamLabel}" placeholder="Team naam (bv. Premium Vaporize)" style="flex:1;" oninput="_rebuildTeamTabsNav()">
+        <div style="display:flex;gap:3px;align-items:center;background:rgba(0,0,0,0.25);border-radius:6px;padding:3px 5px;">
+          <span style="font-size:10px;color:var(--muted);margin-right:3px;white-space:nowrap;">👥</span>
+          ${[1,2,3,4].map(n=>`<button type="button" onclick="teamSetCount('${tk}',${n})" id="trtab-${tk}-${n}" style="width:26px;height:26px;border-radius:5px;border:1px solid ${n===tabCount?'var(--gold)':'rgba(200,168,75,0.2)'};background:${n===tabCount?'rgba(200,168,75,0.2)':'transparent'};color:${n===tabCount?'var(--gold)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;transition:all .12s;">${n}</button>`).join('')}
+        </div>
+        <button class="rm-btn" onclick="_removeTeamRow('${tk}')">✕</button>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">${mHtml}</div>
-      <input class="mfi" id="trd-${tk}" value="${teamDesc}" placeholder="Mini Tips (e.g. Yelan + Kazuha for massive Vaporize damage)" style="width:100%;font-size:12px!important;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="tmembers-${tk}">${mHtml}</div>
+      <textarea class="mfi" id="trd-${tk}" placeholder="My Tips (bv. Yelan + Kazuha vir massiewe Vaporize skade)" style="width:100%;font-size:12px!important;min-height:48px;resize:vertical;">${teamDesc}</textarea>
     </div>`);
+
   ms.forEach((m,mi)=>{ if(m.img){const i=document.getElementById('di-tm-'+tk+'-m'+mi);if(i)i.style.display='none';} });
+  teamSetCount(tk, tabCount, true);
+
+  // Switch to the new tab
+  _activeTeamTab = newIdx;
+  _rebuildTeamTabsNav();
+}
+
+function _removeTeamRow(tk) {
+  const panel = document.getElementById('tr-'+tk);
+  if (panel) panel.remove();
+  _activeTeamTab = 0;
+  _rebuildTeamTabsNav();
+}
+
+function teamSetCount(tk, n, init) {
+  [1,2,3,4].forEach(i=>{
+    const btn=document.getElementById('trtab-'+tk+'-'+i);
+    if(!btn) return;
+    btn.style.border=`1px solid ${i===n?'var(--gold)':'rgba(200,168,75,0.2)'}`;
+    btn.style.background=i===n?'rgba(200,168,75,0.2)':'transparent';
+    btn.style.color=i===n?'var(--gold)':'var(--muted)';
+  });
+  [0,1,2,3].forEach(mi=>{
+    const slot=document.getElementById('tmslot-'+tk+'-'+mi);
+    if(slot) slot.style.display=mi<n?'flex':'none';
+  });
 }
 function addTalRow(d, pk) {
   const k=pk||('tal'+_talc++); const dt=d||{img:'',label:'',priority:_talc,desc:''};
@@ -2267,6 +2366,7 @@ function _openAddModalInner(editIdx) {
   _editIdx = editIdx !== undefined ? editIdx : null;
   _pendingImgs={}; _selEl=''; _selWep='';
   _wc=0; _ac=0; _tc=0; _talc=0;
+  _activeTeamTab=0; _teamKeys=[];
   const c = _editIdx !== null ? myChars[_editIdx] : null;
   if(c){ _selEl=c.elem||''; _selWep=c.weapon||''; }
 
@@ -2322,7 +2422,16 @@ function _openAddModalInner(editIdx) {
     <div class="mfrow"><span class="mfl">Substats (comma-separated)</span><input class="mfi" id="m-subs" value="${c?.substats||''}" placeholder="e.g. Crit Rate, Crit DMG, HP%"></div>
 
     <hr class="mdiv">
-    <div class="mfrow"><span class="mfl">Team Compositions — photo + name per member</span><div id="m-teams"></div><button class="add-row-btn" onclick="addTeamRow()">+ Add team</button></div>
+    <div class="mfrow">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span class="mfl" style="margin-bottom:0;">Team Compositions</span>
+        <button class="add-row-btn" onclick="addTeamRow()" style="margin-top:0;" id="add-team-btn">+ Add team</button>
+      </div>
+      <!-- Team tabs nav -->
+      <div id="m-team-tabs-nav" style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;"></div>
+      <!-- Team panels -->
+      <div id="m-teams"></div>
+    </div>
 
     <hr class="mdiv">
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px;" id="m-tals"></div>
@@ -2365,10 +2474,14 @@ function _openAddModalInner(editIdx) {
   (c?.artSets||[{img:'',name:'',pc:'4-pc',rank:'1st'}]).forEach(a=>addArtRow(a));
   // Teams: support both old format (array of members) and new format ({label,desc,members})
   const teamsToFill = c?.teams||[{label:'',desc:'',members:[{img:'',name:''},{img:'',name:''},{img:'',name:''},{img:'',name:''}]}];
+  _activeTeamTab = 0;
+  _teamKeys = [];
   teamsToFill.forEach(t=>{
     if(Array.isArray(t)) addTeamRow(t); // old format fallback
     else addTeamRow(t); // new {label,desc,members} format
   });
+  _activeTeamTab = 0;
+  _rebuildTeamTabsNav();
   (c?.talents||[]).forEach((t,i)=>addTalRow(t,'pre'+i));
   if(!(c?.talents?.length)) addTalRow();
 
@@ -2393,7 +2506,20 @@ function collectTeams() {
     const tk=r.id.replace('tr-','');
     const label=(document.getElementById('trl-'+tk)||{}).value||'';
     const desc=(document.getElementById('trd-'+tk)||{}).value||'';
-    const members=[0,1,2,3].map(mi=>{const mk=tk+'-m'+mi;return{img:_pendingImgs['tm-'+mk]||'',name:(document.getElementById('tmn-'+mk)||{}).value||''};}).filter(m=>m.name);
+    // Determine active member count by checking which count button is gold
+    let count=4;
+    [1,2,3,4].forEach(n=>{
+      const btn=document.getElementById('trtab-'+tk+'-'+n);
+      if(btn && (btn.style.background.includes('200,168,75') || btn.style.color.includes('--gold') || btn.style.color==='var(--gold)')) count=n;
+    });
+    // Re-determine by checking slot visibility
+    let visCount=0;
+    [0,1,2,3].forEach(mi=>{
+      const slot=document.getElementById('tmslot-'+tk+'-'+mi);
+      if(slot && slot.style.display!=='none') visCount=mi+1;
+    });
+    if(visCount>0) count=visCount;
+    const members=[0,1,2,3].filter(mi=>mi<count).map(mi=>{const mk=tk+'-m'+mi;return{img:_pendingImgs['tm-'+mk]||'',name:(document.getElementById('tmn-'+mk)||{}).value||''};}).filter(m=>m.name||m.img);
     return members.length ? {label, desc, members} : null;
   }).filter(Boolean);
 }
@@ -2629,34 +2755,91 @@ function showMyChar(idx) {
   // Substats
   document.getElementById('substat-list').innerHTML=(c.substats||'').split(',').filter(s=>s.trim()).map((s,i)=>`<div class="sub-chip"><span class="priority" style="background:rgba(200,168,75,0.15);border-radius:3px;padding:1px 5px;margin-right:4px;">#${i+1}</span>${s.trim()}</div>`).join('');
 
-  // Teams — support both old array format and new {label,desc,members} format
-  document.getElementById('team-blocks').innerHTML=(c.teams||[]).map((t,ti)=>{
-    // new format: {label, desc, members:[]}
-    // old format: [{img,name},...]
-    const isNew = !Array.isArray(t) && t.members;
-    const members = isNew ? t.members : t;
-    const label = isNew ? (t.label||('Team '+(ti+1))) : ('Team '+(ti+1));
-    const desc  = isNew ? (t.desc||'') : (c.notes||'');
-    const iconsHtml = members.map(m=>m.img
-      ? `<div class="team-icon" style="padding:0;overflow:hidden;"><img src="${m.img}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;"></div>`
-      : `<div class="team-icon">${m.name||'👤'}</div>`).join('');
-    return `<div class="team-block">
-      <div class="team-label">${label}</div>
-      <div class="team-icons">${iconsHtml}</div>
-      <div class="team-tips" style="margin-top:8px;font-size:12px;color:var(--text-body);background:rgba(200,168,75,0.07);border:1px solid rgba(200,168,75,0.15);border-radius:5px;padding:7px 11px;line-height:1.6;"><span style="color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.5px;display:block;margin-bottom:3px;">📝 My Tips for You</span>${desc||c.notes||'Use this team composition for best synergy and reactions.'}</div>
-    </div>`;
-  }).join('');
+  // Teams — toggle nav grouped by unique label, show all teams in that group
+  (function() {
+    const tb = document.getElementById('team-blocks');
+    const teams = (c.teams||[]);
+    if (!teams.length) { tb.innerHTML = ''; return; }
 
-  // Talents
+    // Normalise each team to {label, desc, members[]}
+    const normalised = teams.map((t, i) => {
+      const isNew = !Array.isArray(t) && t.members;
+      return {
+        label:   isNew ? (t.label || ('Team '+(i+1))) : ('Team '+(i+1)),
+        desc:    isNew ? (t.desc  || '') : (c.notes || ''),
+        members: isNew ? t.members : t
+      };
+    });
+
+    // Group by unique label — preserve order of first appearance
+    const groupOrder = [];
+    const groups = {};
+    normalised.forEach(t => {
+      if (!groups[t.label]) { groups[t.label] = []; groupOrder.push(t.label); }
+      groups[t.label].push(t);
+    });
+
+    let activeGroup = groupOrder[0];
+
+    function teamIconHtml(members) {
+      return (members||[]).map(m => m.img
+        ? `<div class="team-icon" style="padding:0;overflow:hidden;"><img src="${m.img}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;"></div>`
+        : `<div class="team-icon">${m.name||'👤'}</div>`).join('');
+    }
+
+    function renderGroup(lbl) {
+      activeGroup = lbl;
+      // Update nav buttons
+      groupOrder.forEach(gl => {
+        const btn = document.getElementById('myviewteambtn-' + gl.replace(/\s+/g,'_'));
+        if (btn) {
+          const on = gl === lbl;
+          btn.style.background   = on ? 'rgba(200,168,75,0.15)' : 'var(--panel2)';
+          btn.style.color        = on ? 'var(--gold)' : 'var(--muted)';
+          btn.style.borderColor  = on ? 'var(--gold)' : 'rgba(200,168,75,0.22)';
+        }
+      });
+      // Render all teams in this group
+      const panel = document.getElementById('myviewteam-panel');
+      if (!panel) return;
+      const grpTeams = groups[lbl] || [];
+      panel.innerHTML = grpTeams.map(t => `
+        <div class="team-block" style="margin-top:0;margin-bottom:10px;">
+          <div class="team-label">${t.label}</div>
+          <div class="team-icons">${teamIconHtml(t.members)}</div>
+          <div class="team-tips" style="margin-top:8px;font-size:12px;color:var(--text-body);background:rgba(200,168,75,0.07);border:1px solid rgba(200,168,75,0.15);border-radius:5px;padding:7px 11px;line-height:1.6;">
+            <span style="color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.5px;display:block;margin-bottom:3px;">📝 My Tips for You</span>
+            ${t.desc || c.notes || 'Use this team composition for best synergy and reactions.'}
+          </div>
+        </div>`).join('');
+    }
+
+    const navHtml = groupOrder.length > 1
+      ? `<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+          ${groupOrder.map((lbl, i) =>
+            `<button id="myviewteambtn-${lbl.replace(/\s+/g,'_')}" onclick="window._renderMyTeamFn('${lbl.replace(/'/g,"\\'")}')" style="padding:4px 14px;border-radius:6px;border:1px solid ${i===0?'var(--gold)':'rgba(200,168,75,0.22)'};background:${i===0?'rgba(200,168,75,0.15)':'var(--panel2)'};color:${i===0?'var(--gold)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;letter-spacing:.5px;transition:all .15s;">${lbl}</button>`
+          ).join('')}
+        </div>`
+      : '';
+
+    tb.innerHTML = navHtml + `<div id="myviewteam-panel"></div>`;
+    window._renderMyTeamFn = renderGroup;
+    renderGroup(activeGroup);
+  })();
+
+  // Talents — horisontaal, 3 kolomme met → pyle
   const sorted=[...(c.talents||[])].sort((a,b)=>a.priority-b.priority);
-  document.getElementById('talent-row').innerHTML=sorted.map((t,i)=>`
-    <div class="talent-chip">
+  const talParts = sorted.map((t,i) => {
+    const chip = `<div class="talent-chip">
       <div class="t-icon-wrap" style="${t.img?'padding:0;overflow:hidden;':''}">${t.img?`<img src="${t.img}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`:'✨'}</div>
       <div style="flex:1;">
         <div class="t-type">#${t.priority||i+1} — ${t.label}</div>
         ${t.desc?`<div class="t-label">${t.desc}</div>`:''}
       </div>
-    </div>${i<sorted.length-1?'<span class="talent-arrow">↓</span>':''}`).join('');
+    </div>`;
+    return i < sorted.length - 1 ? chip + '<span class="talent-arrow">→</span>' : chip;
+  });
+  document.getElementById('talent-row').innerHTML = talParts.join('');
 
   // Notes / My Tips for You
   document.getElementById('notes-box').innerHTML=c.notes?`<div class="notes-title">📝 My Tips for You</div>${c.notes}`:'';
