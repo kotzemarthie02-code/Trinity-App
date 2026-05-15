@@ -291,12 +291,22 @@ body::after {
     position: relative;
   }
   .weapon-slot .w-tag {
-    position: absolute; top: 5px; right: 6px;
     font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
     padding: 1px 5px; border-radius: 3px;
   }
-  .w-tag.bis { background: rgba(200,168,75,0.2); color: var(--gold); }
-  .w-tag.f2p { background: rgba(79,195,161,0.15); color: var(--accent); }
+  .weapon-slot .w-badges {
+    position: absolute; top: 5px; right: 6px;
+    display: flex; gap: 3px; align-items: center;
+  }
+  .w-tag.bis   { background: rgba(200,168,75,0.2);  color: var(--gold); }
+  .w-tag.f2p   { background: rgba(79,195,161,0.15); color: var(--accent); }
+  .w-tag.wish  { background: rgba(155,114,207,0.2); color: var(--purple); }
+  .w-tag.bp    { background: rgba(224,80,80,0.15);  color: var(--danger); }
+  .w-source-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+    padding: 1px 5px; border-radius: 3px;
+    background: rgba(255,255,255,0.08); color: var(--muted);
+  }
   .weapon-icon { font-size: 24px; flex-shrink: 0; }
   .w-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
   .w-stars { font-size: 11px; }
@@ -1157,6 +1167,16 @@ function showView(v) {
   document.getElementById('view-' + v).classList.add('active');
 }
 
+function wTagLabel(tag) {
+  return { bis:'BiS', f2p:'F2P', wish:'Wish', bp:'BP' }[tag] || tag.toUpperCase();
+}
+function wBadgesHtml(tag, source) {
+  const srcMap = { wish:'🔮 Wish', craft:'⚒️ Craft', bp:'📜 BP', event:'🎉 Event', fishing:'🎣 Fishing', quest:'📋 Quest', shop:'🛒 Shop' };
+  const srcHtml = source ? `<span class="w-source-badge">${srcMap[source]||source}</span>` : '';
+  const tagHtml = tag ? `<span class="w-tag ${tag}">${wTagLabel(tag)}</span>` : '';
+  return (srcHtml||tagHtml) ? `<div class="w-badges">${srcHtml}${tagHtml}</div>` : '';
+}
+
 function renderBuildVariant(id, variantIdx) {
   const c = CHARS[id];
   if (!c) return;
@@ -1167,7 +1187,7 @@ function renderBuildVariant(id, variantIdx) {
   const wg = document.getElementById('weapon-grid');
   wg.innerHTML = build.weapons.map(w => `
     <div class="weapon-slot">
-      ${w.tag ? `<span class="w-tag ${w.tag}">${w.tag === 'bis' ? 'BiS' : 'F2P'}</span>` : ''}
+      ${wBadgesHtml(w.tag, w.source)}
       <div class="weapon-icon">${w.icon}</div>
       <div>
         <div class="w-name">${w.name}</div>
@@ -1766,7 +1786,7 @@ renderBuildVariant = function(id, variantIdx) {
         ? `<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${IC[wKey]}" style="width:100%;height:100%;object-fit:contain;" /></span>`
         : `<div class="weapon-icon">${w.icon}</div>`;
       return `<div class="weapon-slot">
-        ${w.tag ? `<span class="w-tag ${w.tag}">${w.tag === 'bis' ? 'BiS' : 'F2P'}</span>` : ''}
+        ${wBadgesHtml(w.tag, w.source)}
         ${imgHtml}
         <div><div class="w-name">${w.name}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars)}</div></div>
       </div>`;
@@ -2231,7 +2251,8 @@ function addWepRow(d) {
       <div class="dyn-pb" onclick="pbPick('wf-${k}')"><span id="di-wep-${k}">${dt.img?'':'⚔️'}</span><img id="dp-wep-${k}" src="${dt.img||''}" style="${dt.img?'':'display:none'}"></div>
       <input type="file" id="wf-${k}" accept="image/*" style="display:none" onchange="dynLoad(this,'wep-${k}')">
       <input class="mfi" id="wn-${k}" value="${dt.name||''}" placeholder="Weapon name" style="flex:1;min-width:110px;">
-      <select class="mfi" id="wt-${k}" style="width:62px;padding:7px 4px;"><option value=""${!dt.tag||dt.tag===''?' selected':''}></option><option value="bis"${dt.tag==='bis'?' selected':''}>BiS</option><option value="f2p"${dt.tag==='f2p'?' selected':''}>F2P</option></select>
+      <select class="mfi" id="wt-${k}" style="width:72px;padding:7px 4px;"><option value=""${!dt.tag||dt.tag===''?' selected':''}></option><option value="wish"${dt.tag==='wish'?' selected':''}>Wish</option><option value="bp"${dt.tag==='bp'?' selected':''}>BP</option><option value="bis"${dt.tag==='bis'?' selected':''}>BiS</option><option value="f2p"${dt.tag==='f2p'?' selected':''}>F2P</option></select>
+      <select class="mfi" id="wsrc-${k}" style="width:88px;padding:7px 4px;" title="Weapon Source"><option value=""${!dt.source?' selected':''}>Source…</option><option value="wish"${dt.source==='wish'?' selected':''}>🔮 Wish</option><option value="craft"${dt.source==='craft'?' selected':''}>⚒️ Craft</option><option value="bp"${dt.source==='bp'?' selected':''}>📜 BP</option><option value="event"${dt.source==='event'?' selected':''}>🎉 Event</option><option value="fishing"${dt.source==='fishing'?' selected':''}>🎣 Fishing</option><option value="quest"${dt.source==='quest'?' selected':''}>📋 Quest</option><option value="shop"${dt.source==='shop'?' selected':''}>🛒 Shop</option></select>
       <select class="mfi" id="ws-${k}" style="width:54px;padding:7px 4px;"><option value="5"${dt.stars==5?' selected':''}>★5</option><option value="4"${dt.stars==4?' selected':''}>★4</option><option value="3"${dt.stars==3?' selected':''}>★3</option></select>
       <button class="rm-btn" onclick="document.getElementById('wr-${k}').remove()">✕</button>
     </div>`);
@@ -2492,7 +2513,7 @@ function _openAddModalInner(editIdx) {
 function collectWeps() {
   return [...document.getElementById('m-weps').querySelectorAll('[id^="wr-"]')].map(r=>{
     const k=r.id.replace('wr-','');
-    return {img:_pendingImgs['wep-'+k]||'',name:(document.getElementById('wn-'+k)||{}).value||'',tag:(document.getElementById('wt-'+k)||{}).value||'',stars:parseInt((document.getElementById('ws-'+k)||{}).value||5)};
+    return {img:_pendingImgs['wep-'+k]||'',name:(document.getElementById('wn-'+k)||{}).value||'',tag:(document.getElementById('wt-'+k)||{}).value||'',source:(document.getElementById('wsrc-'+k)||{}).value||'',stars:parseInt((document.getElementById('ws-'+k)||{}).value||5)};
   }).filter(w=>w.name);
 }
 function collectArts() {
@@ -2714,7 +2735,7 @@ function showMyChar(idx) {
   // Weapons
   document.getElementById('weapon-grid').innerHTML=(c.weapons||[]).map(w=>`
     <div class="weapon-slot">
-      ${w.tag ? `<span class="w-tag ${w.tag}">${w.tag==='f2p'?'F2P':'BiS'}</span>` : ''}
+      ${wBadgesHtml(w.tag, w.source)}
       ${w.img?`<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${w.img}" style="width:100%;height:100%;object-fit:contain;"></span>`:'<div class="weapon-icon">⚔️</div>'}
       <div><div class="w-name">${w.name}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars||4)}</div></div>
     </div>`).join('');
