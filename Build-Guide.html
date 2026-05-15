@@ -1259,7 +1259,6 @@ function renderTeamVariant(id, variantIdx) {
     if (panel) {
       panel.innerHTML = `
         <div class="team-block" style="margin-top:0;">
-          <div class="team-label">${t.label}</div>
           <div class="team-icons">
             ${t.icons.map(i => `<div class="team-icon">${i}</div>`).join('')}
           </div>
@@ -2826,7 +2825,6 @@ function showMyChar(idx) {
       const grpTeams = groups[lbl] || [];
       panel.innerHTML = grpTeams.map(t => `
         <div class="team-block" style="margin-top:0;margin-bottom:10px;">
-          <div class="team-label">${t.label}</div>
           <div class="team-icons">${teamIconHtml(t.members)}</div>
           <div class="team-tips" style="margin-top:8px;font-size:12px;color:var(--text-body);background:rgba(200,168,75,0.07);border:1px solid rgba(200,168,75,0.15);border-radius:5px;padding:7px 11px;line-height:1.6;">
             <span style="color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.5px;display:block;margin-bottom:3px;">📝 My Tips for You</span>
