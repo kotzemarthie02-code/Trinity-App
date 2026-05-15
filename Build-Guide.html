@@ -2142,7 +2142,7 @@ let _wc=0, _ac=0, _tc=0, _talc=0;
   ov.className = 'modal-overlay';
   ov.id = 'char-modal';
   ov.innerHTML = '<div class="modal-box" id="char-modal-box"></div>';
-  ov.addEventListener('click', e => { if(e.target===ov) closeModal(); });
+  // Click outside disabled — modal only closes via Save or Cancel/X
   document.body.appendChild(ov);
 })();
 
