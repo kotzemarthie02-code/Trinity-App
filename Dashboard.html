@@ -161,6 +161,11 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
+        // Maak Firebase funksies globaal beskikbaar vir die tweede script
+        window._fbDb = db;
+        window._fbRef = ref;
+        window._fbSet = set;
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 localStorage.setItem('trinity_uid', user.uid);
@@ -267,7 +272,7 @@
     <div class="cal-panel" id="calPanel">
         <div class="cal-header-row" style="justify-content:center;gap:10px;">
             <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
-            <a href="Calendar.html" id="calMonthLbl" style="font-size:16px;font-weight:800;color:#f3d18b;text-decoration:none;display:flex;align-items:center;gap:6px;min-width:150px;justify-content:center;">
+            <a href="Calendar.html" id="calMonthLbl" onclick="markCalRead()" style="font-size:16px;font-weight:800;color:#f3d18b;text-decoration:none;display:flex;align-items:center;gap:6px;min-width:150px;justify-content:center;">
                 📅 <span id="calMonthLblText"></span>
             </a>
             <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
@@ -401,13 +406,23 @@
         function markCalRead() {
             document.getElementById('calBadge').classList.add('hidden');
             const uid = localStorage.getItem('trinity_uid');
-            if (uid) set(ref(db, 'users/' + uid + '/lastRead/calendar'), Date.now());
+            if (uid && window._fbDb && window._fbRef && window._fbSet) {
+                window._fbSet(window._fbRef(window._fbDb, 'users/' + uid + '/lastRead/calendar'), Date.now());
+            }
         }
 
         function markNewsRead() {
             document.getElementById('newsBadge').classList.add('hidden');
             const uid = localStorage.getItem('trinity_uid');
-            if (uid) set(ref(db, 'users/' + uid + '/lastRead/news'), Date.now());
+            if (uid && window._fbDb && window._fbRef && window._fbSet) {
+                window._fbSet(window._fbRef(window._fbDb, 'users/' + uid + '/lastRead/news'), Date.now());
+            }
+        }
+
+        // Wanneer jy Calendar.html oopmaak, mark as read
+        function goToCalendar() {
+            markCalRead();
+            setTimeout(() => { window.location.href = 'Calendar.html'; }, 80);
         }
 
         window.renderCal = renderCal;
