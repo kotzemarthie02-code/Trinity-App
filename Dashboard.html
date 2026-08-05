@@ -260,6 +260,24 @@
 </head>
 <body>
 
+    <!-- Laai cached profiel ONMIDDELLIK voor Firebase — geen flicker nie -->
+    <script>
+        (function() {
+            const nick = localStorage.getItem('trinity_nickname');
+            const uid  = localStorage.getItem('trinity_genshinuid');
+            const pic  = localStorage.getItem('trinity_profilepic');
+            if (nick) document.addEventListener('DOMContentLoaded', function() {
+                const n = document.getElementById('n-display'); if(n) n.innerText = nick;
+            });
+            if (uid) document.addEventListener('DOMContentLoaded', function() {
+                const u = document.getElementById('u-display'); if(u) u.innerText = uid;
+            });
+            if (pic) document.addEventListener('DOMContentLoaded', function() {
+                const a = document.getElementById('avatar'); if(a) a.src = pic;
+            });
+        })();
+    </script>
+
     <div class="top-right-box">
         <span class="uid-tag">UID: <span id="u-display">--------</span></span>
         <div class="logout-btn" onclick="logout()">LOG OUT</div>
@@ -284,7 +302,7 @@
 
     <div class="profile-section">
         <div class="profile-pic" onclick="document.getElementById('file-input').click()">
-            <img id="avatar" src="https://via.placeholder.com/120" alt="Avatar">
+            <img id="avatar" src="" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
         </div>
         <div class="profile-right">
             <div class="nickname" id="n-display">Traveler</div>
@@ -349,9 +367,10 @@
         }
 
         function renderCal() {
-            // Kry private notas van LocalStorage
-            const allNotes = JSON.parse(localStorage.getItem('cal_save_data')) || {};
-            
+            const raw = JSON.parse(localStorage.getItem('cal_save_data')) || {};
+            // Nuwe formaat: raw._events is 'n array met {start, end, color}
+            const events = raw._events || [];
+
             const lbl = document.getElementById('calMonthLblText'); 
             if(lbl) lbl.textContent = MONTHS[calMonth] + ' ' + calYear;
             
@@ -383,20 +402,22 @@
                     el.classList.add('today');
                 }
 
+                // Soek alle events wat hierdie dag dek (start <= dag <= end)
+                const mm = String(calMonth + 1).padStart(2, '0');
+                const dd = String(d).padStart(2, '0');
+                const dateStr = `${calYear}-${mm}-${dd}`;
+
                 const dotsContainer = document.createElement('div');
                 dotsContainer.className = 'cal-note-dots';
 
-                // Wys sirkels VAN FIREBASE sharedData — almal sien dieselfde
-                const dateKey = `${calYear}-${calMonth + 1}-${d}`;
-                const dayNotes = allNotes[dateKey];
-                if (dayNotes && dayNotes.length > 0) {
-                    dayNotes.forEach(note => {
+                events.forEach(ev => {
+                    if (dateStr >= ev.start && dateStr <= (ev.end || ev.start)) {
                         const dot = document.createElement('div');
                         dot.className = 'cal-note-dot';
-                        dot.style.backgroundColor = note.color;
+                        dot.style.backgroundColor = ev.color || '#f3d18b';
                         dotsContainer.appendChild(dot);
-                    });
-                }
+                    }
+                });
 
                 el.appendChild(dotsContainer);
                 grid.appendChild(el);
