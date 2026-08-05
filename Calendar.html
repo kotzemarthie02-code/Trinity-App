@@ -108,13 +108,14 @@
 
         /* ── TIMELINE WRAPPER ── */
         .timeline-outer {
-            background: transparent;
+            background: rgba(6,8,18,0.55);
             border-radius: 12px;
             border: 1px solid var(--border);
             overflow: hidden;
             margin-bottom: 30px;
+            height: calc(100vh - 130px);
         }
-        .timeline-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 130px); height: fit-content; }
+        .timeline-scroll { overflow-x: auto; overflow-y: auto; height: 100%; }
         ::-webkit-scrollbar { height: 7px; width: 7px; }
         ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -678,13 +679,8 @@ function renderTimeline() {
                 cells.appendChild(cell);
             });
 
-            // Today line
-            if (todayIdx >= 0) {
-                const line = document.createElement('div');
-                line.className = 'today-vline';
-                line.style.left = (todayIdx * pxDay + pxDay/2) + 'px';
-                cells.appendChild(line);
-            }
+            // Today line - SKIP hier, word apart gehanteer
+            // (sien globaleTodayLine onder)
 
             // Bar
             const sIdx = days.findIndex(d => d.toISOString().slice(0,10) === ev.start);
@@ -714,6 +710,27 @@ function renderTimeline() {
             root.appendChild(row);
         });
     });
+
+    // ── Globale Today Lyn (strek oor hele timeline hoogte, scroll saam) ──
+    if (todayIdx >= 0) {
+        const labelW = 220; // --label-w
+        const todayLeft = labelW + todayIdx * pxDay + pxDay / 2;
+        const globalLine = document.createElement('div');
+        globalLine.id = 'global-today-line';
+        globalLine.style.cssText = `
+            position: absolute;
+            top: 0; bottom: 0;
+            left: ${todayLeft}px;
+            width: 2px;
+            background: var(--blue);
+            opacity: 0.9;
+            box-shadow: 0 0 10px var(--blue), 0 0 4px var(--blue);
+            pointer-events: none;
+            z-index: 30;
+        `;
+        root.style.position = 'relative';
+        root.appendChild(globalLine);
+    }
 }
 
 // ── Scroll to today ──
