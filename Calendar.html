@@ -57,7 +57,7 @@
             background-size: cover;
             font-family: 'Segoe UI', sans-serif;
             color: white;
-            padding: 10px 14px;
+            padding: 10px 14px 0 14px;
             min-height: 100vh;
         }
 
@@ -110,12 +110,14 @@
         .timeline-outer {
             background: rgba(6,8,18,0.55);
             border-radius: 12px;
-            border: 1px solid rgba(51,255,119,0.5);
+            border: 2px solid rgba(51,255,119,0.5);
             overflow: hidden;
-            margin-bottom: 30px;
-            height: calc(100vh - 130px);
+            margin-bottom: 0;
+            height: calc(100vh - 90px);
+            display: flex;
+            flex-direction: column;
         }
-        .timeline-scroll { overflow-x: auto; overflow-y: auto; height: 100%; }
+        .timeline-scroll { overflow-x: auto; overflow-y: auto; flex: 1; }
         ::-webkit-scrollbar { height: 7px; width: 7px; }
         ::-webkit-scrollbar-thumb { background: #33ff77; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
