@@ -47,8 +47,8 @@
             --bg-dark: rgba(8,10,20,0.96);
             --row-h: 46px;
             --header-h: 56px;
-            --label-w: 160px;
-            --cat-w: 110px;
+            --label-w: 220px;
+            --cat-w: 0px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -64,7 +64,8 @@
         /* ── TOP BAR ── */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.88); padding: 11px 18px;
+            background: rgba(0,0,0,0.60); padding: 11px 18px;
+            backdrop-filter: blur(10px);
             border-radius: 12px; border: 1px solid var(--border);
             margin-bottom: 12px; position: sticky; top: 8px; z-index: 300;
             gap: 10px; flex-wrap: wrap;
@@ -107,7 +108,7 @@
 
         /* ── TIMELINE WRAPPER ── */
         .timeline-outer {
-            background: rgba(6,8,18,0.88);
+            background: rgba(6,8,18,0.55);
             border-radius: 12px;
             border: 1px solid var(--border);
             overflow: hidden;
@@ -123,7 +124,7 @@
             position: sticky; left: 0; z-index: 50;
             width: calc(var(--cat-w) + var(--label-w));
             flex-shrink: 0;
-            background: rgba(6,8,18,0.99);
+            background: rgba(6,8,18,0.82);
             border-right: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
             height: var(--header-h);
@@ -141,15 +142,15 @@
         /* Header row */
         .tl-header-row {
             display: flex; position: sticky; top: 0; z-index: 40;
-            background: rgba(6,8,18,0.99);
+            background: rgba(6,8,18,0.82);
             border-bottom: 1px solid var(--border);
             min-width: max-content;
         }
         .tl-header-left {
             position: sticky; left: 0; z-index: 50;
-            width: calc(var(--cat-w) + var(--label-w));
+            width: var(--label-w);
             flex-shrink: 0;
-            background: rgba(6,8,18,0.99);
+            background: rgba(6,8,18,0.82);
             border-right: 1px solid var(--border);
             height: var(--header-h);
             display: flex; align-items: flex-end; padding: 0 14px 8px;
@@ -187,9 +188,9 @@
         }
         .tl-group-label {
             position: sticky; left: 0; z-index: 20;
-            width: calc(var(--cat-w) + var(--label-w));
+            width: var(--label-w);
             flex-shrink: 0;
-            background: rgba(12,14,28,0.99);
+            background: rgba(12,14,28,0.72);
             border-right: 1px solid var(--border);
             display: flex; align-items: center;
             padding: 0 12px;
@@ -213,25 +214,19 @@
         }
         .tl-event-row:hover { background: rgba(255,255,255,0.02); }
 
-        .tl-row-cat {
-            position: sticky; left: 0; z-index: 20;
-            width: var(--cat-w); flex-shrink: 0;
-            background: rgba(8,10,20,0.99);
-            border-right: 1px solid rgba(255,255,255,0.06);
-            display: flex; align-items: center; padding: 0 8px;
-        }
+        .tl-row-cat { display: none; }
         .cat-badge {
             font-size: 10px; font-weight: 800; padding: 2px 7px;
             border-radius: 4px; letter-spacing: .4px; white-space: nowrap;
             overflow: hidden; text-overflow: ellipsis; max-width: 90px;
         }
         .tl-row-label {
-            position: sticky; left: var(--cat-w); z-index: 20;
+            position: sticky; left: 0; z-index: 20;
             width: var(--label-w); flex-shrink: 0;
-            background: rgba(8,10,20,0.99);
+            background: rgba(8,10,20,0.72);
             border-right: 1px solid var(--border);
-            display: flex; align-items: center; padding: 0 10px;
-            font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8);
+            display: flex; align-items: center; padding: 0 12px;
+            font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85);
             gap: 6px;
         }
         .tl-row-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
@@ -272,8 +267,9 @@
         /* Today line */
         .today-vline {
             position: absolute; top: 0; bottom: 0; width: 2px;
-            background: var(--blue); opacity: 0.55;
+            background: var(--blue); opacity: 0.90;
             pointer-events: none; z-index: 5;
+            box-shadow: 0 0 8px var(--blue);
         }
 
         /* Empty */
@@ -557,7 +553,7 @@ function renderTimeline() {
 
     const headerLeft = document.createElement('div');
     headerLeft.className = 'tl-header-left';
-    headerLeft.textContent = 'Category / Event';
+    headerLeft.textContent = 'Genshin Impact Calendar';
     headerRow.appendChild(headerLeft);
 
     const headerDates = document.createElement('div');
