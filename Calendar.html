@@ -108,13 +108,13 @@
 
         /* ── TIMELINE WRAPPER ── */
         .timeline-outer {
-            background: rgba(6,8,18,0.55);
+            background: transparent;
             border-radius: 12px;
             border: 1px solid var(--border);
             overflow: hidden;
             margin-bottom: 30px;
         }
-        .timeline-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 130px); }
+        .timeline-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 130px); height: fit-content; }
         ::-webkit-scrollbar { height: 7px; width: 7px; }
         ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
