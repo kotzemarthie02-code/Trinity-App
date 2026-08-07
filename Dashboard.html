@@ -532,8 +532,8 @@
             const reminders = [];
 
             events.forEach(ev => {
-                if (!ev.title && !ev.name) return; // skip events with no name
-                const name = ev.title || ev.name || 'Event';
+                if (!ev.title && !ev.name && !ev.text) return; // skip events with no name
+                const name = ev.title || ev.name || ev.text || 'Event';
                 const startDate = ev.start ? new Date(ev.start + 'T00:00:00') : null;
                 const endDate   = ev.end   ? new Date(ev.end   + 'T00:00:00') : startDate;
 
