@@ -734,6 +734,8 @@ window.onload=()=>{
   const cd=G('cds')||{};SV('cd1',cd.d1);SV('cd2',cd.d2);
   const pd=G('pd')||{};SV('p1d',pd.p1);SV('p2d',pd.p2);
   const lv=G('live')||{};SV('live-date',lv.date);SV('live-ver',lv.ver);
+  const vb=G('vb');if(vb){const el=document.getElementById('ver-banner');if(el)el.value=vb;}
+  const vm=G('vm');if(vm){const el=document.getElementById('ver-maint');if(el)el.value=vm;}
 
   renderBdays();
   const s=G('ss')||'';if(s)setSave(s);

@@ -411,7 +411,10 @@
                 dotsContainer.className = 'cal-note-dots';
 
                 events.forEach(ev => {
-                    if (dateStr >= ev.start && dateStr <= (ev.end || ev.start)) {
+                    const evEnd = ev.end || ev.start;
+                    const isStart = dateStr === ev.start;
+                    const isEnd   = dateStr === evEnd;
+                    if (isStart || isEnd) {
                         const dot = document.createElement('div');
                         dot.className = 'cal-note-dot';
                         dot.style.backgroundColor = ev.color || '#f3d18b';
