@@ -48,7 +48,7 @@
         const lv   = data.live || {};
 
         const dispMap = [
-            { inp:'cd1',       val:cds.d1,  disp:'d1',    pre:'Release Date & Time'  },
+            { inp:'cd1',       val:cds.d1,  disp:'d1',    pre:'Existence Date & Time'},
             { inp:'cd2',       val:cds.d2,  disp:'d2',    pre:'Release Date & Time'  },
             { inp:'p1d',       val:pd.p1,   disp:'dp1',   pre:'Expected Date & Time' },
             { inp:'p2d',       val:pd.p2,   disp:'dp2',   pre:'Expected Date & Time' },
@@ -203,7 +203,10 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
   <div style="padding:10px 0 5px;display:flex;justify-content:space-between;align-items:center;">
     <a href="Dashboard.html" class="dash-btn">🏠 Dashboard</a>
 
-    <button id="lock-btn" onclick="toggleLock()" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">⚙️ <span id="lock-lbl">Settings</span></button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="lock-btn" onclick="toggleLock()" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">⚙️ <span id="lock-lbl">Settings</span></button>
+      <button onclick="resetNews()" title="Skoon alles vir nuwe update" style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.4);color:#ff9090;padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">🔄 Reset</button>
+    </div>
   </div>
   <div class="site-title"><h1>The Trinity News</h1></div>
 
@@ -234,8 +237,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
               <div class="timer-unit"><span id="t1m">--</span><span class="t-lbl">min</span></div>
               <div class="timer-unit"><span id="t1s">--</span><span class="t-lbl">sec</span></div>
             </div>
-            <div class="timer-info" id="d1" style="color:var(--gold);">Release Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('cd1','d1','Release Date &amp; Time')" title="Skrap datum">✕</button></div>
-            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);" onclick="openDT('cd1','d1','Release Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
+            <div class="timer-info" id="d1" style="color:var(--gold);">Existence Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('cd1','d1','Existence Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);" onclick="openDT('cd1','d1','Existence Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
           </div>
         </div>
       </div>
@@ -264,9 +267,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
     <div class="split">
       <div class="card">
         <span class="lbl">📰 NEWS UPDATE STORY</span>
-        <textarea id="news-story" rows="4" placeholder="Write the update news here..." oninput="saveNews()"></textarea>
-        <span class="lbl">TikTok Share Link</span>
-        <div class="lr"><input type="text" id="tiktok-link" placeholder="TikTok URL..." oninput="saveNews()"><button class="btn btn-g pub-btn" onclick="openL('tiktok-link')">▶ Share</button></div>
+        <textarea id="news-story" rows="8" placeholder="Write the update news here..." oninput="saveNews()" style="min-height:140px;"></textarea>
+        <input type="text" id="tiktok-link" class="hide">
         <span class="lbl">New Events</span>
         <div id="events-con" style="display:flex;flex-direction:column;gap:4px;"></div>
         <button class="btn btn-g btn-w" style="margin-top:6px;" onclick="addEvent()">+ Add Event</button>
@@ -504,10 +506,37 @@ function saveNews(){
 
 function addEvent(val=''){
   const c=document.getElementById('events-con');
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;gap:6px;align-items:center;margin-top:4px;';
   const i=document.createElement('input');i.type='text';i.className='ev-inp';
-  i.placeholder='Event Name...';i.value=val;
-  i.style.cssText='width:100%;margin-top:4px;';
-  i.oninput=saveNews;c.appendChild(i);
+  i.placeholder='Event Name...';i.value=val;i.style.cssText='flex:1;';
+  i.oninput=saveNews;
+  const rm=document.createElement('button');
+  rm.textContent='✕';
+  rm.style.cssText='background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.4);color:#ff9090;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:13px;font-weight:700;flex-shrink:0;';
+  rm.onclick=()=>{wrap.remove();saveNews();};
+  wrap.appendChild(i);wrap.appendChild(rm);
+  c.appendChild(wrap);
+}
+
+function resetNews(){
+  if(!_unlocked){alert('🔒 Ontsluit eers via Settings.');return;}
+  if(!confirm('🔄 Skoon alles vir nuwe update? Dit kan nie ontgedaan word nie.'))return;
+  ['ver-input','title-input','news-story','tiktok-link','new-maps',
+   'p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b',
+   'p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b',
+   'new-char','yt-demo','yt-misc','build-link','wiki-link','weekly-boss','boss-link',
+   'cd1','cd2','p1d','p2d','live-date','live-ver','ver-banner','ver-maint'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('events-con').innerHTML='';
+  const dispReset={'d1':'Existence Date & Time: —','d2':'Release Date & Time: —','dp1':'Expected Date & Time: —','dp2':'Expected Date & Time: —','dlive':'Release Date & Time: —'};
+  Object.entries(dispReset).forEach(([id,txt])=>{const el=document.getElementById(id);if(el)el.innerHTML=txt;});
+  ['t1d','t1h','t1m','t1s','t2d','t2h','t2m','t2s',
+   'p1dd','p1dh','p1dm','p1ds','p2dd','p2dh','p2dm','p2ds',
+   'lcd','lch','lcm','lcs'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
+  saveNews();P('cds',{});P('pd',{});saveLive();
+  alert('✅ Skoon! Klaar vir nuwe update.');
 }
 
 // ── UPCOMING CHARACTERS ──
@@ -767,7 +796,7 @@ function fmtCD(ms){
 }
 
 const tickers=[
-  {inp:'cd1',       ids:['t1d','t1h','t1m','t1s'],   disp:'d1',    pre:'Release Date & Time'},
+  {inp:'cd1',       ids:['t1d','t1h','t1m','t1s'],   disp:'d1',    pre:'Existence Date & Time'},
   {inp:'cd2',       ids:['t2d','t2h','t2m','t2s'],   disp:'d2',    pre:'Release Date & Time'},
   {inp:'p1d',       ids:['p1dd','p1dh','p1dm','p1ds'],disp:'dp1',  pre:'Expected Date & Time'},
   {inp:'p2d',       ids:['p2dd','p2dh','p2dm','p2ds'],disp:'dp2',  pre:'Expected Date & Time'},
