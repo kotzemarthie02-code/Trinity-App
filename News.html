@@ -361,6 +361,13 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
     </div>
   </div>
 
+  <!-- ── UPCOMING CHARACTERS ── -->
+  <div class="panel">
+    <div class="sec-lbl">🌟 Upcoming Characters</div>
+    <div id="upcoming-con" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
+    <button class="btn btn-g btn-w" style="margin-top:14px;" onclick="addUpcoming()">+ Add Character</button>
+  </div>
+
   <!-- ── BATTLE & BUILD ── -->
   <div class="panel">
     <div class="sec-lbl">⚔️ Battle &amp; Build Intel</div>
@@ -502,6 +509,147 @@ function addEvent(val=''){
   i.style.cssText='width:100%;margin-top:4px;';
   i.oninput=saveNews;c.appendChild(i);
 }
+
+// ── UPCOMING CHARACTERS ──
+let _upcomingTickers = [];
+
+function addUpcoming(data){
+  const id = 'uc_' + Date.now() + '_' + document.querySelectorAll('.upcoming-card').length;
+  const card = document.createElement('div');
+  card.className = 'upcoming-card';
+  card.dataset.id = id;
+  card.style.cssText = 'position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#000;';
+
+  const imgId  = 'ucimg_'  + id;
+  const fileId = 'ucfile_' + id;
+  const nameId = 'ucname_' + id;
+  const elemId = 'ucelem_' + id;
+  const dtId   = 'ucdt_'   + id;
+  const dispId = 'ucdisp_' + id;
+  const ddId   = 'ucdd_'   + id;
+  const dhId   = 'ucdh_'   + id;
+  const dmId   = 'ucdm_'   + id;
+  const dsId   = 'ucds_'   + id;
+
+  card.innerHTML = `
+    <!-- ✕ remove -->
+    <button onclick="removeUpcoming(this)" title="Verwyder"
+      style="position:absolute;top:7px;right:7px;z-index:20;background:rgba(200,0,0,0.75);border:none;color:white;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+
+    <!-- Name + Element inputs (bo) -->
+    <div style="position:relative;z-index:10;display:flex;gap:6px;padding:10px 10px 6px;background:linear-gradient(to bottom,rgba(0,0,0,0.72),transparent);">
+      <input type="text" id="${nameId}" placeholder="Character Name..." oninput="saveUpcoming()"
+        style="flex:1;background:transparent;border:none;border-bottom:1px solid rgba(255,224,138,0.5);color:var(--gold);font-size:13px;font-weight:800;padding:2px 4px;outline:none;font-family:'Cinzel',serif;">
+      <input type="text" id="${elemId}" placeholder="Element..." oninput="saveUpcoming()"
+        style="width:78px;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);font-size:11px;font-weight:700;padding:2px 4px;outline:none;text-align:center;">
+    </div>
+
+    <!-- Background image (prent) -->
+    <div id="${imgId}" onclick="if(_unlocked)document.getElementById('${fileId}').click()"
+      style="height:155px;background:rgba(30,30,50,0.6) center/cover no-repeat;cursor:pointer;display:flex;align-items:center;justify-content:center;filter:brightness(0.38);transition:filter 0.2s;"
+      onmouseover="this.style.filter='brightness(0.52)'" onmouseout="this.style.filter='brightness(0.38)'">
+      <span class="ucph" style="font-size:11px;opacity:0.45;filter:brightness(2.5);">🖼️ Klik vir prentjie</span>
+    </div>
+    <input type="file" id="${fileId}" class="hide" accept="image/*" onchange="ucChImg(this,'${imgId}','${id}')">
+    <input type="datetime-local" id="${dtId}" class="hide">
+
+    <!-- Countdown overlay (middel bo prent) -->
+    <div style="position:absolute;top:42px;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;pointer-events:none;">
+      <div style="display:flex;gap:14px;font-family:'Cinzel',serif;font-size:26px;font-weight:900;color:white;text-shadow:0 2px 8px rgba(0,0,0,0.9);">
+        <div class="timer-unit"><span id="${ddId}">--</span><span class="t-lbl">days</span></div>
+        <div class="timer-unit"><span id="${dhId}">--</span><span class="t-lbl">hours</span></div>
+        <div class="timer-unit"><span id="${dmId}">--</span><span class="t-lbl">min</span></div>
+        <div class="timer-unit"><span id="${dsId}">--</span><span class="t-lbl">sec</span></div>
+      </div>
+      <div id="${dispId}" style="font-size:11px;font-weight:700;color:var(--gold);margin-top:4px;text-shadow:0 1px 6px rgba(0,0,0,0.9);text-align:center;padding:0 8px;">Expected Date &amp; Time: —</div>
+    </div>
+
+    <!-- Set Date button (onder) -->
+    <div style="position:relative;z-index:10;padding:7px 10px;background:linear-gradient(to top,rgba(0,0,0,0.75),transparent);display:flex;justify-content:center;">
+      <button class="set-btn" style="border-color:var(--gold);color:var(--gold);pointer-events:auto;"
+        onclick="openUcDT('${dtId}','${dispId}','${id}')">📅 Set Date &amp; Time</button>
+    </div>`;
+
+  document.getElementById('upcoming-con').appendChild(card);
+
+  if(data){
+    const ni=document.getElementById(nameId); if(ni) ni.value=data.name||'';
+    const ei=document.getElementById(elemId); if(ei) ei.value=data.elem||'';
+    const di=document.getElementById(dtId);   if(di&&data.dt) di.value=data.dt;
+    if(data.img){
+      const el=document.getElementById(imgId);
+      if(el){ el.style.backgroundImage='url("'+data.img+'")'; const sp=el.querySelector('.ucph'); if(sp)sp.style.display='none'; }
+    }
+    if(data.dt){ const dp=document.getElementById(dispId); if(dp) dp.innerHTML='Expected Date &amp; Time: <strong style="color:var(--gold);">'+fmtFull(data.dt)+'</strong>'; }
+  }
+
+  _upcomingTickers.push({dtId,ddId,dhId,dmId,dsId,dispId});
+}
+
+function ucChImg(inp, imgId, ucId){
+  if(!_unlocked){alert('🔒 Ontsluit eers via Settings.');inp.value='';return;}
+  if(!inp.files||!inp.files[0]) return;
+  compressImg(inp.files[0], url=>{
+    const el=document.getElementById(imgId);
+    if(el){ el.style.backgroundImage='url("'+url+'")'; const sp=el.querySelector('.ucph'); if(sp)sp.style.display='none'; }
+    saveUpcoming();
+  }, 800, 0.75);
+}
+
+let _ucDtCurrent=null;
+function openUcDT(dtId, dispId, ucId){
+  event.stopPropagation();
+  _ucDtCurrent={dtId,dispId};
+  window._ucApply=true;
+  document.getElementById('dtm-title').textContent='📅 Expected Date & Time';
+  document.getElementById('dtm-title').style.color='var(--gold)';
+  const ex=document.getElementById(dtId);
+  document.getElementById('dtm-inp').value=ex?ex.value:'';
+  document.getElementById('dtm').classList.add('open');
+}
+
+function applyDT(){
+  const val=document.getElementById('dtm-inp').value;
+  if(!val){closeDT();return;}
+  if(window._ucApply&&_ucDtCurrent){
+    const {dtId,dispId}=_ucDtCurrent;
+    const inp=document.getElementById(dtId); if(inp) inp.value=val;
+    const dp=document.getElementById(dispId); if(dp) dp.innerHTML='Expected Date &amp; Time: <strong style="color:var(--gold);">'+fmtFull(val)+'</strong>';
+    saveUpcoming(); window._ucApply=false; _ucDtCurrent=null; closeDT(); return;
+  }
+  if(!_dtTarget){closeDT();return;}
+  const inp=document.getElementById(_dtTarget); if(inp) inp.value=val;
+  const dp=document.getElementById(_dtDisp);   if(dp) dp.textContent=_dtPre+': '+fmtFull(val);
+  saveDates(); closeDT();
+}
+
+function removeUpcoming(btn){ btn.closest('.upcoming-card').remove(); saveUpcoming(); }
+
+function saveUpcoming(){
+  const cards=[...document.querySelectorAll('.upcoming-card')];
+  const data=cards.map(card=>{
+    const imgEl =card.querySelector('[id^="ucimg_"]');
+    const nameEl=card.querySelector('[id^="ucname_"]');
+    const elemEl=card.querySelector('[id^="ucelem_"]');
+    const dtEl  =card.querySelector('[id^="ucdt_"]');
+    const bg=imgEl?imgEl.style.backgroundImage.replace(/url\(["']?|["']?\)/g,''):'';
+    return{name:nameEl?nameEl.value:'', elem:elemEl?elemEl.value:'', dt:dtEl?dtEl.value:'', img:bg};
+  });
+  P('upcoming',data);
+}
+
+function tickUpcoming(){
+  const now=Date.now();
+  _upcomingTickers.forEach(t=>{
+    const inp=document.getElementById(t.dtId);
+    if(!inp||!inp.value){[t.ddId,t.dhId,t.dmId,t.dsId].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});return;}
+    const diff=new Date(inp.value).getTime()-now;
+    if(diff<=0){[t.ddId,t.dhId,t.dmId,t.dsId].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});return;}
+    const parts=fmtCD(diff);
+    [t.ddId,t.dhId,t.dmId,t.dsId].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=parts[i];});
+  });
+}
+setInterval(tickUpcoming,1000);
 
 function updVer(){
   const v=V('ver-input')||'6.5';
@@ -736,6 +884,9 @@ window.onload=()=>{
   const lv=G('live')||{};SV('live-date',lv.date);SV('live-ver',lv.ver);
   const vb=G('vb');if(vb){const el=document.getElementById('ver-banner');if(el)el.value=vb;}
   const vm=G('vm');if(vm){const el=document.getElementById('ver-maint');if(el)el.value=vm;}
+
+  const uc = G('upcoming')||[];
+  uc.forEach(d => addUpcoming(d));
 
   renderBdays();
   const s=G('ss')||'';if(s)setSave(s);
