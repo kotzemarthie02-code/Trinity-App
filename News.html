@@ -48,10 +48,10 @@
         const lv   = data.live || {};
 
         const dispMap = [
-            { inp:'cd1',       val:cds.d1,  disp:'d1',    pre:'Existence Date & Time'},
+            { inp:'cd1',       val:cds.d1,  disp:'d1',    pre:'Expiry Date & Time'},
             { inp:'cd2',       val:cds.d2,  disp:'d2',    pre:'Release Date & Time'  },
-            { inp:'p1d',       val:pd.p1,   disp:'dp1',   pre:'Expected Date & Time' },
-            { inp:'p2d',       val:pd.p2,   disp:'dp2',   pre:'Expected Date & Time' },
+            { inp:'p1d',       val:pd.p1,   disp:'dp1',   pre:'Expected Release Date & Time' },
+            { inp:'p2d',       val:pd.p2,   disp:'dp2',   pre:'Expected Release Date & Time' },
             { inp:'live-date', val:lv.date, disp:'dlive', pre:'Release Date & Time'  }
         ];
 
@@ -237,8 +237,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
               <div class="timer-unit"><span id="t1m">--</span><span class="t-lbl">min</span></div>
               <div class="timer-unit"><span id="t1s">--</span><span class="t-lbl">sec</span></div>
             </div>
-            <div class="timer-info" id="d1" style="color:var(--gold);">Existence Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('cd1','d1','Existence Date &amp; Time')" title="Skrap datum">✕</button></div>
-            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);" onclick="openDT('cd1','d1','Existence Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
+            <div class="timer-info" id="d1" style="color:var(--gold);">Expiry Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('cd1','d1','Expiry Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);" onclick="openDT('cd1','d1','Expiry Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
           </div>
         </div>
       </div>
@@ -311,8 +311,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
               <div class="timer-unit"><span id="p1dm">--</span><span class="t-lbl">m</span></div>
               <div class="timer-unit"><span id="p1ds">--</span><span class="t-lbl">s</span></div>
             </div>
-            <div class="timer-info" id="dp1" style="color:var(--gold);font-size:11px;">Expected Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('p1d','dp1','Expected Date &amp; Time')" title="Skrap datum">✕</button></div>
-            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);font-size:10px;padding:4px 11px;" onclick="openDT('p1d','dp1','Expected Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
+            <div class="timer-info" id="dp1" style="color:var(--gold);font-size:11px;">Expected Release Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('p1d','dp1','Expected Release Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--gold);color:var(--gold);font-size:10px;padding:4px 11px;" onclick="openDT('p1d','dp1','Expected Release Date &amp; Time','gold')">📅 Set Date &amp; Time</button>
           </div>
         </div>
 
@@ -347,8 +347,8 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
               <div class="timer-unit"><span id="p2dm">--</span><span class="t-lbl">m</span></div>
               <div class="timer-unit"><span id="p2ds">--</span><span class="t-lbl">s</span></div>
             </div>
-            <div class="timer-info" id="dp2" style="color:var(--blue);font-size:11px;">Expected Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('p2d','dp2','Expected Date &amp; Time')" title="Skrap datum">✕</button></div>
-            <button class="set-btn" style="border-color:var(--blue);color:var(--blue);font-size:10px;padding:4px 11px;" onclick="openDT('p2d','dp2','Expected Date &amp; Time','blue')">📅 Set Date &amp; Time</button>
+            <div class="timer-info" id="dp2" style="color:var(--blue);font-size:11px;">Expected Release Date &amp; Time: —<button class="clr-btn" onclick="event.stopPropagation();clearDT('p2d','dp2','Expected Release Date &amp; Time')" title="Skrap datum">✕</button></div>
+            <button class="set-btn" style="border-color:var(--blue);color:var(--blue);font-size:10px;padding:4px 11px;" onclick="openDT('p2d','dp2','Expected Release Date &amp; Time','blue')">📅 Set Date &amp; Time</button>
           </div>
         </div>
 
@@ -379,20 +379,20 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
         <span class="lbl">Character Name + Element</span>
         <input type="text" id="new-char" placeholder="Name — Element..." oninput="saveBattle()">
         <span class="lbl">YouTube Demo / Trailer</span>
-        <div class="lr"><input type="text" id="yt-demo" placeholder="Link..."><button class="btn btn-g pub-btn" onclick="openL('yt-demo')">▶ Watch</button></div>
+        <div class="lr"><input type="text" id="yt-demo" placeholder="Link..." oninput="saveBattle()"><button class="btn btn-g pub-btn" onclick="openL('yt-demo')">▶ Watch</button></div>
         <span class="lbl">Collected Miscellany</span>
-        <div class="lr"><input type="text" id="yt-misc" placeholder="Link..."><button class="btn btn-g pub-btn" onclick="openL('yt-misc')">▶ Watch</button></div>
+        <div class="lr"><input type="text" id="yt-misc" placeholder="Link..." oninput="saveBattle()"><button class="btn btn-g pub-btn" onclick="openL('yt-misc')">▶ Watch</button></div>
         <span class="lbl">Build Guide Link</span>
-        <div class="lr"><input type="text" id="build-link" placeholder="Link..."><button class="btn btn-gd pub-btn" onclick="openL('build-link')">📖 Open</button></div>
+        <div class="lr"><input type="text" id="build-link" placeholder="Link..." oninput="saveBattle()"><button class="btn btn-gd pub-btn" onclick="openL('build-link')">📖 Open</button></div>
         <span class="lbl">Genshin Impact Wiki</span>
-        <div class="lr"><input type="text" id="wiki-link" placeholder="Link..."><button class="btn btn-gd pub-btn" onclick="openL('wiki-link')">📖 Open</button></div>
+        <div class="lr"><input type="text" id="wiki-link" placeholder="Link..." oninput="saveBattle()"><button class="btn btn-gd pub-btn" onclick="openL('wiki-link')">📖 Open</button></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:15px;">
         <div class="b-boss">
           <div style="font-family:'Cinzel',serif;font-size:11px;color:#ff9090;letter-spacing:1px;margin-bottom:10px;">👹 NEW WEEKLY BOSS</div>
           <input type="text" id="weekly-boss" placeholder="Boss name..." oninput="saveBattle()">
-          <div class="lr" style="margin-top:8px;"><input type="text" id="boss-link" placeholder="Guide..."><button class="btn btn-r pub-btn" onclick="openL('boss-link')">🔗 Open</button></div>
-          <div class="lr" style="margin-top:6px;"><input type="text" id="boss-link2" placeholder="Guide 2..."><button class="btn btn-r pub-btn" onclick="openL('boss-link2')">🔗 Open</button></div>
+          <div class="lr" style="margin-top:8px;"><input type="text" id="boss-link" placeholder="Guide..." oninput="saveBattle()"><button class="btn btn-r pub-btn" onclick="openL('boss-link')">🔗 Open</button></div>
+          <div class="lr" style="margin-top:6px;"><input type="text" id="boss-link2" placeholder="Guide 2..." oninput="saveBattle()"><button class="btn btn-r pub-btn" onclick="openL('boss-link2')">🔗 Open</button></div>
         </div>
         <div class="pw" id="boss-wrap" style="border:1px solid rgba(255,100,100,0.3);height:200px;background-size:cover;background-position:center;background-image:url('NewBoss.png');" onclick="if(_unlocked)document.getElementById('boss-file').click()">
           <span id="boss-ph" style="font-size:11px;opacity:0.5;display:none;">👹 Click to add Weekly Boss picture</span>
@@ -526,12 +526,12 @@ function resetNews(){
   ['ver-input','title-input','news-story','tiktok-link','new-maps',
    'p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b',
    'p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b',
-   'new-char','yt-demo','yt-misc','build-link','wiki-link','weekly-boss','boss-link',
+   'new-char','yt-demo','yt-misc','build-link','wiki-link','weekly-boss','boss-link','boss-link2',
    'cd1','cd2','p1d','p2d','live-date','live-ver','ver-banner','ver-maint'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   document.getElementById('events-con').innerHTML='';
-  const dispReset={'d1':'Existence Date & Time: —','d2':'Release Date & Time: —','dp1':'Expected Date & Time: —','dp2':'Expected Date & Time: —','dlive':'Release Date & Time: —'};
+  const dispReset={'d1':'Expiry Date & Time: —','d2':'Release Date & Time: —','dp1':'Expected Release Date & Time: —','dp2':'Expected Release Date & Time: —','dlive':'Release Date & Time: —'};
   Object.entries(dispReset).forEach(([id,txt])=>{const el=document.getElementById(id);if(el)el.innerHTML=txt;});
   ['t1d','t1h','t1m','t1s','t2d','t2h','t2m','t2s',
    'p1dd','p1dh','p1dm','p1ds','p2dd','p2dh','p2dm','p2ds',
@@ -593,7 +593,7 @@ function addUpcoming(data){
         <div class="timer-unit"><span id="${dmId}">--</span><span class="t-lbl">min</span></div>
         <div class="timer-unit"><span id="${dsId}">--</span><span class="t-lbl">sec</span></div>
       </div>
-      <div id="${dispId}" style="font-size:11px;font-weight:700;color:var(--gold);margin-top:4px;text-shadow:0 1px 6px rgba(0,0,0,0.9);text-align:center;padding:0 8px;">Expected Date &amp; Time: —</div>
+      <div id="${dispId}" style="font-size:11px;font-weight:700;color:var(--gold);margin-top:4px;text-shadow:0 1px 6px rgba(0,0,0,0.9);text-align:center;padding:0 8px;">Expected Release Date &amp; Time: —</div>
     </div>
 
     <!-- Set Date button (onder) -->
@@ -613,7 +613,7 @@ function addUpcoming(data){
       const el=document.getElementById(imgId);
       if(el){ el.style.backgroundImage='url("'+data.img+'")'; const sp=el.querySelector('.ucph'); if(sp)sp.style.display='none'; }
     }
-    if(data.dt){ const dp=document.getElementById(dispId); if(dp) dp.innerHTML='Expected Date &amp; Time: <strong style="color:var(--gold);">'+fmtFull(data.dt)+'</strong>'; }
+    if(data.dt){ const dp=document.getElementById(dispId); if(dp) dp.innerHTML='Expected Release Date &amp; Time: <strong style="color:var(--gold);">'+fmtFull(data.dt)+'</strong>'; }
   }
 
   _upcomingTickers.push({dtId,ddId,dhId,dmId,dsId,dispId});
@@ -634,7 +634,7 @@ function openUcDT(dtId, dispId, ucId){
   event.stopPropagation();
   _ucDtCurrent={dtId,dispId};
   window._ucApply=true;
-  document.getElementById('dtm-title').textContent='📅 Expected Date & Time';
+  document.getElementById('dtm-title').textContent='📅 Expected Release Date & Time';
   document.getElementById('dtm-title').style.color='var(--gold)';
   const ex=document.getElementById(dtId);
   document.getElementById('dtm-inp').value=ex?ex.value:'';
@@ -647,7 +647,7 @@ function applyDT(){
   if(window._ucApply&&_ucDtCurrent){
     const {dtId,dispId}=_ucDtCurrent;
     const inp=document.getElementById(dtId); if(inp) inp.value=val;
-    const dp=document.getElementById(dispId); if(dp) dp.innerHTML='Expected Date &amp; Time: <strong style="color:var(--gold);">'+fmtFull(val)+'</strong>';
+    const dp=document.getElementById(dispId); if(dp) dp.innerHTML='Expected Release Date &amp; Time: <strong style="color:var(--gold);">'+fmtFull(val)+'</strong>';
     saveUpcoming(); window._ucApply=false; _ucDtCurrent=null; closeDT(); return;
   }
   if(!_dtTarget){closeDT();return;}
@@ -779,16 +779,6 @@ function clearDT(inpId,dispId,pre){
   if(ticker)ticker.ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
   saveDates();
 }
-function applyDT(){
-  const val=document.getElementById('dtm-inp').value;
-  if(!val||!_dtTarget){closeDT();return;}
-  const inp=document.getElementById(_dtTarget);
-  if(inp)inp.value=val;
-  const dp=document.getElementById(_dtDisp);
-  if(dp)dp.textContent=_dtPre+': '+fmtFull(val);
-  saveDates();
-  closeDT();
-}
 
 function fmtFull(v){
   if(!v)return '—';
@@ -800,10 +790,10 @@ function fmtCD(ms){
 }
 
 const tickers=[
-  {inp:'cd1',       ids:['t1d','t1h','t1m','t1s'],   disp:'d1',    pre:'Existence Date & Time'},
+  {inp:'cd1',       ids:['t1d','t1h','t1m','t1s'],   disp:'d1',    pre:'Expiry Date & Time'},
   {inp:'cd2',       ids:['t2d','t2h','t2m','t2s'],   disp:'d2',    pre:'Release Date & Time'},
-  {inp:'p1d',       ids:['p1dd','p1dh','p1dm','p1ds'],disp:'dp1',  pre:'Expected Date & Time'},
-  {inp:'p2d',       ids:['p2dd','p2dh','p2dm','p2ds'],disp:'dp2',  pre:'Expected Date & Time'},
+  {inp:'p1d',       ids:['p1dd','p1dh','p1dm','p1ds'],disp:'dp1',  pre:'Expected Release Date & Time'},
+  {inp:'p2d',       ids:['p2dd','p2dh','p2dm','p2ds'],disp:'dp2',  pre:'Expected Release Date & Time'},
   {inp:'live-date', ids:['lcd','lch','lcm','lcs'],    disp:'dlive', pre:'Release Date & Time'}
 ];
 
