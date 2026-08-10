@@ -276,7 +276,7 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
       <div class="card">
         <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--blue);margin-bottom:10px;">🗺️ NEW MAPS &amp; CONTENT</div>
         <input type="text" id="new-maps" placeholder="New Areas / Content Names..." oninput="saveNews()">
-        <div class="pw" id="maps-wrap" style="margin-top:10px;height:200px;border:1px solid var(--blue);background-size:cover;background-position:center;" onclick="document.getElementById('maps-file').click()">
+        <div class="pw" id="maps-wrap" style="margin-top:10px;height:290px;border:1px solid var(--blue);background-size:cover;background-position:center;" onclick="document.getElementById('maps-file').click()">
           <span id="maps-ph" style="font-size:11px;opacity:0.5;">🗺️ Click to add Maps picture</span>
         </div>
         <input type="file" id="maps-file" style="display:none" accept="image/*" onchange="chPic(this,'maps-wrap','maps-ph')">
@@ -392,6 +392,7 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
           <div style="font-family:'Cinzel',serif;font-size:11px;color:#ff9090;letter-spacing:1px;margin-bottom:10px;">👹 NEW WEEKLY BOSS</div>
           <input type="text" id="weekly-boss" placeholder="Boss name..." oninput="saveBattle()">
           <div class="lr" style="margin-top:8px;"><input type="text" id="boss-link" placeholder="Guide..."><button class="btn btn-r pub-btn" onclick="openL('boss-link')">🔗 Open</button></div>
+          <div class="lr" style="margin-top:6px;"><input type="text" id="boss-link2" placeholder="Guide 2..."><button class="btn btn-r pub-btn" onclick="openL('boss-link2')">🔗 Open</button></div>
         </div>
         <div class="pw" id="boss-wrap" style="border:1px solid rgba(255,100,100,0.3);height:200px;background-size:cover;background-position:center;background-image:url('NewBoss.png');" onclick="if(_unlocked)document.getElementById('boss-file').click()">
           <span id="boss-ph" style="font-size:11px;opacity:0.5;display:none;">👹 Click to add Weekly Boss picture</span>
@@ -547,7 +548,7 @@ function addUpcoming(data){
   const card = document.createElement('div');
   card.className = 'upcoming-card';
   card.dataset.id = id;
-  card.style.cssText = 'position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#000;';
+  card.style.cssText = 'position:relative;border-radius:14px;overflow:visible;border:1px solid var(--border);background:#000;';
 
   const imgId  = 'ucimg_'  + id;
   const fileId = 'ucfile_' + id;
@@ -561,17 +562,19 @@ function addUpcoming(data){
   const dsId   = 'ucds_'   + id;
 
   card.innerHTML = `
+    <!-- Name + Element inputs (buite bo, wit bold) -->
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input type="text" id="${nameId}" placeholder="Character Name..." oninput="saveUpcoming()"
+        style="flex:1;background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,0.5);color:white;font-size:14px;font-weight:900;padding:3px 4px;outline:none;font-family:'Cinzel',serif;">
+      <input type="text" id="${elemId}" placeholder="Element..." oninput="saveUpcoming()"
+        style="width:82px;background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,0.35);color:white;font-size:12px;font-weight:700;padding:3px 4px;outline:none;text-align:center;">
+    </div>
+
+    <!-- Card boksie (prent + countdown) -->
+    <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);">
     <!-- ✕ remove -->
     <button onclick="removeUpcoming(this)" title="Verwyder"
       style="position:absolute;top:7px;right:7px;z-index:20;background:rgba(200,0,0,0.75);border:none;color:white;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
-
-    <!-- Name + Element inputs (bo) -->
-    <div style="position:relative;z-index:10;display:flex;gap:6px;padding:10px 10px 6px;background:linear-gradient(to bottom,rgba(0,0,0,0.72),transparent);">
-      <input type="text" id="${nameId}" placeholder="Character Name..." oninput="saveUpcoming()"
-        style="flex:1;background:transparent;border:none;border-bottom:1px solid rgba(255,224,138,0.5);color:var(--gold);font-size:13px;font-weight:800;padding:2px 4px;outline:none;font-family:'Cinzel',serif;">
-      <input type="text" id="${elemId}" placeholder="Element..." oninput="saveUpcoming()"
-        style="width:78px;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);font-size:11px;font-weight:700;padding:2px 4px;outline:none;text-align:center;">
-    </div>
 
     <!-- Background image (prent) -->
     <div id="${imgId}" onclick="if(_unlocked)document.getElementById('${fileId}').click()"
@@ -597,7 +600,8 @@ function addUpcoming(data){
     <div style="position:relative;z-index:10;padding:7px 10px;background:linear-gradient(to top,rgba(0,0,0,0.75),transparent);display:flex;justify-content:center;">
       <button class="set-btn" style="border-color:var(--gold);color:var(--gold);pointer-events:auto;"
         onclick="openUcDT('${dtId}','${dispId}','${id}')">📅 Set Date &amp; Time</button>
-    </div>`;
+    </div>
+    </div>`; /* close inner card boksie div */
 
   document.getElementById('upcoming-con').appendChild(card);
 
@@ -685,7 +689,7 @@ function updVer(){
   document.querySelectorAll('.vlbl').forEach(el=>el.textContent=v);
 }
 
-function saveBattle(){P('battle',{char:V('new-char'),yd:V('yt-demo'),ym:V('yt-misc'),bl:V('build-link'),wl:V('wiki-link'),wb:V('weekly-boss'),blink:V('boss-link')});}
+function saveBattle(){P('battle',{char:V('new-char'),yd:V('yt-demo'),ym:V('yt-misc'),bl:V('build-link'),wl:V('wiki-link'),wb:V('weekly-boss'),blink:V('boss-link'),blink2:V('boss-link2')});}
 function saveLive(){P('live',{date:V('live-date'),ver:V('live-ver')});}
 
 // ── BIRTHDAYS AUTO-LIST ──
@@ -907,7 +911,7 @@ window.onload=()=>{
   ['p1c1','p1c1yt','p1c1b','p1c2','p1c2yt','p1c2b','p2c1','p2c1yt','p2c1b','p2c2','p2c2yt','p2c2b','goal1','goal2','goal3'].forEach(k=>{const el=document.getElementById(k);if(el&&n[k])el.value=n[k];});
   (n.events||[]).forEach(ev=>addEvent(ev));
 
-  const bt=G('battle')||{};SV('new-char',bt.char);SV('yt-demo',bt.yd);SV('yt-misc',bt.ym);SV('build-link',bt.bl);SV('wiki-link',bt.wl);SV('weekly-boss',bt.wb);SV('boss-link',bt.blink);
+  const bt=G('battle')||{};SV('new-char',bt.char);SV('yt-demo',bt.yd);SV('yt-misc',bt.ym);SV('build-link',bt.bl);SV('wiki-link',bt.wl);SV('weekly-boss',bt.wb);SV('boss-link',bt.blink);SV('boss-link2',bt.blink2);
   const cd=G('cds')||{};SV('cd1',cd.d1);SV('cd2',cd.d2);
   const pd=G('pd')||{};SV('p1d',pd.p1);SV('p2d',pd.p2);
   const lv=G('live')||{};SV('live-date',lv.date);SV('live-ver',lv.ver);
