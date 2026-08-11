@@ -1383,7 +1383,6 @@ function showChar(id) {
   let linksHtml = `
     <span style="font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Links▶▶</span>
     <a class="link-btn yt" href="${L.yt}" target="_blank">▶ YouTube Demo</a>
-    <a class="link-btn tt" href="${L.tt}" target="_blank">♪ TikTok</a>
     <a class="link-btn build" href="${L.build}" target="_blank">📋 Build Guide</a>
     <div class="links-divider"></div>
     <a class="link-btn trailer" href="${L.trailer || '#'}" target="_blank">🎬 Official Trailer</a>
@@ -2477,7 +2476,6 @@ function _openAddModalInner(editIdx) {
     <hr class="mdiv">
     <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Links▶▶</div>
     <div class="mfrow"><span class="mfl">▶ YouTube Demo</span><input class="mfi" id="m-link-yt" value="${c?.linkYt||''}" placeholder="https://youtube.com/..."></div>
-    <div class="mfrow"><span class="mfl">♪ TikTok</span><input class="mfi" id="m-link-tt" value="${c?.linkTt||''}" placeholder="https://tiktok.com/..."></div>
     <div class="mfrow"><span class="mfl">📋 Build Guide</span><input class="mfi" id="m-link-build" value="${c?.linkBuild||''}" placeholder="https://keqingmains.com/..."></div>
     <div class="mfrow"><span class="mfl">🎬 Official Trailer</span><input class="mfi" id="m-link-trailer" value="${c?.linkTrailer||''}" placeholder="https://youtube.com/..."></div>
     <div class="mfrow"><span class="mfl">🎥 Collected Miscellany (5★ only)</span><input class="mfi" id="m-link-misc" value="${c?.linkMisc||''}" placeholder="https://youtube.com/..."></div>
@@ -2872,7 +2870,7 @@ function showMyChar(idx) {
   const lb2 = document.getElementById('links-bar');
   let myLinksHtml = `<span style="font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Links▶▶</span>`;
   if(c.linkYt) myLinksHtml += `<a class="link-btn yt" href="${c.linkYt}" target="_blank">▶ YouTube Demo</a>`;
-  if(c.linkTt) myLinksHtml += `<a class="link-btn tt" href="${c.linkTt}" target="_blank">♪ TikTok</a>`;
+  if(c.linkTt) {} // tiktok removed
   if(c.linkBuild) myLinksHtml += `<a class="link-btn build" href="${c.linkBuild}" target="_blank">📋 Build Guide</a>`;
   if(c.linkTrailer) myLinksHtml += `<div class="links-divider"></div><a class="link-btn trailer" href="${c.linkTrailer}" target="_blank">🎬 Official Trailer</a>`;
   if(c.stars===5 && c.linkMisc) myLinksHtml += `<a class="link-btn misc" href="${c.linkMisc}" target="_blank">🎥 Collected Miscellany</a>`;
