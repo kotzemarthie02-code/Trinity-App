@@ -641,7 +641,12 @@ body::after {
       if (cSnap.exists()) {
         const chars = JSON.parse(cSnap.val().chars || '[]');
         if (chars.length > 0) {
-          try { localStorage.setItem('bg_chars_v3', JSON.stringify(chars)); } catch(e) { /* kwota vol — ignoreer */ }
+          // Merge met localStorage data sodat geen karakters verlore gaan
+          let local = [];
+          try { local = JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) {}
+          const merged = [...chars];
+          local.forEach(lc => { if (!merged.find(f => f.name === lc.name)) merged.push(lc); });
+          try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
         }
       }
       const oSnap = await get(ref(db, 'buildguide_owned/' + uid));
@@ -653,14 +658,22 @@ body::after {
       onValue(ref(db, 'buildguide/characters'), (snap) => {
         if (!snap.exists()) return;
         try {
-          const chars = JSON.parse(snap.val().chars || '[]');
-          try { localStorage.setItem('bg_chars_v3', JSON.stringify(chars)); } catch(e) { /* kwota vol — ignoreer */ }
+          const fbChars = JSON.parse(snap.val().chars || '[]');
+          try { localStorage.setItem('bg_chars_v3', JSON.stringify(fbChars)); } catch(e) {}
           if (typeof myChars !== 'undefined' && typeof rebuildRoster === 'function') {
             window._waitingForFirebase = false;
             const msg = document.getElementById('fb-loading-msg');
             if (msg) msg.remove();
+
+            // MERGE: kombineer Firebase + huidige myChars op naam — geen data verlies
+            const merged = [...fbChars];
+            myChars.forEach(local => {
+              const exists = merged.find(f => f.name === local.name);
+              if (!exists) merged.push(local); // voeg by as nie op Firebase nie
+            });
+
             myChars.length = 0;
-            chars.forEach(c => myChars.push(c));
+            merged.forEach(c => myChars.push(c));
             rebuildRoster();
           }
         } catch(e) {}
