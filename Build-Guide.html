@@ -646,26 +646,42 @@ body::after {
   window._fbset = set;
   window._fbget = get;
   window.fbSaveChars = async function(arr) {
-    try {
-      // Lees Firebase, merge, dan stoor — nooit replace nie
-      const snap = await get(ref(db, 'buildguide/characters'));
-      let existing = [];
-      if (snap.exists()) {
-        try { existing = JSON.parse(snap.val().chars || '[]'); } catch(e) {}
-      }
-      const merged = [...existing];
-      arr.forEach(newChar => {
-        const idx = merged.findIndex(e => e.name === newChar.name);
-        if (idx >= 0) merged[idx] = newChar;
-        else merged.push(newChar);
-      });
-      await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(merged) });
-      // Outomatiese backup
-      const now = new Date();
-      const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`;
-      await set(ref(db, 'buildguide_backups/' + key), { chars: JSON.stringify(merged), count: merged.length, time: now.toLocaleString('af-ZA') });
+    // GEEN try/catch om die HELE funksie nie — as Firebase regtig faal (bv. reëls/
+    // toestemming/internet), moet die fout na bo "gooi" sodat saveChars() dit optel
+    // en 'n eerlike foutboodskap wys, i.p.v. 'n vals "gestoor!" boodskap.
+
+    // 1) Lees Firebase, merge, dan stoor — nooit replace nie
+    const snap = await get(ref(db, 'buildguide/characters'));
+    let existing = [];
+    if (snap.exists()) {
+      try { existing = JSON.parse(snap.val().chars || '[]'); } catch(e) {}
     }
-    catch(e) { console.error('fbSaveChars:', e); }
+    const merged = [...existing];
+    arr.forEach(newChar => {
+      const idx = merged.findIndex(e => e.name === newChar.name);
+      if (idx >= 0) merged[idx] = newChar;
+      else merged.push(newChar);
+    });
+    await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(merged) });
+
+    // 2) Bevestig dat die hoof-stoor regtig geslaag het deur dit terug te lees
+    const verifySnap = await get(ref(db, 'buildguide/characters'));
+    if (!verifySnap.exists()) {
+      throw new Error('Kon nie bevestig dat karakters op Firebase gestoor is nie (verify-lees het niks gevind nie).');
+    }
+
+    // 3) Outomatiese backup — as hierdie spesifieke skryf faal (bv. reëls laat dit
+    // nie toe nie), moet dit OOK 'n fout gooi i.p.v. stilweg misluk.
+    const now = new Date();
+    const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`;
+    await set(ref(db, 'buildguide_backups/' + key), { chars: JSON.stringify(merged), count: merged.length, time: now.toLocaleString('af-ZA') });
+
+    // 4) Bevestig ook die backup-skryf
+    const backupVerify = await get(ref(db, 'buildguide_backups/' + key));
+    if (!backupVerify.exists()) {
+      throw new Error('Karakters is gestoor, maar die BACKUP kon nie bevestig word nie. Kyk Firebase-reëls vir pad "buildguide_backups".');
+    }
+    console.log('✅ Firebase: karakters + backup bevestig gestoor (' + merged.length + ' karakters, backup ' + key + ')');
   };
 
   // Direkte save sonder merge — net vir intern gebruik
@@ -2151,7 +2167,9 @@ function saveChars(arr) {
     return out;
   }
 
-  compressAll(arr).then(async compressed => {
+  // saveChars() gee nou 'n regte Promise terug wat eers oplos NADAT Firebase
+  // bevestig het dit gestoor is — sodat 'n "gestoor!" boodskap nooit lieg nie.
+  return compressAll(arr).then(async compressed => {
     const json = JSON.stringify(compressed);
     const kb = (json.length / 1024).toFixed(1);
 
@@ -2159,11 +2177,13 @@ function saveChars(arr) {
     if (typeof window.fbSaveChars === 'function') {
       try {
         await window.fbSaveChars(compressed);
-        console.log('Gestoor op Firebase! Grootte:', kb + 'KB');
+        console.log('✅ Gestoor + bevestig op Firebase! Grootte:', kb + 'KB');
       } catch(e) {
         console.error('Firebase stoor fout:', e);
-        alert('Firebase stoor het misluk — kyk jou internetverbinding.\nFout: ' + e.message);
-        return;
+        // Gooi die fout OP na die aanroeper toe (bv. saveChar()) sodat DIT
+        // besluit hoe om dit eerlik vir die gebruiker te wys — nie 'n vals
+        // "gestoor!" boodskap nie.
+        throw new Error('Firebase stoor het misluk: ' + e.message);
       }
     }
 
@@ -2175,6 +2195,7 @@ function saveChars(arr) {
       console.warn('localStorage kwota vol — data is veilig op Firebase gestoor.');
       try { localStorage.removeItem('bg_chars_v3'); } catch(e2) {}
     }
+    return true;
   });
 }
 function getOwned() {
@@ -2668,7 +2689,7 @@ function collectTals() {
 }
 
 // ── Save char ──
-function saveChar() {
+async function saveChar() {
   try {
     const name=document.getElementById('m-name').value.trim();
     if(!name){alert('Name is required!');return;}
@@ -2701,19 +2722,33 @@ function saveChar() {
     };
     if(_editIdx!==null) { myChars[_editIdx]=data; }
     else { myChars.push(data); }
-    saveChars(myChars);
+
+    // Wys 'n "besig om te stoor..." indikator sodat jy weet dit werk nog
+    const savingToast = document.createElement('div');
+    savingToast.id = '_saving-toast';
+    savingToast.textContent = '⏳ Besig om te stoor...';
+    savingToast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2a;border:1px solid #ffe14b;color:#ffe14b;padding:12px 28px;border-radius:10px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+    document.body.appendChild(savingToast);
+
+    // BELANGRIK: ons WAG nou regtig vir bevestiging dat dit op Firebase
+    // gestoor is voordat ons enige "gestoor!" boodskap wys of die modal toemaak.
+    await saveChars(myChars);
+
+    savingToast.remove();
     closeModal();
     rebuildRoster();
-    // Wys bevestiging dat data gestoor is
+    // Wys bevestiging dat data ECHT gestoor + bevestig is
     const toast = document.createElement('div');
-    toast.textContent = '✅ Karakter gestoor!';
+    toast.textContent = '✅ Karakter gestoor en bevestig!';
     toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a2a1a;border:1px solid #4caf50;color:#4caf50;padding:12px 28px;border-radius:10px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
     if(_editIdx===null) showMyChar(myChars.length-1);
     else showMyChar(_editIdx);
   } catch(err) {
-    alert('❌ Save fout: ' + err.message);
+    const savingToast = document.getElementById('_saving-toast');
+    if (savingToast) savingToast.remove();
+    alert('❌ Stoor het MISLUK — jou karakter is NIE bevestig gestoor nie!\n\nFout: ' + err.message + '\n\nMoenie die blaaier toemaak nie — probeer weer, of stuur vir jou ontwikkelaar hierdie foutboodskap.');
     console.error('saveChar fout:', err);
   }
 }
