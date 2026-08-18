@@ -642,6 +642,9 @@ body::after {
   const db = getDatabase(app);
 
   window._fbdb = db;
+  window._fbref = ref;
+  window._fbset = set;
+  window._fbget = get;
   window.fbSaveChars = async function(arr) {
     try {
       // Lees Firebase, merge, dan stoor — nooit replace nie
@@ -726,6 +729,14 @@ body::after {
       });
     } catch(e) { console.error('Firebase init:', e); }
   })();
+
+  window.fbLoadBackups = async function() {
+    try {
+      const snap = await get(ref(db, 'buildguide_backups'));
+      if (!snap.exists()) return [];
+      return Object.entries(snap.val()).sort((a,b) => b[0].localeCompare(a[0])).slice(0,20);
+    } catch(e) { return []; }
+  };
 </script>
 
 <script>
@@ -1226,21 +1237,18 @@ window.openBackupModal = async function() {
   const list = document.getElementById('backup-list');
   list.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;padding:20px;">Besig om backups te laai...</div>';
   try {
-    const { get, ref } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
-    const db = window._fbdb;
-    const snap = await get(ref(db, 'buildguide_backups'));
-    if (!snap.exists()) {
+    const backups = await window.fbLoadBackups();
+    if (!backups.length) {
       list.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;padding:20px;">Geen backups gevind nie.<br>Backups word outomaties geskep as jy save.</div>';
       return;
     }
-    const backups = Object.entries(snap.val()).sort((a,b) => b[0].localeCompare(a[0])).slice(0,20);
     list.innerHTML = backups.map(([key, b]) => `
       <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 14px;">
         <div>
           <div style="font-size:13px;font-weight:700;color:white;">${b.time||key}</div>
           <div style="font-size:11px;color:#aaa;">${b.count||'?'} karakters</div>
         </div>
-        <button onclick="fbRestoreBackup('${key}')"
+        <button onclick="window.fbRestoreBackup('${key}')"
           style="background:rgba(200,168,75,0.15);border:1px solid #ffe14b;color:#ffe14b;padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;">
           🔄 Herstel
         </button>
@@ -1253,19 +1261,20 @@ window.openBackupModal = async function() {
 window.fbRestoreBackup = async function(key) {
   if (!confirm('Herstel karakters van hierdie backup? Huidige karakters bly behoue.')) return;
   try {
-    const { get, set, ref } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
-    const db = window._fbdb;
-    const snap = await get(ref(db, 'buildguide_backups/' + key));
+    const snap = await window._fbget(window._fbref(window._fbdb, 'buildguide_backups/' + key));
     if (!snap.exists()) { alert('Backup nie gevind nie.'); return; }
     const chars = JSON.parse(snap.val().chars || '[]');
-    // Merge met huidige — verloor niks
     const merged = [...chars];
-    myChars.forEach(c => { if (!merged.find(f => f.name === c.name)) merged.push(c); });
-    await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(merged) });
+    if (typeof myChars !== 'undefined') {
+      myChars.forEach(c => { if (!merged.find(f => f.name === c.name)) merged.push(c); });
+    }
+    await window._fbset(window._fbref(window._fbdb, 'buildguide/characters'), { chars: JSON.stringify(merged) });
     try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
-    myChars.length = 0;
-    merged.forEach(c => myChars.push(c));
-    rebuildRoster();
+    if (typeof myChars !== 'undefined') {
+      myChars.length = 0;
+      merged.forEach(c => myChars.push(c));
+      if (typeof rebuildRoster === 'function') rebuildRoster();
+    }
     alert('✅ ' + merged.length + ' karakters herstel!');
     document.getElementById('backup-modal').style.display = 'none';
   } catch(e) { alert('Fout: ' + e.message); }
