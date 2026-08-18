@@ -492,6 +492,23 @@ body::after {
     <button class="domain-btn" onclick="showView('domain')">
       <span>🏛</span> Domains
     </button>
+    <button class="domain-btn" onclick="openBackupModal()" style="color:#ffe14b;border-top:1px solid rgba(200,168,75,0.2);">
+      <span>💾</span> Backup & Herstel
+    </button>
+  </div>
+
+  <!-- BACKUP MODAL -->
+  <div id="backup-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;">
+    <div style="background:#1a1a2e;border:1px solid rgba(200,168,75,0.4);border-radius:16px;padding:24px;width:440px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;font-weight:900;color:#ffe14b;">💾 Backup & Herstel</span>
+        <button onclick="document.getElementById('backup-modal').style.display='none'" style="background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;">✕</button>
+      </div>
+      <div style="font-size:12px;color:#aaa;">Elke keer as jy save word 'n backup geskep. Kies een om te herstel:</div>
+      <div id="backup-list" style="overflow-y:auto;max-height:50vh;display:flex;flex-direction:column;gap:6px;">
+        <div style="color:#aaa;font-size:13px;text-align:center;padding:20px;">Besig om backups te laai...</div>
+      </div>
+    </div>
   </div>
 
   <!-- MAIN -->
@@ -624,9 +641,34 @@ body::after {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
+  window._fbdb = db;
   window.fbSaveChars = async function(arr) {
-    try { await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(arr) }); }
+    try {
+      // Lees Firebase, merge, dan stoor — nooit replace nie
+      const snap = await get(ref(db, 'buildguide/characters'));
+      let existing = [];
+      if (snap.exists()) {
+        try { existing = JSON.parse(snap.val().chars || '[]'); } catch(e) {}
+      }
+      const merged = [...existing];
+      arr.forEach(newChar => {
+        const idx = merged.findIndex(e => e.name === newChar.name);
+        if (idx >= 0) merged[idx] = newChar;
+        else merged.push(newChar);
+      });
+      await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(merged) });
+      // Outomatiese backup
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`;
+      await set(ref(db, 'buildguide_backups/' + key), { chars: JSON.stringify(merged), count: merged.length, time: now.toLocaleString('af-ZA') });
+    }
     catch(e) { console.error('fbSaveChars:', e); }
+  };
+
+  // Direkte save sonder merge — net vir intern gebruik
+  window.fbSaveCharsRaw = async function(arr) {
+    try { await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(arr) }); }
+    catch(e) { console.error('fbSaveCharsRaw:', e); }
   };
 
   window.fbSaveOwned = async function(uid, arr) {
@@ -659,21 +701,25 @@ body::after {
         if (!snap.exists()) return;
         try {
           const fbChars = JSON.parse(snap.val().chars || '[]');
-          try { localStorage.setItem('bg_chars_v3', JSON.stringify(fbChars)); } catch(e) {}
           if (typeof myChars !== 'undefined' && typeof rebuildRoster === 'function') {
             window._waitingForFirebase = false;
             const msg = document.getElementById('fb-loading-msg');
             if (msg) msg.remove();
 
-            // MERGE: kombineer Firebase + huidige myChars op naam — geen data verlies
+            // MERGE: grootste lys wen altyd
             const merged = [...fbChars];
             myChars.forEach(local => {
-              const exists = merged.find(f => f.name === local.name);
-              if (!exists) merged.push(local); // voeg by as nie op Firebase nie
+              if (!merged.find(f => f.name === local.name)) merged.push(local);
             });
+
+            // As ons meer het as Firebase, stoor terug
+            if (merged.length > fbChars.length && typeof window.fbSaveCharsRaw === 'function') {
+              window.fbSaveCharsRaw(merged);
+            }
 
             myChars.length = 0;
             merged.forEach(c => myChars.push(c));
+            try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
             rebuildRoster();
           }
         } catch(e) {}
@@ -1173,6 +1219,57 @@ function switchTab(tab, el) {
   document.getElementById('tab-team').style.display = tab === 'team' ? '' : 'none';
   document.getElementById('tab-talent').style.display = tab === 'talent' ? '' : 'none';
 }
+
+window.openBackupModal = async function() {
+  const modal = document.getElementById('backup-modal');
+  modal.style.display = 'flex';
+  const list = document.getElementById('backup-list');
+  list.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;padding:20px;">Besig om backups te laai...</div>';
+  try {
+    const { get, ref } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+    const db = window._fbdb;
+    const snap = await get(ref(db, 'buildguide_backups'));
+    if (!snap.exists()) {
+      list.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;padding:20px;">Geen backups gevind nie.<br>Backups word outomaties geskep as jy save.</div>';
+      return;
+    }
+    const backups = Object.entries(snap.val()).sort((a,b) => b[0].localeCompare(a[0])).slice(0,20);
+    list.innerHTML = backups.map(([key, b]) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 14px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:white;">${b.time||key}</div>
+          <div style="font-size:11px;color:#aaa;">${b.count||'?'} karakters</div>
+        </div>
+        <button onclick="fbRestoreBackup('${key}')"
+          style="background:rgba(200,168,75,0.15);border:1px solid #ffe14b;color:#ffe14b;padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;">
+          🔄 Herstel
+        </button>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:#ff9090;font-size:13px;text-align:center;padding:20px;">Fout: ' + e.message + '</div>';
+  }
+};
+
+window.fbRestoreBackup = async function(key) {
+  if (!confirm('Herstel karakters van hierdie backup? Huidige karakters bly behoue.')) return;
+  try {
+    const { get, set, ref } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+    const db = window._fbdb;
+    const snap = await get(ref(db, 'buildguide_backups/' + key));
+    if (!snap.exists()) { alert('Backup nie gevind nie.'); return; }
+    const chars = JSON.parse(snap.val().chars || '[]');
+    // Merge met huidige — verloor niks
+    const merged = [...chars];
+    myChars.forEach(c => { if (!merged.find(f => f.name === c.name)) merged.push(c); });
+    await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(merged) });
+    try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
+    myChars.length = 0;
+    merged.forEach(c => myChars.push(c));
+    rebuildRoster();
+    alert('✅ ' + merged.length + ' karakters herstel!');
+    document.getElementById('backup-modal').style.display = 'none';
+  } catch(e) { alert('Fout: ' + e.message); }
+};
 
 function showView(v) {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
