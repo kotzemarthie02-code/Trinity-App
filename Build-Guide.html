@@ -464,6 +464,18 @@ body::after {
   .elem-cryo { background: #60a0d0; }
   .elem-geo { background: #c09040; }
   .elem-dendro { background: #60a040; }
+
+  /* ── AUTOCOMPLETE ── */
+  .ac-wrap { position:relative; }
+  .ac-list { position:absolute; top:100%; left:0; right:0; z-index:9999;
+      background:#1a1a2e; border:1px solid rgba(200,168,75,0.4); border-radius:8px;
+      max-height:220px; overflow-y:auto; display:none; box-shadow:0 8px 24px rgba(0,0,0,0.6); }
+  .ac-list.open { display:block; }
+  .ac-item { display:flex; align-items:center; gap:8px; padding:7px 10px; cursor:pointer;
+      font-size:13px; font-weight:700; color:white; transition:background 0.15s; }
+  .ac-item:hover, .ac-item.sel { background:rgba(200,168,75,0.15); }
+  .ac-item img { width:34px; height:34px; border-radius:5px; object-fit:cover; flex-shrink:0; background:#111; }
+  .ac-sub { font-size:10px; color:var(--muted); font-weight:400; }
 </style>
 </head>
 <body>
@@ -2386,15 +2398,35 @@ function addWepRow(d) {
   if(dt.img) _pendingImgs['wep-'+k]=dt.img;
   document.getElementById('m-weps').insertAdjacentHTML('beforeend',`
     <div id="wr-${k}" class="dyn-row">
-      <div class="dyn-pb" onclick="pbPick('wf-${k}')"><span id="di-wep-${k}">${dt.img?'':'⚔️'}</span><img id="dp-wep-${k}" src="${dt.img||''}" style="${dt.img?'':'display:none'}"></div>
+      <div class="dyn-pb" id="weppb-${k}" onclick="pbPick('wf-${k}')"><span id="di-wep-${k}">${dt.img?'':'⚔️'}</span><img id="dp-wep-${k}" src="${dt.img||''}" style="${dt.img?'':'display:none'}"></div>
       <input type="file" id="wf-${k}" accept="image/*" style="display:none" onchange="dynLoad(this,'wep-${k}')">
-      <input class="mfi" id="wn-${k}" value="${dt.name||''}" placeholder="Weapon name" style="flex:1;min-width:110px;">
+      <div class="ac-wrap" style="flex:1;min-width:110px;">
+        <input class="mfi" id="wn-${k}" value="${dt.name||''}" placeholder="Weapon naam..." autocomplete="off" style="width:100%;">
+      </div>
       <select class="mfi" id="wt-${k}" style="width:72px;padding:7px 4px;"><option value=""${!dt.tag||dt.tag===''?' selected':''}></option><option value="wish"${dt.tag==='wish'?' selected':''}>Wish</option><option value="bp"${dt.tag==='bp'?' selected':''}>BP</option><option value="bis"${dt.tag==='bis'?' selected':''}>BiS</option><option value="f2p"${dt.tag==='f2p'?' selected':''}>F2P</option></select>
       <select class="mfi" id="wsrc-${k}" style="width:88px;padding:7px 4px;" title="Weapon Source"><option value=""${!dt.source?' selected':''}>Source…</option><option value="wish"${dt.source==='wish'?' selected':''}>🔮 Wish</option><option value="craft"${dt.source==='craft'?' selected':''}>⚒️ Craft</option><option value="bp"${dt.source==='bp'?' selected':''}>📜 BP</option><option value="event"${dt.source==='event'?' selected':''}>🎉 Event</option><option value="fishing"${dt.source==='fishing'?' selected':''}>🎣 Fishing</option><option value="quest"${dt.source==='quest'?' selected':''}>📋 Quest</option><option value="shop"${dt.source==='shop'?' selected':''}>🛒 Shop</option></select>
       <select class="mfi" id="ws-${k}" style="width:54px;padding:7px 4px;"><option value="5"${dt.stars==5?' selected':''}>★5</option><option value="4"${dt.stars==4?' selected':''}>★4</option><option value="3"${dt.stars==3?' selected':''}>★3</option></select>
       <button class="rm-btn" onclick="document.getElementById('wr-${k}').remove()">✕</button>
     </div>`);
   if(dt.img){const i=document.getElementById('di-wep-'+k);if(i)i.style.display='none';}
+  // Autocomplete vir weapon naam
+  const winp = document.getElementById('wn-'+k);
+  if (winp) setupAC(winp, 'weapons', async (id, name, imgUrl) => {
+    winp.value = name;
+    try {
+      const res = await fetch(imgUrl);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = e => {
+        _pendingImgs['wep-'+k] = e.target.result;
+        const pp = document.getElementById('dp-wep-'+k);
+        const pi = document.getElementById('di-wep-'+k);
+        if(pp){pp.src=e.target.result;pp.style.display='';}
+        if(pi) pi.style.display='none';
+      };
+      reader.readAsDataURL(blob);
+    } catch(e) {}
+  });
 }
 function addArtRow(d) {
   const k='a'+_ac++; const dt=d||{img:'',name:'',pc:'4-pc',rank:'1st'};
@@ -2404,11 +2436,31 @@ function addArtRow(d) {
       <select class="mfi" id="ark-${k}" style="width:58px;padding:7px 4px;font-weight:700;color:var(--gold);"><option value="1st"${(dt.rank||'1st')==='1st'?' selected':''}>1st</option><option value="2nd"${dt.rank==='2nd'?' selected':''}>2nd</option><option value="3rd"${dt.rank==='3rd'?' selected':''}>3rd</option><option value="4th"${dt.rank==='4th'?' selected':''}>4th</option></select>
       <div class="dyn-pb" onclick="pbPick('af-${k}')"><span id="di-art-${k}">${dt.img?'':'🎖️'}</span><img id="dp-art-${k}" src="${dt.img||''}" style="${dt.img?'':'display:none'}"></div>
       <input type="file" id="af-${k}" accept="image/*" style="display:none" onchange="dynLoad(this,'art-${k}')">
-      <input class="mfi" id="an-${k}" value="${dt.name||''}" placeholder="Artifact set name" style="flex:1;">
+      <div class="ac-wrap" style="flex:1;">
+        <input class="mfi" id="an-${k}" value="${dt.name||''}" placeholder="Artifact set naam..." autocomplete="off" style="width:100%;">
+      </div>
       <select class="mfi" id="ap-${k}" style="width:72px;padding:7px 4px;"><option value="4-pc"${(dt.pc==='4-pc'||!dt.pc)?' selected':''}>4-pc</option><option value="2-pc"${dt.pc==='2-pc'?' selected':''}>2-pc</option><option value="2/4-pc"${(dt.pc==='2/4-pc'||dt.pc==='4/2PC')?' selected':''}>2/4-pc</option></select>
       <button class="rm-btn" onclick="document.getElementById('ar-${k}').remove()">✕</button>
     </div>`);
   if(dt.img){const i=document.getElementById('di-art-'+k);if(i)i.style.display='none';}
+  // Autocomplete vir artifact naam
+  const ainp = document.getElementById('an-'+k);
+  if (ainp) setupAC(ainp, 'artifacts', async (id, name, imgUrl) => {
+    ainp.value = name;
+    try {
+      const res = await fetch(imgUrl);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = e => {
+        _pendingImgs['art-'+k] = e.target.result;
+        const pp = document.getElementById('dp-art-'+k);
+        const pi = document.getElementById('di-art-'+k);
+        if(pp){pp.src=e.target.result;pp.style.display='';}
+        if(pi) pi.style.display='none';
+      };
+      reader.readAsDataURL(blob);
+    } catch(e) {}
+  });
 }
 // ── Team tabs state ──
 let _activeTeamTab = 0; // which team panel is visible (by index)
@@ -2480,6 +2532,28 @@ function addTeamRow(teamData) {
   ms.forEach((m,mi)=>{ if(m.img){const i=document.getElementById('di-tm-'+tk+'-m'+mi);if(i)i.style.display='none';} });
   teamSetCount(tk, tabCount, true);
 
+  // Autocomplete vir team lede
+  ms.forEach((m,mi) => {
+    const mk = tk+'-m'+mi;
+    const tinp = document.getElementById('tmn-'+mk);
+    if (tinp) setupAC(tinp, 'characters', async (id, name, imgUrl) => {
+      tinp.value = name;
+      try {
+        const res = await fetch(imgUrl);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onload = e => {
+          _pendingImgs['tm-'+mk] = e.target.result;
+          const pp = document.getElementById('dp-tm-'+mk);
+          const pi = document.getElementById('di-tm-'+mk);
+          if(pp){pp.src=e.target.result;pp.style.display='';}
+          if(pi) pi.style.display='none';
+        };
+        reader.readAsDataURL(blob);
+      } catch(e) {}
+    });
+  });
+
   // Switch to the new tab
   _activeTeamTab = newIdx;
   _rebuildTeamTabsNav();
@@ -2512,12 +2586,32 @@ function addTalRow(d, pk) {
     <div id="talr-${k}" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(14,16,22,0.5);border:1px solid rgba(200,168,75,0.1);border-radius:8px;padding:8px;min-width:90px;">
       <div class="dyn-pb" onclick="pbPick('talf-${k}')" style="width:54px;height:54px;border-radius:50%;"><span id="di-tal-${k}" style="font-size:18px;">${dt.img?'':'✨'}</span><img id="dp-tal-${k}" src="${dt.img||''}" style="${dt.img?'border-radius:50%;':'display:none;border-radius:50%;'}"></div>
       <input type="file" id="talf-${k}" accept="image/*" style="display:none" onchange="dynLoad(this,'tal-${k}')">
-      <input class="mfi" id="taln-${k}" value="${dt.label||''}" placeholder="Label" style="width:80px;font-size:11px!important;padding:4px!important;text-align:center;">
+      <div class="ac-wrap" style="width:80px;">
+        <input class="mfi" id="taln-${k}" value="${dt.label||''}" placeholder="Label" style="width:80px;font-size:11px!important;padding:4px!important;text-align:center;" autocomplete="off">
+      </div>
       <input class="mfi" id="talp-${k}" type="number" value="${dt.priority||''}" placeholder="#" min="1" max="10" style="width:42px;font-size:11px!important;padding:3px!important;text-align:center;">
       <textarea class="mfi" id="tald-${k}" placeholder="Short desc..." style="width:80px;font-size:10px!important;padding:3px!important;min-height:40px;resize:none;">${dt.desc||''}</textarea>
       <button class="rm-btn" style="font-size:10px;padding:2px 6px;" onclick="document.getElementById('talr-${k}').remove()">✕</button>
     </div>`);
   if(dt.img){const i=document.getElementById('di-tal-'+k);if(i)i.style.display='none';}
+  // Autocomplete vir talent label (soek karakter naam vir talent icon)
+  const talinp = document.getElementById('taln-'+k);
+  if (talinp) setupAC(talinp, 'characters', async (id, name, imgUrl) => {
+    talinp.value = name;
+    try {
+      const res = await fetch(imgUrl);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = e => {
+        _pendingImgs['tal-'+k] = e.target.result;
+        const pp = document.getElementById('dp-tal-'+k);
+        const pi = document.getElementById('di-tal-'+k);
+        if(pp){pp.src=e.target.result;pp.style.display='';pp.style.borderRadius='50%';}
+        if(pi) pi.style.display='none';
+      };
+      reader.readAsDataURL(blob);
+    } catch(e) {}
+  });
 }
 
 // ── Open add modal ──
@@ -2560,7 +2654,11 @@ function _openAddModalInner(editIdx) {
         <input type="file" id="fi-char" accept="image/*" style="display:none" onchange="pbLoad(this,'pp-char','pi-char','pl-char','char')">
       </div>
       <div style="flex:1;">
-        <div class="mfrow"><span class="mfl">Name</span><input class="mfi" id="m-name" value="${c?.name||''}" placeholder="e.g. Hu Tao"></div>
+        <div class="mfrow"><span class="mfl">Name</span>
+          <div class="ac-wrap" style="flex:1;">
+            <input class="mfi" id="m-name" value="${c?.name||''}" placeholder="Begin tik bv. Hu Tao..." autocomplete="off">
+          </div>
+        </div>
         <div class="mfrow"><span class="mfl">Title</span><input class="mfi" id="m-title" value="${c?.title||''}" placeholder="e.g. Fragrance in Thaw"></div>
         <div style="display:flex;gap:8px;">
           <div style="flex:1;"><span class="mfl">Stars</span><select class="mfi" id="m-stars"><option value="5"${(c?.stars||5)==5?' selected':''}>5 ★★★★★</option><option value="4"${c?.stars==4?' selected':''}>4 ★★★★</option></select></div>
@@ -2608,7 +2706,11 @@ function _openAddModalInner(editIdx) {
         </div>
         <input type="file" id="fi-boss" accept="image/*" style="display:none" onchange="pbLoad(this,'pp-boss','pi-boss',null,'boss')">
       </div>
-      <div style="flex:1;"><span class="mfl">Boss Name</span><input class="mfi" id="m-boss" value="${c?.bossName||''}" placeholder="e.g. Calamitous God"></div>
+      <div style="flex:1;"><span class="mfl">Boss Name</span>
+        <div class="ac-wrap">
+          <input class="mfi" id="m-boss" value="${c?.bossName||''}" placeholder="e.g. Calamitous God" autocomplete="off">
+        </div>
+      </div>
     </div>
     <div class="mfrow"><span class="mfl">Boss Location & Drop (e.g. Inazuma — farm for Molten Moment)</span><input class="mfi" id="m-boss-loc" value="${c?.bossLocation||''}" placeholder="e.g. Inazuma — farm for Molten Moment"></div>
     <div class="mfrow"><span class="mfl">▶ How to Fight Link (YouTube/Wiki URL)</span><input class="mfi" id="m-boss-link" value="${c?.bossFightLink||''}" placeholder="https://..."></div>
@@ -2644,6 +2746,73 @@ function _openAddModalInner(editIdx) {
   if(!(c?.talents?.length)) addTalRow();
 
   openModal();
+
+  // ── Setup autocomplete ──
+  // Character name → auto prentjie + title + element + stars
+  const nameInp = document.getElementById('m-name');
+  if (nameInp) {
+    setupAC(nameInp, 'characters', async (id, name, imgUrl) => {
+      nameInp.value = name;
+      // Probeer title en element van API kry
+      try {
+        const r = await fetch(`https://genshin.jmp.blue/characters/${id}`);
+        const data = await r.json();
+        const titleEl = document.getElementById('m-title');
+        if (titleEl && data.title) titleEl.value = data.title;
+        if (data.vision) {
+          const v = data.vision.charAt(0).toUpperCase() + data.vision.slice(1).toLowerCase();
+          const btn = [...document.querySelectorAll('.el-btn')].find(b => b.dataset.el === v);
+          if (btn) { document.querySelectorAll('.el-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); _selEl=v; }
+        }
+        if (data.weapon_type) {
+          const wt = data.weapon_type;
+          const wbtn = [...document.querySelectorAll('.wep-btn')].find(b => b.dataset.wep === wt);
+          if (wbtn) { document.querySelectorAll('.wep-btn').forEach(b=>b.classList.remove('active')); wbtn.classList.add('active'); _selWep=wt; }
+        }
+        if (data.rarity) {
+          const s = document.getElementById('m-stars');
+          if (s) s.value = data.rarity;
+        }
+      } catch(e) {}
+      // Laai prentjie
+      try {
+        const res = await fetch(imgUrl);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onload = e => {
+          const b64 = e.target.result;
+          _pendingImgs['char'] = b64;
+          const pp = document.getElementById('pp-char');
+          const pi = document.getElementById('pi-char');
+          const pl = document.getElementById('pl-char');
+          if (pp) { pp.src = b64; pp.style.display = ''; }
+          if (pi) pi.style.display = 'none';
+          if (pl) pl.style.display = 'none';
+        };
+        reader.readAsDataURL(blob);
+      } catch(e) {}
+    });
+  }
+  // Boss autocomplete
+  const bossInp = document.getElementById('m-boss');
+  if (bossInp) {
+    setupAC(bossInp, 'bosses', async (id, name, imgUrl) => {
+      bossInp.value = name;
+      try {
+        const res = await fetch(imgUrl);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onload = e => {
+          _pendingImgs['boss'] = e.target.result;
+          const pp = document.getElementById('pp-boss');
+          const pi = document.getElementById('pi-boss');
+          if(pp){pp.src=e.target.result;pp.style.display='';}
+          if(pi) pi.style.display='none';
+        };
+        reader.readAsDataURL(blob);
+      } catch(e) {}
+    });
+  }
 }
 
 // ── Collect dynamic rows ──
@@ -2763,6 +2932,63 @@ function deleteChar(idx) {
 }
 
 // ── Build sidebar entry + dashboard card ──
+// ── GENSHIN AUTOCOMPLETE ──
+const GI_API = 'https://genshin.jmp.blue';
+const _acCache = {};
+
+async function giList(type) {
+  if (_acCache[type]) return _acCache[type];
+  try {
+    const r = await fetch(`${GI_API}/${type}`);
+    const list = await r.json();
+    _acCache[type] = list;
+    return list;
+  } catch(e) { return []; }
+}
+
+function giImg(type, id) {
+  const map = { characters:'icon-big', weapons:'icon', artifacts:'icon', talents:'icon' };
+  return `${GI_API}/${type}/${id}/${map[type]||'icon'}`;
+}
+
+function giName(id) {
+  return id.split('-').map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ')
+    .replace('Of ','of ').replace('The ','the ').replace('And ','and ');
+}
+
+async function setupAC(inputEl, type, onSelect) {
+  const wrap = inputEl.closest('.ac-wrap') || inputEl.parentElement;
+  let list = document.createElement('div');
+  list.className = 'ac-list';
+  wrap.appendChild(list);
+
+  const items = await giList(type);
+
+  inputEl.addEventListener('input', () => {
+    const q = inputEl.value.toLowerCase().trim();
+    if (!q) { list.classList.remove('open'); return; }
+    const matches = items.filter(id => id.includes(q) || giName(id).toLowerCase().includes(q)).slice(0,10);
+    if (!matches.length) { list.classList.remove('open'); return; }
+    list.innerHTML = matches.map(id => `
+      <div class="ac-item" data-id="${id}">
+        <img src="${giImg(type, id)}" onerror="this.style.display='none'">
+        <div><div>${giName(id)}</div></div>
+      </div>`).join('');
+    list.classList.add('open');
+    list.querySelectorAll('.ac-item').forEach(item => {
+      item.onclick = () => {
+        const id = item.dataset.id;
+        onSelect(id, giName(id), giImg(type, id));
+        list.classList.remove('open');
+      };
+    });
+  });
+
+  document.addEventListener('click', e => {
+    if (!wrap.contains(e.target)) list.classList.remove('open');
+  });
+}
+
 function rebuildRoster() {
   // Clear sidebar (keep header label)
   const cl=document.getElementById('char-list');
