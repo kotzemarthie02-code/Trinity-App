@@ -666,104 +666,125 @@ body::after {
   window._fbref = ref;
   window._fbset = set;
   window._fbget = get;
+
+  // ── PER-KARAKTER STOOR ──
+  // Elke karakter word apart gestoor: buildguide/chars/{sleutel}
+  // So Firebase het nooit meer as een karakter se data op 'n slag nie — geen 10MB limiet!
+
+  function charKey(name) {
+    return (name||'').toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+  }
+
   window.fbSaveChars = async function(arr) {
-    // GEEN try/catch om die HELE funksie nie — as Firebase regtig faal (bv. reëls/
-    // toestemming/internet), moet die fout na bo "gooi" sodat saveChars() dit optel
-    // en 'n eerlike foutboodskap wys, i.p.v. 'n vals "gestoor!" boodskap.
-
-    // 1) Lees Firebase, merge, dan stoor — nooit replace nie
-    const snap = await get(ref(db, 'buildguide/characters'));
-    let existing = [];
-    if (snap.exists()) {
-      try { existing = JSON.parse(snap.val().chars || '[]'); } catch(e) {}
+    // Stoor elke karakter apart
+    for (const c of arr) {
+      const key = charKey(c.name);
+      if (!key) continue;
+      await set(ref(db, 'buildguide/chars/' + key), JSON.stringify(c));
     }
-    const merged = [...existing];
-    arr.forEach(newChar => {
-      const idx = merged.findIndex(e => e.name === newChar.name);
-      if (idx >= 0) merged[idx] = newChar;
-      else merged.push(newChar);
-    });
-    await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(merged) });
+    // Stoor ook die lys van karakter name (vir laai volgorde)
+    const names = arr.map(c => c.name);
+    await set(ref(db, 'buildguide/charList'), JSON.stringify(names));
 
-    // 2) Bevestig dat die hoof-stoor regtig geslaag het deur dit terug te lees
-    const verifySnap = await get(ref(db, 'buildguide/characters'));
-    if (!verifySnap.exists()) {
-      throw new Error('Kon nie bevestig dat karakters op Firebase gestoor is nie (verify-lees het niks gevind nie).');
-    }
-
-    // 3) Outomatiese backup — as hierdie spesifieke skryf faal (bv. reëls laat dit
-    // nie toe nie), moet dit OOK 'n fout gooi i.p.v. stilweg misluk.
+    // Backup
     const now = new Date();
-    const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`;
-    await set(ref(db, 'buildguide_backups/' + key), { chars: JSON.stringify(merged), count: merged.length, time: now.toLocaleString('af-ZA') });
-
-    // 4) Bevestig ook die backup-skryf
-    const backupVerify = await get(ref(db, 'buildguide_backups/' + key));
-    if (!backupVerify.exists()) {
-      throw new Error('Karakters is gestoor, maar die BACKUP kon nie bevestig word nie. Kyk Firebase-reëls vir pad "buildguide_backups".');
-    }
-    console.log('✅ Firebase: karakters + backup bevestig gestoor (' + merged.length + ' karakters, backup ' + key + ')');
+    const bkey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`;
+    await set(ref(db, 'buildguide_backups/' + bkey), { count: arr.length, time: now.toLocaleString('af-ZA'), names: JSON.stringify(names) });
+    console.log('✅ ' + arr.length + ' karakters gestoor (per-karakter)');
   };
 
-  // Direkte save sonder merge — net vir intern gebruik
-  window.fbSaveCharsRaw = async function(arr) {
-    try { await set(ref(db, 'buildguide/characters'), { chars: JSON.stringify(arr) }); }
-    catch(e) { console.error('fbSaveCharsRaw:', e); }
-  };
+  window.fbSaveCharsRaw = window.fbSaveChars;
 
   window.fbSaveOwned = async function(uid, arr) {
     try { await set(ref(db, 'buildguide_owned/' + uid), { owned: JSON.stringify(arr) }); }
     catch(e) { console.error('fbSaveOwned:', e); }
   };
 
+  // Laai alle karakters van Firebase
+  async function fbLoadAllChars() {
+    try {
+      // Probeer eers die lys
+      const listSnap = await get(ref(db, 'buildguide/charList'));
+      if (listSnap.exists()) {
+        const names = JSON.parse(listSnap.val() || '[]');
+        const chars = [];
+        for (const name of names) {
+          const key = charKey(name);
+          const snap = await get(ref(db, 'buildguide/chars/' + key));
+          if (snap.exists()) {
+            try { chars.push(JSON.parse(snap.val())); } catch(e) {}
+          }
+        }
+        if (chars.length > 0) return chars;
+      }
+      // Fallback: ou sisteem (chars in een string)
+      const oldSnap = await get(ref(db, 'buildguide/characters'));
+      if (oldSnap.exists()) {
+        const chars = JSON.parse(oldSnap.val().chars || '[]');
+        if (chars.length > 0) {
+          // Migreer na nuwe sisteem
+          console.log('Migreer ' + chars.length + ' karakters na per-karakter stoor...');
+          await window.fbSaveChars(chars);
+          return chars;
+        }
+      }
+      return [];
+    } catch(e) { console.error('fbLoadAllChars:', e); return []; }
+  }
+
   (async () => {
     try {
       const uid = localStorage.getItem('trinity_uid') || 'Admin';
-      const cSnap = await get(ref(db, 'buildguide/characters'));
-      if (cSnap.exists()) {
-        const chars = JSON.parse(cSnap.val().chars || '[]');
-        if (chars.length > 0) {
-          // Merge met localStorage data sodat geen karakters verlore gaan
-          let local = [];
-          try { local = JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) {}
-          const merged = [...chars];
-          local.forEach(lc => { if (!merged.find(f => f.name === lc.name)) merged.push(lc); });
-          try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
+
+      // Laai karakters
+      const fbChars = await fbLoadAllChars();
+      if (fbChars.length > 0) {
+        let local = [];
+        try { local = JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) {}
+        const merged = [...fbChars];
+        local.forEach(lc => { if (!merged.find(f => f.name === lc.name)) merged.push(lc); });
+        try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
+
+        window._waitingForFirebase = false;
+        const msg = document.getElementById('fb-loading-msg');
+        if (msg) msg.remove();
+        if (typeof myChars !== 'undefined') {
+          myChars.length = 0;
+          merged.forEach(c => myChars.push(c));
+          if (typeof rebuildRoster === 'function') rebuildRoster();
         }
       }
+
+      // Owned
       const oSnap = await get(ref(db, 'buildguide_owned/' + uid));
       if (oSnap.exists()) {
         const owned = JSON.parse(oSnap.val().owned || '[]');
         try { localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned)); } catch(e) {}
         try { localStorage.setItem('bg_owned_v3', JSON.stringify(owned)); } catch(e) {}
       }
-      onValue(ref(db, 'buildguide/characters'), (snap) => {
+
+      // Luister vir veranderinge aan die karakter lys
+      onValue(ref(db, 'buildguide/charList'), async (snap) => {
         if (!snap.exists()) return;
         try {
-          const fbChars = JSON.parse(snap.val().chars || '[]');
-          if (typeof myChars !== 'undefined' && typeof rebuildRoster === 'function') {
-            window._waitingForFirebase = false;
-            const msg = document.getElementById('fb-loading-msg');
-            if (msg) msg.remove();
-
-            // MERGE: grootste lys wen altyd
-            const merged = [...fbChars];
-            myChars.forEach(local => {
-              if (!merged.find(f => f.name === local.name)) merged.push(local);
-            });
-
-            // As ons meer het as Firebase, stoor terug
-            if (merged.length > fbChars.length && typeof window.fbSaveCharsRaw === 'function') {
-              window.fbSaveCharsRaw(merged);
-            }
-
-            myChars.length = 0;
-            merged.forEach(c => myChars.push(c));
-            try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
-            rebuildRoster();
-          }
+          const chars = await fbLoadAllChars();
+          if (!chars.length) return;
+          if (typeof myChars === 'undefined' || typeof rebuildRoster !== 'function') return;
+          window._waitingForFirebase = false;
+          const msg = document.getElementById('fb-loading-msg');
+          if (msg) msg.remove();
+          const merged = [...chars];
+          myChars.forEach(local => {
+            if (!merged.find(f => f.name === local.name)) merged.push(local);
+          });
+          if (merged.length > chars.length) await window.fbSaveChars(merged);
+          myChars.length = 0;
+          merged.forEach(c => myChars.push(c));
+          try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
+          rebuildRoster();
         } catch(e) {}
       });
+
     } catch(e) { console.error('Firebase init:', e); }
   })();
 
@@ -2150,24 +2171,7 @@ function loadChars() {
 window._waitingForFirebase = !localStorage.getItem('bg_chars_v3');
 function saveChars(arr) {
   // Async kompresseer alle beelde, dan stoor
-  // ── CLOUDINARY ── upload net NUWE base64 prentjies, los URLs ongeroer
-  const CL_CLOUD = 'cu7atsav';
-  const CL_PRESET = 'buildguide';
-
-  async function toCloud(dataUrl) {
-    if (!dataUrl) return '';
-    if (dataUrl.startsWith('http')) return dataUrl; // al 'n URL — los dit
-    if (!dataUrl.startsWith('data:image')) return '';
-    try {
-      const fd = new FormData();
-      fd.append('file', dataUrl);
-      fd.append('upload_preset', CL_PRESET);
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD}/image/upload`, { method:'POST', body:fd });
-      const d = await res.json();
-      return d.secure_url || dataUrl;
-    } catch(e) { return dataUrl; }
-  }
-
+  // ── KOMPRESSIE — geen Cloudinary nie, stoor prentjies direk ──
   function compressOne(dataUrl, maxSize, quality) {
     return new Promise(resolve => {
       if (!dataUrl) return resolve('');
@@ -2193,22 +2197,15 @@ function saveChars(arr) {
   async function compressAll(arr) {
     const out = [];
     for (const c of arr) {
-      // up: komprimeer dan upload na Cloudinary as dit nuwe base64 is
-      async function up(dataUrl, maxSize, quality) {
-        if (!dataUrl) return '';
-        if (dataUrl.startsWith('http')) return dataUrl; // los bestaande URL
-        const small = await compressOne(dataUrl, maxSize, quality);
-        return await toCloud(small);
-      }
-      const charImg = await up(c.charImg, 180, 0.70);
-      const bossImg = await up(c.bossImg, 150, 0.70);
-      const weapons = await Promise.all((c.weapons||[]).map(async w => ({...w, img: await up(w.img, 140, 0.70)})));
-      const artSets = await Promise.all((c.artSets||[]).map(async a => ({...a, img: await up(a.img, 140, 0.70)})));
+      const charImg = await compressOne(c.charImg, 180, 0.80);
+      const bossImg = await compressOne(c.bossImg, 150, 0.80);
+      const weapons = await Promise.all((c.weapons||[]).map(async w => ({...w, img: await compressOne(w.img, 140, 0.80)})));
+      const artSets = await Promise.all((c.artSets||[]).map(async a => ({...a, img: await compressOne(a.img, 140, 0.80)})));
       const teams   = await Promise.all((c.teams||[]).map(async t => ({
         ...t,
-        members: await Promise.all((t.members||[]).map(async m => ({...m, img: await up(m.img, 120, 0.65)})))
+        members: await Promise.all((t.members||[]).map(async m => ({...m, img: await compressOne(m.img, 120, 0.80)})))
       })));
-      const talents = await Promise.all((c.talents||[]).map(async t => ({...t, img: await up(t.img, 120, 0.65)})));
+      const talents = await Promise.all((c.talents||[]).map(async t => ({...t, img: await compressOne(t.img, 120, 0.80)})));
       out.push({...c, charImg, bossImg, weapons, artSets, teams, talents});
     }
     return out;
