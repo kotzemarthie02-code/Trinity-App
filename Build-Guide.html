@@ -2141,10 +2141,34 @@ function loadChars() {
 window._waitingForFirebase = !localStorage.getItem('bg_chars_v3');
 function saveChars(arr) {
   // Async kompresseer alle beelde, dan stoor
+  // ── CLOUDINARY UPLOAD ──
+  const CL_CLOUD = 'cu7atsav';
+  const CL_PRESET = 'buildguide';
+
+  async function uploadToCloudinary(dataUrl) {
+    if (!dataUrl) return '';
+    if (dataUrl.startsWith('http')) return dataUrl; // al 'n URL
+    if (!dataUrl.startsWith('data:image')) return '';
+    try {
+      const formData = new FormData();
+      formData.append('file', dataUrl);
+      formData.append('upload_preset', CL_PRESET);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD}/image/upload`, {
+        method: 'POST', body: formData
+      });
+      const data = await res.json();
+      return data.secure_url || '';
+    } catch(e) {
+      console.error('Cloudinary upload fout:', e);
+      return dataUrl; // fallback
+    }
+  }
+
   function compressOne(dataUrl, maxSize, quality) {
     return new Promise(resolve => {
-      if (!dataUrl || !dataUrl.startsWith('data:image')) return resolve(dataUrl);
-      if (dataUrl.length < 15000) return resolve(dataUrl); // al klein genoeg
+      if (!dataUrl) return resolve('');
+      if (dataUrl.startsWith('http')) return resolve(dataUrl);
+      if (!dataUrl.startsWith('data:image')) return resolve('');
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement('canvas');
@@ -2157,7 +2181,7 @@ function saveChars(arr) {
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
-      img.onerror = () => resolve(dataUrl);
+      img.onerror = () => resolve('');
       img.src = dataUrl;
     });
   }
@@ -2165,15 +2189,22 @@ function saveChars(arr) {
   async function compressAll(arr) {
     const out = [];
     for (const c of arr) {
-      const charImg = await compressOne(c.charImg, 200, 0.70);
-      const bossImg = await compressOne(c.bossImg, 160, 0.70);
-      const weapons = await Promise.all((c.weapons||[]).map(async w => ({...w, img: await compressOne(w.img, 160, 0.70)})));
-      const artSets = await Promise.all((c.artSets||[]).map(async a => ({...a, img: await compressOne(a.img, 160, 0.70)})));
-      const teams = await Promise.all((c.teams||[]).map(async t => ({
+      // Komprimeer eers, dan upload na Cloudinary
+      async function up(dataUrl) {
+        if (!dataUrl || dataUrl.startsWith('http')) return dataUrl || '';
+        const small = await compressOne(dataUrl, 150, 0.65);
+        return await uploadToCloudinary(small);
+      }
+
+      const charImg = await up(c.charImg);
+      const bossImg = await up(c.bossImg);
+      const weapons = await Promise.all((c.weapons||[]).map(async w => ({...w, img: await up(w.img)})));
+      const artSets = await Promise.all((c.artSets||[]).map(async a => ({...a, img: await up(a.img)})));
+      const teams   = await Promise.all((c.teams||[]).map(async t => ({
         ...t,
-        members: await Promise.all((t.members||[]).map(async m => ({...m, img: await compressOne(m.img, 120, 0.65)})))
+        members: await Promise.all((t.members||[]).map(async m => ({...m, img: await up(m.img)})))
       })));
-      const talents = await Promise.all((c.talents||[]).map(async t => ({...t, img: await compressOne(t.img, 120, 0.65)})));
+      const talents = await Promise.all((c.talents||[]).map(async t => ({...t, img: await up(t.img)})));
       out.push({...c, charImg, bossImg, weapons, artSets, teams, talents});
     }
     return out;
