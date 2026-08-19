@@ -110,6 +110,12 @@ body::after {
     font-size: 18px; flex-shrink: 0;
     position: relative; overflow: hidden;
   }
+  .char-avatar img { width:100%; height:100%; object-fit:cover; filter:brightness(1.15); }
+  .dyn-pb img { filter:brightness(1.12); }
+  .wep-img img, .art-img img, .tal-img img, .boss-img img { filter:brightness(1.12); }
+  /* Alle prentjies in die view — helderder */
+  .weapon-slot img, .art-set img, .t-icon-wrap img, .boss-icon-big img,
+  [style*="object-fit:cover"] img, [style*="object-fit:contain"] img { filter:brightness(1.15) !important; }
   .char-avatar .elem-dot {
     position: absolute; bottom: 1px; right: 1px;
     width: 10px; height: 10px; border-radius: 50%;
@@ -315,6 +321,7 @@ body::after {
 
   /* Artifacts */
   .artifact-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .art-set img { filter:brightness(1.15); }
   .art-set {
     background: var(--panel2); border: 1px solid var(--border);
     border-radius: var(--radius-sm); padding: 10px 8px; text-align: center;
@@ -389,6 +396,8 @@ body::after {
 
   /* Boss */
   .boss-row { display: flex; align-items: center; gap: 12px; }
+  .talent-chip .t-icon-wrap img { filter:brightness(1.15); }
+  .boss-icon-big img { filter:brightness(1.15); }
   .boss-icon-big { font-size: 36px; flex-shrink: 0; }
   .boss-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
   .boss-sub { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
@@ -3139,7 +3148,7 @@ function showMyChar(idx) {
   document.getElementById('weapon-grid').innerHTML=(c.weapons||[]).map(w=>`
     <div class="weapon-slot">
       ${wBadgesHtml(w.tag, w.source)}
-      ${w.img?`<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${w.img}" style="width:100%;height:100%;object-fit:contain;"></span>`:'<div class="weapon-icon">⚔️</div>'}
+      ${w.img?`<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${w.img}" style="width:100%;height:100%;object-fit:contain;filter:brightness(1.15);"></span>`:'<div class="weapon-icon">⚔️</div>'}
       <div><div class="w-name">${w.name}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars||4)}</div></div>
     </div>`).join('');
 
