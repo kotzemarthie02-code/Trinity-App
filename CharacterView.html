@@ -141,6 +141,23 @@
         .domain-row-flex {
             display: flex; gap: 30px; align-items: flex-end; margin-top: 15px;
         }
+
+        /* ── REPEATER (+ Add vir meer) ── */
+        .repeater-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .repeater-row select { flex: 1; min-width: 0; }
+        .repeater-row input[type="text"] { width: 60px; flex-shrink: 0; text-align: center; }
+        .repeater-remove-btn {
+            flex-shrink: 0; width: 24px; height: 24px; border-radius: 5px;
+            background: rgba(244,67,54,0.2); border: 1px solid #f44336; color: #ff6b6b;
+            cursor: pointer; font-weight: 900; font-size: 13px; line-height: 1; padding: 0;
+        }
+        .repeater-remove-btn:hover { background: rgba(244,67,54,0.35); }
+        .repeater-add-btn {
+            display: block; width: 100%; margin-top: 2px; padding: 6px 10px;
+            background: rgba(255,225,75,0.1); border: 1px dashed #ffe14b; border-radius: 6px;
+            color: #ffe14b; font-size: 12px; font-weight: 800; cursor: pointer; font-family: sans-serif;
+        }
+        .repeater-add-btn:hover { background: rgba(255,225,75,0.2); }
         /* ── MY PROGRESS ── */
         .prog-checklist { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
         .prog-item { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 14px; cursor:pointer; transition:all 0.2s; }
@@ -227,56 +244,50 @@
     </div>
 
     <div class="field" style="margin-top:15px;"><label>Enemy Material:</label>
-        <select class="mat-drop" style="margin-bottom:5px;"></select>
-        <select class="mat-drop" style="margin-bottom:5px;"></select>
-        <select class="mat-drop"></select>
-    </div>
-    <div class="field"><label>Total:</label>
-        <div style="display:flex; gap:5px;">
-            <input type="text" class="total-input" style="width:40px;">
-            <input type="text" class="total-input" style="width:40px;">
-            <input type="text" class="total-input" style="width:40px;">
+        <div class="repeater" data-group="wnInfoMat">
+            <div class="repeater-row">
+                <select class="mat-drop"></select>
+                <input type="text" class="total-input" placeholder="Total">
+            </div>
         </div>
+        <button type="button" class="repeater-add-btn" onclick="repeaterAdd('wnInfoMat')">+ Add vir meer</button>
     </div>
 </div>
 
 <div class="weapon-col">
     <h3>Enemy</h3>
     <div class="field"><label>Enemy Material:</label>
-        <select class="mat-drop" style="margin-bottom:5px;"></select>
-        <select class="mat-drop" style="margin-bottom:5px;"></select>
-        <select class="mat-drop"></select>
-    </div>
-    <div class="field"><label>Total:</label>
-        <div style="display:flex; gap:5px;">
-            <input type="text" class="total-input" style="width:40px;">
-            <input type="text" class="total-input" style="width:40px;">
-            <input type="text" class="total-input" style="width:40px;">
+        <div class="repeater" data-group="wnEnemyMat">
+            <div class="repeater-row">
+                <select class="mat-drop"></select>
+                <input type="text" class="total-input" placeholder="Total">
+            </div>
         </div>
+        <button type="button" class="repeater-add-btn" onclick="repeaterAdd('wnEnemyMat')">+ Add vir meer</button>
     </div>
     <div class="field" style="margin-top:10px;">
         <label>Enemy Type:</label>
-        <div style="display:flex; gap:5px; align-items:center;">
-            <select class="enemy-type-list" style="flex:1;"></select>
+        <div class="repeater" data-group="wnEnemyType">
+            <div class="repeater-row">
+                <select class="enemy-type-list"></select>
+            </div>
         </div>
-    </div>
-    <div class="field">
-        <label>Enemy Type:</label>
-        <div style="display:flex; gap:5px; align-items:center;">
-            <select class="enemy-type-list" style="flex:1;"></select>
-        </div>
+        <button type="button" class="repeater-add-btn" onclick="repeaterAdd('wnEnemyType')">+ Add vir meer</button>
     </div>
 </div>
 
             <div class="weapon-col">
                 <h3>Domain</h3>
                 <div class="field"><label>Domain Material:</label>
-                    <div style="display:flex; flex-direction:column; gap:5px;"><select class="dom-mat-drop"></select><select class="dom-mat-drop"></select><select class="dom-mat-drop"></select></div>
+                    <div class="repeater" data-group="wnDomainMat">
+                        <div class="repeater-row">
+                            <select class="dom-mat-drop"></select>
+                            <input type="text" class="total-input" placeholder="Total">
+                        </div>
+                    </div>
+                    <button type="button" class="repeater-add-btn" onclick="repeaterAdd('wnDomainMat')">+ Add vir meer</button>
                 </div>
                 <div class="field"><label>Domain Type:</label><select class="domain-list-drop"></select></div>
-                <div class="field"><label>Total:</label>
-                    <div style="display:flex; flex-direction:column; gap:5px;"><input type="text"><input type="text"><input type="text"></div>
-                </div>
                 <div class="field"><label>Days:</label><select class="days-drop wea-days-drop"></select></div>
             </div>
         </div>
@@ -316,30 +327,35 @@
         <div class="weapon-col">
             <h3>Enemy</h3>
             <div class="field"><label>Enemy Material:</label>
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                    <select class="talent-enemy-mat-drop"></select>
-                    <select class="talent-enemy-mat-drop"></select>
-                    <select class="talent-enemy-mat-drop"></select>
+                <div class="repeater" data-group="talEnemyMat">
+                    <div class="repeater-row">
+                        <select class="talent-enemy-mat-drop"></select>
+                        <input type="text" class="total-input" placeholder="Total">
+                    </div>
                 </div>
+                <button type="button" class="repeater-add-btn" onclick="repeaterAdd('talEnemyMat')">+ Add vir meer</button>
             </div>
-            <div class="field"><label>Enemy Type:</label><select class="talent-ascend-enemy-type"></select></div>
-            <div class="field"><label>Total:</label>
-                <div style="display:flex; flex-direction:column; gap:5px;"><input type="text"><input type="text"><input type="text"></div>
+            <div class="field"><label>Enemy Type:</label>
+                <div class="repeater" data-group="talEnemyType">
+                    <div class="repeater-row">
+                        <select class="talent-ascend-enemy-type"></select>
+                    </div>
+                </div>
+                <button type="button" class="repeater-add-btn" onclick="repeaterAdd('talEnemyType')">+ Add vir meer</button>
             </div>
         </div>
         <div class="weapon-col">
             <h3>Domain</h3>
             <div class="field"><label>Domain Material:</label>
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                    <select class="talent-book-drop"></select>
-                    <select class="talent-book-drop"></select>
-                    <select class="talent-book-drop"></select>
+                <div class="repeater" data-group="talDomainMat">
+                    <div class="repeater-row">
+                        <select class="talent-book-drop"></select>
+                        <input type="text" class="total-input" placeholder="Total">
+                    </div>
                 </div>
+                <button type="button" class="repeater-add-btn" onclick="repeaterAdd('talDomainMat')">+ Add vir meer</button>
             </div>
             <div class="field"><label>Domain:</label><select class="talent-domain-drop"></select></div>
-            <div class="field"><label>Total:</label>
-                <div style="display:flex; flex-direction:column; gap:5px;"><input type="text"><input type="text"><input type="text"></div>
-            </div>
             <div class="field"><label>Days:</label><select class="days-drop"></select></div>
         </div>
         <div class="weapon-col">
@@ -414,27 +430,43 @@
     <div class="star-content active" id="star4-content">
         <h3 class="gold-text" style="font-size: 16px; margin-bottom: 5px;">Enemy</h3>
         <div class="future-grid">
-            <div class="col"><table class="future-enemy-table">
-                <tr><th class="gold-text white-text">Enemy Material</th><th class="white-text">Enemy Type</th><th class="white-text">Total</th></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td rowspan="3"><select class="enemy-type-list"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-            </table></div>
-            <div class="col"><table class="future-enemy-table">
-                <tr><th class="gold-text white-text">Enemy Material</th><th class="white-text">Enemy Type</th><th class="white-text">Total</th></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td rowspan="3"><select class="enemy-type-list"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-            </table></div>
+            <div class="col">
+                <div class="field"><label class="gold-text">Enemy Material:</label>
+                    <div class="repeater" data-group="fut4Enemy1">
+                        <div class="repeater-row">
+                            <select class="enemy-mat-drop"></select>
+                            <input type="text" class="future-input-small" placeholder="Total">
+                        </div>
+                    </div>
+                    <button type="button" class="repeater-add-btn" onclick="repeaterAdd('fut4Enemy1')">+ Add vir meer</button>
+                </div>
+                <div class="field" style="margin-top:8px;"><label>Enemy Type:</label><select class="enemy-type-list"></select></div>
+            </div>
+            <div class="col">
+                <div class="field"><label class="gold-text">Enemy Material:</label>
+                    <div class="repeater" data-group="fut4Enemy2">
+                        <div class="repeater-row">
+                            <select class="enemy-mat-drop"></select>
+                            <input type="text" class="future-input-small" placeholder="Total">
+                        </div>
+                    </div>
+                    <button type="button" class="repeater-add-btn" onclick="repeaterAdd('fut4Enemy2')">+ Add vir meer</button>
+                </div>
+                <div class="field" style="margin-top:8px;"><label>Enemy Type:</label><select class="enemy-type-list"></select></div>
+            </div>
         </div>
         <div class="domain-row-flex">
             <div style="flex:1;"><h3 class="gold-text" style="font-size:16px;margin-bottom:5px;">Domain</h3>
-            <table class="future-enemy-table">
-                <tr><th class="white-text">Domain Material</th><th class="white-text">Total</th></tr>
-                <tr><td><select class="dom-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="dom-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="dom-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-            </table></div>
+                <div class="field"><label>Domain Material:</label>
+                    <div class="repeater" data-group="fut4Domain">
+                        <div class="repeater-row">
+                            <select class="dom-mat-drop"></select>
+                            <input type="text" class="future-input-small" placeholder="Total">
+                        </div>
+                    </div>
+                    <button type="button" class="repeater-add-btn" onclick="repeaterAdd('fut4Domain')">+ Add vir meer</button>
+                </div>
+            </div>
             <div style="display:flex;flex-direction:column;gap:15px;justify-content:flex-end;padding-bottom:10px;min-width:260px;">
                 <div class="field" style="margin-bottom:0;"><label>Days:</label><select class="days-drop wea-days-drop"></select></div>
                 <div class="field" style="margin-bottom:0;"><label>Mystic Enhancement Ore:</label><div style="display:flex;align-items:center;gap:5px;"><span style="font-size:12px;">Total:</span><input type="text" style="width:100px;"></div></div>
@@ -447,27 +479,43 @@
     <div class="star-content" id="star5-content">
         <h3 class="gold-text" style="font-size: 16px; margin-bottom: 5px;">Enemy</h3>
         <div class="future-grid">
-            <div class="col"><table class="future-enemy-table">
-                <tr><th class="gold-text white-text">Enemy Material</th><th class="white-text">Enemy Type</th><th class="white-text">Total</th></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td rowspan="3"><select class="enemy-type-list"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-            </table></div>
-            <div class="col"><table class="future-enemy-table">
-                <tr><th class="gold-text white-text">Enemy Material</th><th class="white-text">Enemy Type</th><th class="white-text">Total</th></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td rowspan="3"><select class="enemy-type-list"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="enemy-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-            </table></div>
+            <div class="col">
+                <div class="field"><label class="gold-text">Enemy Material:</label>
+                    <div class="repeater" data-group="fut5Enemy1">
+                        <div class="repeater-row">
+                            <select class="enemy-mat-drop"></select>
+                            <input type="text" class="future-input-small" placeholder="Total">
+                        </div>
+                    </div>
+                    <button type="button" class="repeater-add-btn" onclick="repeaterAdd('fut5Enemy1')">+ Add vir meer</button>
+                </div>
+                <div class="field" style="margin-top:8px;"><label>Enemy Type:</label><select class="enemy-type-list"></select></div>
+            </div>
+            <div class="col">
+                <div class="field"><label class="gold-text">Enemy Material:</label>
+                    <div class="repeater" data-group="fut5Enemy2">
+                        <div class="repeater-row">
+                            <select class="enemy-mat-drop"></select>
+                            <input type="text" class="future-input-small" placeholder="Total">
+                        </div>
+                    </div>
+                    <button type="button" class="repeater-add-btn" onclick="repeaterAdd('fut5Enemy2')">+ Add vir meer</button>
+                </div>
+                <div class="field" style="margin-top:8px;"><label>Enemy Type:</label><select class="enemy-type-list"></select></div>
+            </div>
         </div>
         <div class="domain-row-flex">
             <div style="flex:1;"><h3 class="gold-text" style="font-size:16px;margin-bottom:5px;">Domain</h3>
-            <table class="future-enemy-table">
-                <tr><th class="white-text">Domain Material</th><th class="white-text">Total</th></tr>
-                <tr><td><select class="dom-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="dom-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-                <tr><td><select class="dom-mat-drop"></select></td><td><input type="text" class="future-input-small"></td></tr>
-            </table></div>
+                <div class="field"><label>Domain Material:</label>
+                    <div class="repeater" data-group="fut5Domain">
+                        <div class="repeater-row">
+                            <select class="dom-mat-drop"></select>
+                            <input type="text" class="future-input-small" placeholder="Total">
+                        </div>
+                    </div>
+                    <button type="button" class="repeater-add-btn" onclick="repeaterAdd('fut5Domain')">+ Add vir meer</button>
+                </div>
+            </div>
             <div style="display:flex;flex-direction:column;gap:15px;justify-content:flex-end;padding-bottom:10px;min-width:260px;">
                 <div class="field" style="margin-bottom:0;"><label>Days:</label><select class="days-drop wea-days-drop"></select></div>
                 <div class="field" style="margin-bottom:0;"><label>Mystic Enhancement Ore:</label><div style="display:flex;align-items:center;gap:5px;"><span style="font-size:12px;">Total:</span><input type="text" style="width:100px;"></div></div>
@@ -790,6 +838,88 @@ async function setupDropdowns() {
     fillDropdown('.future-domain-type-drop', domainTypes);
 }
 
+// ============ REPEATER ("+ Add vir meer") ENJIN ============
+// Elke groep se velde: watter select-klas met watter opsielys, en of daar 'n Total-inset is.
+const REPEATER_CONFIG = {
+    wnInfoMat:    [{ type:'select', cls:'mat-drop',               list:()=>enemyMaterials },       { type:'input', cls:'total-input' }],
+    wnEnemyMat:   [{ type:'select', cls:'mat-drop',               list:()=>enemyMaterials },       { type:'input', cls:'total-input' }],
+    wnEnemyType:  [{ type:'select', cls:'enemy-type-list',        list:()=>enemyList }],
+    wnDomainMat:  [{ type:'select', cls:'dom-mat-drop',           list:()=>domainMaterials },      { type:'input', cls:'total-input' }],
+    talEnemyMat:  [{ type:'select', cls:'talent-enemy-mat-drop',  list:()=>ascendEnemyMaterials }, { type:'input', cls:'total-input' }],
+    talEnemyType: [{ type:'select', cls:'talent-ascend-enemy-type', list:()=>enemyTypes }],
+    talDomainMat: [{ type:'select', cls:'talent-book-drop',       list:()=>talentBooks },          { type:'input', cls:'total-input' }],
+    fut4Enemy1:   [{ type:'select', cls:'enemy-mat-drop',         list:()=>enemyMaterials },       { type:'input', cls:'future-input-small' }],
+    fut4Enemy2:   [{ type:'select', cls:'enemy-mat-drop',         list:()=>enemyMaterials },       { type:'input', cls:'future-input-small' }],
+    fut4Domain:   [{ type:'select', cls:'dom-mat-drop',           list:()=>domainMaterials },      { type:'input', cls:'future-input-small' }],
+    fut5Enemy1:   [{ type:'select', cls:'enemy-mat-drop',         list:()=>enemyMaterials },       { type:'input', cls:'future-input-small' }],
+    fut5Enemy2:   [{ type:'select', cls:'enemy-mat-drop',         list:()=>enemyMaterials },       { type:'input', cls:'future-input-small' }],
+    fut5Domain:   [{ type:'select', cls:'dom-mat-drop',           list:()=>domainMaterials },      { type:'input', cls:'future-input-small' }],
+};
+
+function buildRepeaterRow(groupKey) {
+    const config = REPEATER_CONFIG[groupKey];
+    const row = document.createElement('div');
+    row.className = 'repeater-row';
+    config.forEach(f => {
+        let el;
+        if (f.type === 'select') {
+            el = document.createElement('select');
+            el.className = f.cls;
+            el.innerHTML = '<option value="">Select</option>';
+            f.list().forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item; opt.textContent = item;
+                el.appendChild(opt);
+            });
+        } else {
+            el = document.createElement('input');
+            el.type = 'text';
+            el.className = f.cls;
+            el.placeholder = 'Total';
+        }
+        row.appendChild(el);
+    });
+    return row;
+}
+
+// Wys 'n "×" verwyder-knoppie op elke ry behalwe die eerste
+function refreshRepeaterRemoveButtons(container) {
+    const rows = container.querySelectorAll('.repeater-row');
+    rows.forEach((row, i) => {
+        let btn = row.querySelector('.repeater-remove-btn');
+        if (i === 0) {
+            if (btn) btn.remove();
+            return;
+        }
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'repeater-remove-btn';
+            btn.textContent = '×';
+            row.appendChild(btn);
+        }
+        btn.onclick = () => { row.remove(); refreshRepeaterRemoveButtons(container); autoSave(); };
+    });
+}
+
+window.repeaterAdd = function(groupKey) {
+    const container = document.querySelector('.repeater[data-group="' + groupKey + '"]');
+    if (!container) return;
+    container.appendChild(buildRepeaterRow(groupKey));
+    refreshRepeaterRemoveButtons(container);
+    autoSave();
+};
+
+// Stel 'n groep terug na 'n gegewe aantal rye (minstens 1), sonder waardes (waardes word apart gestel)
+function resetRepeaterRowCount(groupKey, count) {
+    const container = document.querySelector('.repeater[data-group="' + groupKey + '"]');
+    if (!container) return;
+    container.innerHTML = '';
+    const n = Math.max(1, count || 1);
+    for (let i = 0; i < n; i++) container.appendChild(buildRepeaterRow(groupKey));
+    refreshRepeaterRemoveButtons(container);
+}
+
 async function cycleColor(el) {
     // Grey(0) → Green(1) → Orange(2) → Red(3) → Grey
     const colors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
@@ -845,6 +975,8 @@ async function resetCurrentChar() {
     });
     // Reset all text inputs
     document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
+    // Reset elke "+ Add vir meer" groep terug na 1 leë ry
+    Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, 1));
     // Reset circles to grey
     document.querySelectorAll('.panel .status-circle').forEach(c => {
         c.style.backgroundColor = 'rgb(85, 85, 85)';
@@ -882,17 +1014,30 @@ async function autoSave() {
 
     if (!characterDetails[charName]) characterDetails[charName] = {};
 
-    const selects = document.querySelectorAll('select');
+    // Statiese (nie-repeater) selects/inputs stoor soos voorheen, via hul index -
+    // maar rye binne 'n .repeater-row word HIER uitgesluit sodat "+ Add vir meer"
+    // nooit die indeks van ander velde laat skuif nie.
+    const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row'));
     selects.forEach((sel, index) => {
-        if (sel.id !== 'charSelect') {
-            characterDetails[charName]["sel_" + index] = sel.value;
-        }
+        characterDetails[charName]["sel_" + index] = sel.value;
     });
 
-    const inputs = document.querySelectorAll('input[type="text"]');
+    const inputs = [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row'));
     inputs.forEach((inp, index) => {
         characterDetails[charName]["inp_" + index] = inp.value;
     });
+
+    // Repeater-groepe ("+ Add vir meer") apart stoor, per groep-sleutel, sodat
+    // die aantal rye per karakter kan verskil sonder om enigiets anders te breek.
+    const dynGroups = {};
+    Object.keys(REPEATER_CONFIG).forEach(groupKey => {
+        const container = document.querySelector('.repeater[data-group="' + groupKey + '"]');
+        if (!container) return;
+        dynGroups[groupKey] = [...container.querySelectorAll('.repeater-row')].map(row => {
+            return [...row.querySelectorAll('select, input')].map(el => el.value);
+        });
+    });
+    characterDetails[charName].dynGroups = dynGroups;
 
     // Save status circle colors
     const circles = document.querySelectorAll('.panel .status-circle');
@@ -915,15 +1060,32 @@ async function loadCharData(charName) {
     document.querySelectorAll('.panel .status-circle').forEach(c => c.style.backgroundColor = 'rgb(85, 85, 85)');
 
     if (!data) {
-        document.querySelectorAll('select').forEach(sel => { if(sel.id !== 'charSelect') sel.value = ""; });
-        document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
+        [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row')).forEach(sel => { sel.value = ""; });
+        [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row')).forEach(inp => { inp.value = ""; });
+        // Geen data nie (nuwe karakter) -> elke repeater-groep terug na 1 leë ry
+        Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, 1));
     } else {
-        const selects = document.querySelectorAll('select');
+        const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row'));
         selects.forEach((sel, index) => {
-            if (sel.id !== 'charSelect') sel.value = data["sel_" + index] || "";
+            sel.value = data["sel_" + index] || "";
         });
-        const inputs = document.querySelectorAll('input[type="text"]');
+        const inputs = [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row'));
         inputs.forEach((inp, index) => { inp.value = data["inp_" + index] || ""; });
+
+        // Repeater-groepe herstel: eers die regte aantal rye maak, dan waardes instel
+        const dyn = data.dynGroups || {};
+        Object.keys(REPEATER_CONFIG).forEach(groupKey => {
+            const savedRows = dyn[groupKey] || [];
+            resetRepeaterRowCount(groupKey, savedRows.length || 1);
+            const container = document.querySelector('.repeater[data-group="' + groupKey + '"]');
+            if (!container) return;
+            const rows = container.querySelectorAll('.repeater-row');
+            rows.forEach((row, i) => {
+                const vals = savedRows[i] || [];
+                const fields = row.querySelectorAll('select, input');
+                fields.forEach((el, j) => { el.value = vals[j] || ""; });
+            });
+        });
     }
 
     // Restore circle colors from guideProgress (Firebase)
