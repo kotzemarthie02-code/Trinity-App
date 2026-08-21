@@ -2587,6 +2587,7 @@ function addWepRow(d) {
       <div class="ac-wrap" style="flex:1;min-width:110px;">
         <input class="mfi" id="wn-${k}" value="${dt.name||''}" placeholder="Weapon naam..." autocomplete="off" style="width:100%;" oninput="autoCloudImg(this,'weapons','wep-${k}','dp-wep-${k}','di-wep-${k}',null)">
       </div>
+      <input class="mfi" id="wrole-${k}" value="${dt.role||''}" placeholder="Role e.g. Elemental Mastery" autocomplete="off" style="width:150px;" title="Optional role, shown as (Role) next to the weapon name">
       <select class="mfi" id="wt-${k}" style="width:72px;padding:7px 4px;"><option value=""${!dt.tag||dt.tag===''?' selected':''}></option><option value="wish"${dt.tag==='wish'?' selected':''}>Wish</option><option value="bp"${dt.tag==='bp'?' selected':''}>BP</option><option value="bis"${dt.tag==='bis'?' selected':''}>BiS</option><option value="f2p"${dt.tag==='f2p'?' selected':''}>F2P</option></select>
       <select class="mfi" id="wsrc-${k}" style="width:88px;padding:7px 4px;" title="Weapon Source"><option value=""${!dt.source?' selected':''}>Source…</option><option value="wish"${dt.source==='wish'?' selected':''}>🔮 Wish</option><option value="craft"${dt.source==='craft'?' selected':''}>⚒️ Craft</option><option value="bp"${dt.source==='bp'?' selected':''}>📜 BP</option><option value="event"${dt.source==='event'?' selected':''}>🎉 Event</option><option value="fishing"${dt.source==='fishing'?' selected':''}>🎣 Fishing</option><option value="quest"${dt.source==='quest'?' selected':''}>📋 Quest</option><option value="shop"${dt.source==='shop'?' selected':''}>🛒 Shop</option></select>
       <select class="mfi" id="ws-${k}" style="width:54px;padding:7px 4px;"><option value="5"${dt.stars==5?' selected':''}>★5</option><option value="4"${dt.stars==4?' selected':''}>★4</option><option value="3"${dt.stars==3?' selected':''}>★3</option></select>
@@ -2606,6 +2607,7 @@ function addArtRow(d) {
       <div class="ac-wrap" style="flex:1;">
         <input class="mfi" id="an-${k}" value="${dt.name||''}" placeholder="Artifact set naam..." autocomplete="off" style="width:100%;" oninput="autoCloudImg(this,'artifacts','art-${k}','dp-art-${k}','di-art-${k}',null)">
       </div>
+      <input class="mfi" id="arole-${k}" value="${dt.role||''}" placeholder="Role e.g. Healer Support (Pre-C6)" autocomplete="off" style="width:170px;" title="Optional role, shown as (Role) next to the artifact set name">
       <select class="mfi" id="ap-${k}" style="width:72px;padding:7px 4px;"><option value="4-pc"${(dt.pc==='4-pc'||!dt.pc)?' selected':''}>4-pc</option><option value="2-pc"${dt.pc==='2-pc'?' selected':''}>2-pc</option><option value="2/4-pc"${(dt.pc==='2/4-pc'||dt.pc==='4/2PC')?' selected':''}>2/4-pc</option></select>
       <button class="rm-btn" onclick="document.getElementById('ar-${k}').remove()">✕</button>
     </div>`);
@@ -2889,13 +2891,13 @@ function _openAddModalInner(editIdx) {
 function collectWeps() {
   return [...document.getElementById('m-weps').querySelectorAll('[id^="wr-"]')].map(r=>{
     const k=r.id.replace('wr-','');
-    return {img:_pendingImgs['wep-'+k]||'',name:(document.getElementById('wn-'+k)||{}).value||'',tag:(document.getElementById('wt-'+k)||{}).value||'',source:(document.getElementById('wsrc-'+k)||{}).value||'',stars:parseInt((document.getElementById('ws-'+k)||{}).value||5)};
+    return {img:_pendingImgs['wep-'+k]||'',name:(document.getElementById('wn-'+k)||{}).value||'',role:(document.getElementById('wrole-'+k)||{}).value||'',tag:(document.getElementById('wt-'+k)||{}).value||'',source:(document.getElementById('wsrc-'+k)||{}).value||'',stars:parseInt((document.getElementById('ws-'+k)||{}).value||5)};
   }).filter(w=>w.name);
 }
 function collectArts() {
   return [...document.getElementById('m-arts').querySelectorAll('[id^="ar-"]')].map(r=>{
     const k=r.id.replace('ar-','');
-    return {img:_pendingImgs['art-'+k]||'',name:(document.getElementById('an-'+k)||{}).value||'',pc:(document.getElementById('ap-'+k)||{}).value||'4-pc',rank:(document.getElementById('ark-'+k)||{}).value||'1st'};
+    return {img:_pendingImgs['art-'+k]||'',name:(document.getElementById('an-'+k)||{}).value||'',role:(document.getElementById('arole-'+k)||{}).value||'',pc:(document.getElementById('ap-'+k)||{}).value||'4-pc',rank:(document.getElementById('ark-'+k)||{}).value||'1st'};
   }).filter(a=>a.name);
 }
 function collectTeams() {
@@ -3203,7 +3205,7 @@ function showMyChar(idx) {
     <div class="weapon-slot">
       ${wBadgesHtml(w.tag, w.source)}
       ${w.img?`<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${w.img}" style="width:100%;height:100%;object-fit:contain;"></span>`:'<div class="weapon-icon">⚔️</div>'}
-      <div><div class="w-name">${w.name}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars||4)}</div></div>
+      <div><div class="w-name">${w.name}${w.role?` (${w.role})`:''}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars||4)}</div></div>
     </div>`).join('');
 
   // Artifacts — alles in een vloeiende ry, rank label voor elke groep
@@ -3223,7 +3225,7 @@ function showMyChar(idx) {
       <div style="font-size:11px;font-weight:700;color:${rankColors[rank]};padding-top:4px;white-space:nowrap;">${rank}</div>
       ${grouped[rank].map(a=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:58px;">
         ${a.img?`<img src="${a.img}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;">`:'<div style="font-size:24px;line-height:40px;">🎖️</div>'}
-        <div style="font-size:10px;font-weight:600;color:var(--text);text-align:center;line-height:1.2;word-break:break-word;">${a.name}</div>
+        <div style="font-size:10px;font-weight:600;color:var(--text);text-align:center;line-height:1.2;word-break:break-word;">${a.name}${a.role?` (${a.role})`:''}</div>
         <div style="font-size:9px;font-weight:700;color:var(--gold);background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.3);border-radius:3px;padding:1px 4px;">${a.pc||'4-pc'}</div>
       </div>`).join('')}
     </div>`;
