@@ -308,7 +308,8 @@ body::after {
     background: rgba(255,255,255,0.08); color: var(--muted);
   }
   .weapon-icon { font-size: 24px; flex-shrink: 0; }
-  .w-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .w-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 1px; line-height: 1.25; }
+  .w-role { font-size: 10.5px; font-weight: 500; color: var(--muted); font-style: italic; margin-bottom: 3px; line-height: 1.25; }
   .w-stars { font-size: 11px; }
   .w-stars.s5 { color: var(--star5); }
   .w-stars.s4 { color: var(--star4); }
@@ -3325,7 +3326,7 @@ function showMyChar(idx) {
     <div class="weapon-slot">
       ${wBadgesHtml(w.tag, w.source)}
       ${w.img?`<span style="width:36px;height:36px;display:block;flex-shrink:0;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.05);"><img src="${w.img}" style="width:100%;height:100%;object-fit:contain;"></span>`:'<div class="weapon-icon">⚔️</div>'}
-      <div><div class="w-name">${w.name}${w.role?` (${w.role})`:''}</div><div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars||4)}</div></div>
+      <div><div class="w-name">${w.name}</div>${w.role?`<div class="w-role">(${w.role})</div>`:''}<div class="w-stars ${w.stars===5?'s5':'s4'}">${'★'.repeat(w.stars||4)}</div></div>
     </div>`).join('');
 
   // Artifacts — alles in een vloeiende ry, rank label voor elke groep
@@ -3345,7 +3346,8 @@ function showMyChar(idx) {
       <div style="font-size:11px;font-weight:700;color:${rankColors[rank]};padding-top:4px;white-space:nowrap;">${rank}</div>
       ${grouped[rank].map(a=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:58px;">
         ${a.img?`<img src="${a.img}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;">`:'<div style="font-size:24px;line-height:40px;">🎖️</div>'}
-        <div style="font-size:10px;font-weight:600;color:var(--text);text-align:center;line-height:1.2;word-break:break-word;">${a.name}${a.role?` (${a.role})`:''}</div>
+        <div style="font-size:10px;font-weight:600;color:var(--text);text-align:center;line-height:1.25;word-break:break-word;">${a.name}</div>
+        ${a.role?`<div style="font-size:9px;font-weight:500;color:var(--muted);font-style:italic;text-align:center;line-height:1.2;word-break:break-word;">(${a.role})</div>`:''}
         <div style="font-size:9px;font-weight:700;color:var(--gold);background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.3);border-radius:3px;padding:1px 4px;">${a.pc||'4-pc'}</div>
       </div>`).join('')}
     </div>`;
