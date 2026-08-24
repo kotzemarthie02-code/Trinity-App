@@ -308,8 +308,8 @@ body::after {
     background: rgba(255,255,255,0.08); color: var(--muted);
   }
   .weapon-icon { font-size: 24px; flex-shrink: 0; }
-  .w-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 1px; line-height: 1.25; }
-  .w-role { font-size: 10.5px; font-weight: 500; color: var(--muted); font-style: italic; margin-bottom: 3px; line-height: 1.25; }
+  .w-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 1px; line-height: 1.3; }
+  .w-role { font-size: 11.5px; font-weight: 500; color: #b7ad98; margin-bottom: 4px; line-height: 1.3; }
   .w-stars { font-size: 11px; }
   .w-stars.s5 { color: var(--star5); }
   .w-stars.s4 { color: var(--star4); }
@@ -3344,10 +3344,10 @@ function showMyChar(idx) {
     if(!grouped[rank]) return;
     artHtml += `<div style="display:flex;align-items:flex-start;gap:6px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
       <div style="font-size:11px;font-weight:700;color:${rankColors[rank]};padding-top:4px;white-space:nowrap;">${rank}</div>
-      ${grouped[rank].map(a=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:58px;">
+      ${grouped[rank].map(a=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;">
         ${a.img?`<img src="${a.img}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;">`:'<div style="font-size:24px;line-height:40px;">🎖️</div>'}
-        <div style="font-size:10px;font-weight:600;color:var(--text);text-align:center;line-height:1.25;word-break:break-word;">${a.name}</div>
-        ${a.role?`<div style="font-size:9px;font-weight:500;color:var(--muted);font-style:italic;text-align:center;line-height:1.2;word-break:break-word;">(${a.role})</div>`:''}
+        <div style="font-size:10px;font-weight:600;color:var(--text);text-align:center;line-height:1.3;word-break:break-word;">${a.name}</div>
+        ${a.role?`<div style="font-size:10px;font-weight:500;color:#b7ad98;text-align:center;line-height:1.25;word-break:break-word;margin-top:1px;">(${a.role})</div>`:''}
         <div style="font-size:9px;font-weight:700;color:var(--gold);background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.3);border-radius:3px;padding:1px 4px;">${a.pc||'4-pc'}</div>
       </div>`).join('')}
     </div>`;
@@ -3556,7 +3556,7 @@ else showView('dashboard');
   <div style="background:#0d0f1a;border:1px solid rgba(200,168,75,0.3);border-radius:20px;padding:28px 26px;width:300px;text-align:center;box-shadow:0 0 60px rgba(0,0,0,0.8);">
     <div style="font-family:'Cinzel',serif;font-size:15px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">⚙️ Admin Settings</div>
     <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:20px;">Voer wagwoord in om te wysig</div>
-    <input type="password" id="bg-lock-pw" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" placeholder="Wagwoord..." style="width:100%;background:#13162a;border:1px solid rgba(200,168,75,0.25);border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;padding:10px 14px;outline:none;margin-bottom:10px;" onkeydown="if(event.key==='Enter')bgConfirmLockPw()">
+    <input type="password" id="bg-lock-pw" name="admin-pin-field" autocomplete="one-time-code" data-lpignore="true" data-1p-ignore="true" placeholder="Wagwoord..." style="width:100%;background:#13162a;border:1px solid rgba(200,168,75,0.25);border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;padding:10px 14px;outline:none;margin-bottom:10px;" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter')bgConfirmLockPw()">
     <div id="bg-lock-pw-err" style="color:#e05050;font-size:11px;margin-bottom:10px;display:none;">❌ Verkeerde wagwoord</div>
     <div style="display:flex;gap:8px;justify-content:center;">
       <button onclick="bgConfirmLockPw()" style="background:rgba(200,168,75,0.18);border:1px solid rgba(200,168,75,0.5);border-radius:8px;padding:9px 22px;cursor:pointer;font-size:13px;font-weight:700;color:#ffe08a;font-family:'Rajdhani',sans-serif;">🔓 Unlock</button>
