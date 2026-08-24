@@ -2803,6 +2803,10 @@ function addSlotBuildRow(buildData) {
         <button class="rm-btn" onclick="_removeSlotBuildRow('${sk}')">✕</button>
       </div>
       <div class="fixed-slot-wrap">${slotHtml}</div>
+      <div style="margin-top:10px;">
+        <span class="mfl" style="font-size:11px;">Substats for this build (comma-separated)</span>
+        <input class="mfi" id="sb-${sk}-substats" value="${(d.substats!==undefined?d.substats:'')}" placeholder="e.g. Crit Rate, Crit DMG, HP%" style="width:100%;">
+      </div>
     </div>`);
 
   _activeSlotTab = newIdx;
@@ -2823,7 +2827,8 @@ function collectSlotBuilds() {
       plume: 'ATK',
       sands: (document.getElementById('sb-'+sk+'-sands')||{}).value || '',
       goblet: (document.getElementById('sb-'+sk+'-goblet')||{}).value || '',
-      circlet: (document.getElementById('sb-'+sk+'-circlet')||{}).value || ''
+      circlet: (document.getElementById('sb-'+sk+'-circlet')||{}).value || '',
+      substats: (document.getElementById('sb-'+sk+'-substats')||{}).value || ''
     };
   });
 }
@@ -2925,8 +2930,6 @@ function _openAddModalInner(editIdx) {
       <!-- Slot-build panels -->
       <div id="m-slotbuilds"></div>
     </div>
-    <div class="mfrow"><span class="mfl">Substats (comma-separated)</span><input class="mfi" id="m-subs" value="${c?.substats||''}" placeholder="e.g. Crit Rate, Crit DMG, HP%"></div>
-
     <hr class="mdiv">
     <div class="mfrow">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -2991,6 +2994,10 @@ function _openAddModalInner(editIdx) {
   // anders migreer die ou enkel-artSlots formaat na 1 build.
   const slotBuildsToFill = c?.artSlotBuilds?.length ? c.artSlotBuilds
     : [{ label:'', flower:'HP', plume:'ATK', sands:c?.artSlots?.sands||'', goblet:c?.artSlots?.goblet||'', circlet:c?.artSlots?.circlet||'' }];
+  // Migreer ou enkel-globale substats na die eerste build s'n, as dit nog nie sy eie het nie
+  if (slotBuildsToFill[0] && slotBuildsToFill[0].substats === undefined && c?.substats) {
+    slotBuildsToFill[0] = { ...slotBuildsToFill[0], substats: c.substats };
+  }
   slotBuildsToFill.forEach(b=>addSlotBuildRow(b));
   _activeSlotTab = 0;
   _rebuildSlotTabsNav();
@@ -3074,7 +3081,9 @@ async function saveChar() {
       // artSlots bly hier as 'n "spieël" van die eerste build vir agterwaartse
       // vergelykbaarheid met enige ou kode/data wat nog na c.artSlots kyk.
       artSlots:(collectSlotBuilds()[0] || {flower:'HP',plume:'ATK',sands:'',goblet:'',circlet:''}),
-      substats:document.getElementById('m-subs').value,
+      // substats bly hier as 'n "spieël" van die eerste build se substats vir
+      // agterwaartse vergelykbaarheid met enige ou kode/data.
+      substats:(collectSlotBuilds()[0] || {}).substats || '',
       teams:collectTeams(), talents:collectTals(),
       notes:document.getElementById('m-notes').value.trim(),
       bossImg:_pendingImgs['boss']||'',
@@ -3376,6 +3385,10 @@ function showMyChar(idx) {
       const ico=sf?`<img src="${sf}" onerror="this.style.display='none'" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px;">`:'';
       return `<div class="stat-box"><div class="stat-piece">${ico}${s.l}</div><div class="stat-val">${b[s.k]||'—'}</div></div>`;
     }).join('');
+    // Substats hoort by hierdie spesifieke build — val terug na c.substats
+    // net as hierdie build glad nie sy eie substats het nie (ou data).
+    const bSubs = (b.substats !== undefined && b.substats !== '') ? b.substats : (slotBuilds.length<=1 ? (c.substats||'') : '');
+    document.getElementById('substat-list').innerHTML=bSubs.split(',').filter(s=>s.trim()).map((s,i)=>`<div class="sub-chip"><span class="priority" style="background:rgba(200,168,75,0.15);border-radius:3px;padding:1px 5px;margin-right:4px;">#${i+1}</span>${s.trim()}</div>`).join('');
   }
   const slotTabsEl = document.getElementById('slot-build-tabs');
   if (slotTabsEl) {
@@ -3387,9 +3400,6 @@ function showMyChar(idx) {
   let activeSlotBuild = (window._activeViewSlotBuild && window._activeViewSlotBuild[key]) || 0;
   if (activeSlotBuild >= slotBuilds.length) activeSlotBuild = 0;
   renderSlotBuild(activeSlotBuild);
-
-  // Substats
-  document.getElementById('substat-list').innerHTML=(c.substats||'').split(',').filter(s=>s.trim()).map((s,i)=>`<div class="sub-chip"><span class="priority" style="background:rgba(200,168,75,0.15);border-radius:3px;padding:1px 5px;margin-right:4px;">#${i+1}</span>${s.trim()}</div>`).join('');
 
   // Teams — toggle nav grouped by unique label, show all teams in that group
   (function() {
