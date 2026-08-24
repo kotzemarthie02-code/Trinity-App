@@ -3556,7 +3556,7 @@ else showView('dashboard');
   <div style="background:#0d0f1a;border:1px solid rgba(200,168,75,0.3);border-radius:20px;padding:28px 26px;width:300px;text-align:center;box-shadow:0 0 60px rgba(0,0,0,0.8);">
     <div style="font-family:'Cinzel',serif;font-size:15px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">⚙️ Admin Settings</div>
     <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:20px;">Voer wagwoord in om te wysig</div>
-    <input type="password" id="bg-lock-pw" name="admin-pin-field" autocomplete="one-time-code" data-lpignore="true" data-1p-ignore="true" placeholder="Wagwoord..." style="width:100%;background:#13162a;border:1px solid rgba(200,168,75,0.25);border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;padding:10px 14px;outline:none;margin-bottom:10px;" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter')bgConfirmLockPw()">
+    <input type="text" inputmode="text" spellcheck="false" id="bg-lock-pw" name="admin-pin-field" autocomplete="off" data-lpignore="true" data-1p-ignore="true" placeholder="Wagwoord..." style="width:100%;background:#13162a;border:1px solid rgba(200,168,75,0.25);border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;padding:10px 14px;outline:none;margin-bottom:10px;" readonly onfocus="this.removeAttribute('readonly')" oninput="_maskLockPw(this)" onkeydown="if(event.key==='Enter')bgConfirmLockPw()">
     <div id="bg-lock-pw-err" style="color:#e05050;font-size:11px;margin-bottom:10px;display:none;">❌ Verkeerde wagwoord</div>
     <div style="display:flex;gap:8px;justify-content:center;">
       <button onclick="bgConfirmLockPw()" style="background:rgba(200,168,75,0.18);border:1px solid rgba(200,168,75,0.5);border-radius:8px;padding:9px 22px;cursor:pointer;font-size:13px;font-weight:700;color:#ffe08a;font-family:'Rajdhani',sans-serif;">🔓 Unlock</button>
@@ -3632,11 +3632,27 @@ function bgRefreshAllOwned() {
 refreshAllOwned = bgRefreshAllOwned;
 
 // ── Lock/Unlock (Settings — sigbaar vir almal) ──
+// Let wel: hierdie veld is doelbewus 'n type="text" (nie type="password" nie)
+// en word met JS in punte "gemasker" — Chrome se wagwoordbestuur-kaartjie
+// (Suggest strong password / gestoorde rekening) word slegs op regte
+// type="password"-velde gewys, so hierdie truuk laat dit heeltemal weg bly.
+let _lockPwReal = '';
+function _maskLockPw(el) {
+  const val = el.value;
+  const realLen = _lockPwReal.length;
+  if (val.length > realLen) {
+    _lockPwReal += val.slice(realLen);
+  } else {
+    _lockPwReal = _lockPwReal.slice(0, val.length);
+  }
+  el.value = '•'.repeat(_lockPwReal.length);
+}
 function bgToggleLock() {
   if(_bgUnlocked) {
     _bgUnlocked = false;
     bgApplyLockState();
   } else {
+    _lockPwReal = '';
     document.getElementById('bg-lock-modal').style.display = 'flex';
     document.getElementById('bg-lock-pw').value = '';
     document.getElementById('bg-lock-pw-err').style.display = 'none';
@@ -3645,19 +3661,21 @@ function bgToggleLock() {
 }
 
 function bgConfirmLockPw() {
-  const val = document.getElementById('bg-lock-pw').value;
+  const val = _lockPwReal;
   if(val === BG_PASSWORD) {
     bgCloseLockModal();
     _bgUnlocked = true;
     bgApplyLockState();
   } else {
     document.getElementById('bg-lock-pw-err').style.display = 'block';
+    _lockPwReal = '';
     document.getElementById('bg-lock-pw').value = '';
     document.getElementById('bg-lock-pw').focus();
   }
 }
 
 function bgCloseLockModal() {
+  _lockPwReal = '';
   document.getElementById('bg-lock-modal').style.display = 'none';
 }
 
