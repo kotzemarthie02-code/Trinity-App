@@ -582,6 +582,7 @@ body::after {
         </div>
         <div class="section-card full">
           <div class="section-title">📊 Main Stats &amp; Substats</div>
+          <div id="slot-build-tabs" style="display:flex;flex-wrap:wrap;"></div>
           <div class="stat-row" id="stat-row"></div>
           <div style="font-size:12px;color:var(--muted);margin:10px 0 4px;letter-spacing:0.5px;text-transform:uppercase;">Substats (priority)</div>
           <div class="substat-list" id="substat-list"></div>
@@ -1327,6 +1328,12 @@ function renderBuildVariant(id, variantIdx) {
   if (!c) return;
   const build = c.builds[variantIdx];
   if (!build) return;
+
+  // Hierdie preset-karakters gebruik hul eie build-toggle stelsel (nie die
+  // "myChars" artifact-slot-build tabs nie) — maak seker geen ou tabs bly
+  // hangs as ons van 'n eie karakter na 'n preset-karakter oorskakel nie.
+  const slotTabsElPreset = document.getElementById('slot-build-tabs');
+  if (slotTabsElPreset) slotTabsElPreset.innerHTML = '';
 
   // Weapons
   const wg = document.getElementById('weapon-grid');
@@ -2126,7 +2133,7 @@ const SLOT_ICONS = {
   flower:'Flower.png', plume:'Plume.png',
   sands:'Sands.png', goblet:'Goblet.png', circlet:'Circlet.png'
 };
-const SLOT_LABELS = { flower:'Flower', Plume:'Plume', sands:'Sands', goblet:'Goblet', circlet:'Circlet' };
+const SLOT_LABELS = { flower:'Flower', plume:'Plume', sands:'Sands', goblet:'Goblet', circlet:'Circlet' };
 const STAR_COLORS = { 5:'#c8a84b', 4:'#9b7fd4' };
 
 function loadChars() {
@@ -2274,7 +2281,7 @@ let myChars = loadChars();
 let _pendingImgs = {};
 let _editIdx = null;
 let _selEl = '', _selWep = '';
-let _wc=0, _ac=0, _tc=0, _talc=0, _vidc=0;
+let _wc=0, _ac=0, _tc=0, _talc=0, _vidc=0, _sbc=0;
 
 // ── Inject modal styles ──
 (function(){
@@ -2409,6 +2416,26 @@ const CL_PREFIX = {};
 function toClId(name) {
   return name.trim().replace(/'/g, '').replace(/\s+/g, '_');
 }
+// Baie name kan op verskillende maniere by Cloudinary gestoor wees (bv.
+// "Traveler Geo" -> "Traveler_Geo" OF "TravelerGeo"; "Shimenawa's
+// Reminiscence" -> "Shimenawas_Reminiscence" OF "Shimenawa_Reminiscence").
+// I.p.v. net EEN skoonmaak-patroon te probeer, bou ons 'n lys van al die
+// redelike variasies en probeer elkeen totdat een regtig bestaan. Dit
+// beteken jy kan die naam heeltemal natuurlik tik (met spasies, koppeltekens
+// of apostrowe) en dit vind steeds die prentjie.
+function clCandidates(name) {
+  const raw = (name || '').trim();
+  if (!raw) return [];
+  const noApos = raw.replace(/'/g, '');
+  const cands = [];
+  const push = v => { if (v && !cands.includes(v)) cands.push(v); };
+  push(noApos.replace(/[\s\-]+/g, '_'));        // "Traveler Geo" / "Foo-Bar" -> "Traveler_Geo"
+  push(noApos.replace(/[\s\-]+/g, ''));          // "Traveler Geo" -> "TravelerGeo"
+  push(noApos.replace(/[\s\-]+/g, '-'));         // "Traveler Geo" -> "Traveler-Geo"
+  push(raw.replace(/'/g, '_').replace(/[\s\-]+/g, '_')); // apostrophe kept as underscore
+  push(raw.replace(/[\s\-]+/g, '_'));            // apostrophe untouched, spaces -> underscore
+  return cands;
+}
 function clUrlGlobal(folder, name, ext) {
   if (!name) return '';
   // LET WEL: Cloudinary "dynamic folders" - die folder (characters, weapons,
@@ -2417,6 +2444,12 @@ function clUrlGlobal(folder, name, ext) {
   const prefix = CL_PREFIX[folder] || '';
   const id = prefix + toClId(name);
   return `${CL_BASE}/${encodeURIComponent(id)}.${ext}`;
+}
+// Soos clUrlGlobal, maar neem 'n reeds-klaar id (gebruik met clCandidates).
+function clUrlGlobalId(folder, id, ext) {
+  if (!id) return '';
+  const prefix = CL_PREFIX[folder] || '';
+  return `${CL_BASE}/${encodeURIComponent(prefix + id)}.${ext}`;
 }
 // Tjek of die prentjie regtig by Cloudinary bestaan voor ons dit wys —
 // as dit nie bestaan nie (verkeerde naam/nog nie upload nie), los die
@@ -2429,14 +2462,16 @@ function autoCloudImg(inputEl, folder, storeKey, imgId, iconId, lblId) {
   _autoCloudTimers[storeKey] = setTimeout(() => {
     const name = (inputEl.value || '').trim();
     if (!name) return;
-    let extIdx = 0;
+    const candidates = clCandidates(name);
+    let cIdx = 0, extIdx = 0;
     const tryNext = () => {
-      if (extIdx >= CL_EXTS.length) {
-        console.log('[Cloudinary auto] NIE GEVIND ❌ (naam pas nie presies of prentjie bestaan nie by geen uitbreiding nie):', folder, name);
+      if (cIdx >= candidates.length) {
+        console.log('[Cloudinary auto] NIE GEVIND ❌ (geen variasie van die naam pas nie):', folder, name, candidates);
         return;
       }
+      if (extIdx >= CL_EXTS.length) { extIdx = 0; cIdx++; tryNext(); return; }
       const ext = CL_EXTS[extIdx];
-      const url = clUrlGlobal(folder, name, ext);
+      const url = clUrlGlobalId(folder, candidates[cIdx], ext);
       console.log('[Cloudinary auto] soek:', url);
       const test = new Image();
       test.onload = () => {
@@ -2462,19 +2497,26 @@ const CL_TYPE_PREFIX = {};
 function clPic(type, name, prevId, icoId, storeKey, lblId) {
   if (!name||!name.trim()) return;
   const prefix = CL_TYPE_PREFIX[type] || '';
-  const id=prefix+toClId(name);
-  const url=`${CL}/${id}`;
-  _pendingImgs[storeKey]=url;
+  // Probeer al die redelike name-variasies (spasies/koppeltekens/apostrowe),
+  // nie net een skoonmaak-patroon nie — sien clCandidates() se nota hierbo.
+  const candidates = clCandidates(name);
   const pp=document.getElementById(prevId),pi=document.getElementById(icoId),pl=lblId?document.getElementById(lblId):null;
   if(pp){
-    let extIdx=0;
+    let cIdx=0, extIdx=0;
     const tryExt=()=>{
-      if(extIdx>=CL_EXTS.length){pp.style.display='none';if(pi)pi.style.display='';if(pl)pl.style.display='';return;}
-      pp.src=url+'.'+CL_EXTS[extIdx];
+      if(cIdx>=candidates.length){pp.style.display='none';if(pi)pi.style.display='';if(pl)pl.style.display='';return;}
+      if(extIdx>=CL_EXTS.length){extIdx=0;cIdx++;tryExt();return;}
+      const url=`${CL}/${encodeURIComponent(prefix+candidates[cIdx])}.${CL_EXTS[extIdx]}`;
+      _pendingImgs[storeKey]=url;
+      pp.src=url;
     };
     pp.onerror=()=>{extIdx++;tryExt();};
     pp.style.display='block';
     tryExt();
+  } else if (candidates.length) {
+    // Geen voorskou-<img> element (bv. nog nie in die DOM nie) — stoor
+    // ten minste 'n redelike beste-poging URL sodat data nie leeg is nie.
+    _pendingImgs[storeKey]=`${CL}/${encodeURIComponent(prefix+candidates[0])}.${CL_EXTS[0]}`;
   }
   if(pi)pi.style.display='none';if(pl)pl.style.display='none';
 }
@@ -2534,7 +2576,7 @@ function setupCLD(inputEl, type, storeKey, prevId, icoId, lblId) {
     else if(e.key==='Escape')drop.style.display='none';
   });
   document.addEventListener('click',e=>{if(!wrap.contains(e.target))drop.style.display='none';},{passive:true});
-  if(inputEl.value)clPic(type,toClId(inputEl.value),prevId,icoId,storeKey,lblId);
+  if(inputEl.value)clPic(type,inputEl.value,prevId,icoId,storeKey,lblId);
 }
 
 // ── Load image from file ──
@@ -2617,6 +2659,8 @@ function addArtRow(d) {
 // ── Team tabs state ──
 let _activeTeamTab = 0; // which team panel is visible (by index)
 let _teamKeys = []; // ordered list of tk values
+let _activeSlotTab = 0; // which artifact slot-stat build panel is visible (by index)
+let _slotKeys = []; // ordered list of sk values
 
 function _rebuildTeamTabsNav() {
   const nav = document.getElementById('m-team-tabs-nav');
@@ -2716,6 +2760,72 @@ function teamSetCount(tk, n, init) {
     if(slot) slot.style.display=mi<n?'flex':'none';
   });
 }
+// ── Artifact Slot Stats: meerdere builds/tabs (bv. Burst Support vs Melt DPS) ──
+function _rebuildSlotTabsNav() {
+  const nav = document.getElementById('m-slotbuild-tabs-nav');
+  if (!nav) return;
+  const panels = [...document.getElementById('m-slotbuilds').querySelectorAll('[id^="sbr-"]')];
+  _slotKeys = panels.map(p => p.id.replace('sbr-',''));
+  if (_activeSlotTab >= _slotKeys.length) _activeSlotTab = Math.max(0, _slotKeys.length-1);
+  nav.innerHTML = _slotKeys.map((sk, idx) => {
+    const label = (document.getElementById('sbl-'+sk)||{}).value || ('Build '+(idx+1));
+    const isActive = idx === _activeSlotTab;
+    return `<button type="button" onclick="slotSwitchTab(${idx})" id="slottabnav-${idx}" style="padding:5px 13px;border-radius:6px;border:1px solid ${isActive?'var(--gold)':'rgba(200,168,75,0.22)'};background:${isActive?'rgba(200,168,75,0.15)':'var(--panel2)'};color:${isActive?'var(--gold)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;letter-spacing:.5px;transition:all .15s;">${label}</button>`;
+  }).join('');
+  _slotKeys.forEach((sk, idx) => {
+    const panel = document.getElementById('sbr-'+sk);
+    if (panel) panel.style.display = idx === _activeSlotTab ? 'block' : 'none';
+  });
+}
+function slotSwitchTab(idx) {
+  _activeSlotTab = idx;
+  _rebuildSlotTabsNav();
+}
+function addSlotBuildRow(buildData) {
+  const sk='sb'+_sbc++;
+  const d = buildData || {};
+  const label = d.label || '';
+  const vals = { flower: d.flower||'HP', plume: d.plume||'ATK', sands: d.sands||'', goblet: d.goblet||'', circlet: d.circlet||'' };
+  const SLOTS=['flower','plume','sands','goblet','circlet'];
+  const slotHtml = SLOTS.map(s=>`<div class="fixed-slot">
+    <div class="fixed-slot-icon">${slotIcon(s)}</div>
+    <input class="mfi slot-stat-input" id="sb-${sk}-${s}" value="${vals[s]}" placeholder="${SLOT_LABELS[s]}" ${s==='flower'||s==='plume'?'readonly style="color:#555a7a"':''}>
+    <div class="fixed-slot-lbl">${SLOT_LABELS[s]}</div>
+  </div>`).join('');
+
+  const newIdx = document.getElementById('m-slotbuilds').querySelectorAll('[id^="sbr-"]').length;
+
+  document.getElementById('m-slotbuilds').insertAdjacentHTML('beforeend', `
+    <div id="sbr-${sk}" style="background:rgba(14,16,22,0.5);border:1px solid rgba(200,168,75,0.18);border-radius:8px;padding:12px;margin-bottom:0;display:none;">
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">
+        <input class="mfi" id="sbl-${sk}" value="${label}" placeholder="Build naam (bv. Burst Support / Melt DPS)" style="flex:1;" oninput="_rebuildSlotTabsNav()">
+        <button class="rm-btn" onclick="_removeSlotBuildRow('${sk}')">✕</button>
+      </div>
+      <div class="fixed-slot-wrap">${slotHtml}</div>
+    </div>`);
+
+  _activeSlotTab = newIdx;
+  _rebuildSlotTabsNav();
+}
+function _removeSlotBuildRow(sk) {
+  const panel = document.getElementById('sbr-'+sk);
+  if (panel) panel.remove();
+  _activeSlotTab = 0;
+  _rebuildSlotTabsNav();
+}
+function collectSlotBuilds() {
+  return [...document.getElementById('m-slotbuilds').querySelectorAll('[id^="sbr-"]')].map((r,idx)=>{
+    const sk=r.id.replace('sbr-','');
+    return {
+      label: (document.getElementById('sbl-'+sk)||{}).value || ('Build '+(idx+1)),
+      flower: 'HP',
+      plume: 'ATK',
+      sands: (document.getElementById('sb-'+sk+'-sands')||{}).value || '',
+      goblet: (document.getElementById('sb-'+sk+'-goblet')||{}).value || '',
+      circlet: (document.getElementById('sb-'+sk+'-circlet')||{}).value || ''
+    };
+  });
+}
 function addTalRow(d, pk) {
   const k=pk||('tal'+_talc++); const dt=d||{img:'',label:'',displayName:'',priority:_talc,desc:'',type:'Skill'};
   if(dt.img) _pendingImgs['tal-'+k]=dt.img;
@@ -2755,8 +2865,9 @@ function addVidRow(d) {
 function _openAddModalInner(editIdx) {
   _editIdx = editIdx !== undefined ? editIdx : null;
   _pendingImgs={}; _selEl=''; _selWep='';
-  _wc=0; _ac=0; _tc=0; _talc=0; _vidc=0;
+  _wc=0; _ac=0; _tc=0; _talc=0; _vidc=0; _sbc=0;
   _activeTeamTab=0; _teamKeys=[];
+  _activeSlotTab=0; _slotKeys=[];
   const c = _editIdx !== null ? myChars[_editIdx] : null;
   if(c){ _selEl=c.elem||''; _selWep=c.weapon||''; }
 
@@ -2766,11 +2877,6 @@ function _openAddModalInner(editIdx) {
 
   const elBtns=ELS.map(e=>`<button class="sel-btn${_selEl===e?' on':''}" onclick="selEl(this,'${e}')"><span>${elIcon(e,26)}</span><span class="sel-lbl">${e}</span></button>`).join('');
   const wepBtns=WEPS.map(w=>`<button class="sel-btn${_selWep===w?' on':''}" onclick="selWep(this,'${w}')" style="min-width:64px;padding:8px 6px;"><span style="display:block;width:38px;height:38px;margin:0 auto 4px;">${wepIcon(w,38)}</span><span class="sel-lbl">${w}</span></button>`).join('');
-  const slotHtml=SLOTS.map(s=>`<div class="fixed-slot">
-    <div class="fixed-slot-icon">${slotIcon(s)}</div>
-    <input class="mfi slot-stat-input" id="slot-${s}" value="${c?.artSlots?.[s]||''}" placeholder="${SLOT_LABELS[s]}" ${s==='flower'||s==='plume'?'readonly style="color:#555a7a"':''}>
-    <div class="fixed-slot-lbl">${SLOT_LABELS[s]}</div>
-  </div>`).join('');
 
   const charPrev = c?.charImg||'';
   const bossPrev = c?.bossImg||'';
@@ -2808,7 +2914,16 @@ function _openAddModalInner(editIdx) {
 
     <hr class="mdiv">
     <div class="mfrow"><span class="mfl">Artifact Sets — photo + name</span><div id="m-arts"></div><button class="add-row-btn" onclick="addArtRow()">+ Add artifact set</button></div>
-    <div class="mfrow"><span class="mfl">Artifact Slot Stats</span><div class="fixed-slot-wrap">${slotHtml}</div></div>
+    <div class="mfrow">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span class="mfl" style="margin-bottom:0;">Artifact Slot Stats</span>
+        <button class="add-row-btn" onclick="addSlotBuildRow()" style="margin-top:0;">+ Add build</button>
+      </div>
+      <!-- Slot-build tabs nav (bv. "Burst Support" vs "Melt DPS") -->
+      <div id="m-slotbuild-tabs-nav" style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;"></div>
+      <!-- Slot-build panels -->
+      <div id="m-slotbuilds"></div>
+    </div>
     <div class="mfrow"><span class="mfl">Substats (comma-separated)</span><input class="mfi" id="m-subs" value="${c?.substats||''}" placeholder="e.g. Crit Rate, Crit DMG, HP%"></div>
 
     <hr class="mdiv">
@@ -2842,15 +2957,15 @@ function _openAddModalInner(editIdx) {
       <div style="flex:1;"><span class="mfl">Boss Name</span><input class="mfi" id="m-boss" value="${c?.bossName||''}" placeholder="e.g. Calamitous God" oninput="autoCloudImg(this,'boss','boss','pp-boss','pi-boss',null)"></div>
     </div>
     <div class="mfrow"><span class="mfl">Boss Location & Drop (e.g. Inazuma — farm for Molten Moment)</span><input class="mfi" id="m-boss-loc" value="${c?.bossLocation||''}" placeholder="e.g. Inazuma — farm for Molten Moment"></div>
-    <div class="mfrow"><span class="mfl">▶ How to Fight Link (YouTube/Wiki URL)</span><input class="mfi" id="m-boss-link" value="${c?.bossFightLink||''}" placeholder="https://..." autocomplete="off"></div>
+    <div class="mfrow"><span class="mfl">▶ How to Fight Link (YouTube/Wiki URL)</span><input class="mfi noauto-field" id="m-boss-link" name="f-bosslink-${Date.now()}" value="${c?.bossFightLink||''}" placeholder="https://..." autocomplete="off" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')"></div>
 
     <hr class="mdiv">
     <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Links▶▶</div>
-    <div class="mfrow"><span class="mfl">▶ YouTube Demo</span><input class="mfi" id="m-link-yt" value="${c?.linkYt||''}" placeholder="https://youtube.com/..." autocomplete="off"></div>
-    <div class="mfrow"><span class="mfl">📋 Build Guide</span><input class="mfi" id="m-link-build" value="${c?.linkBuild||''}" placeholder="https://keqingmains.com/..." autocomplete="off"></div>
+    <div class="mfrow"><span class="mfl">▶ YouTube Demo</span><input class="mfi noauto-field" id="m-link-yt" name="f-yt-${Date.now()}" value="${c?.linkYt||''}" placeholder="https://youtube.com/..." autocomplete="off" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')"></div>
+    <div class="mfrow"><span class="mfl">📋 Build Guide</span><input class="mfi noauto-field" id="m-link-build" name="f-build-${Date.now()}" value="${c?.linkBuild||''}" placeholder="https://keqingmains.com/..." autocomplete="off" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')"></div>
     <div class="mfrow"><span class="mfl">🎬 Video Guides</span><div id="m-vids"></div><button class="add-row-btn" onclick="addVidRow()">+ Add video guide</button></div>
-    <div class="mfrow"><span class="mfl">🎥 Collected Miscellany</span><input class="mfi" id="m-link-misc" value="${c?.linkMisc||''}" placeholder="https://youtube.com/..." autocomplete="off"></div>
-    <div class="mfrow"><span class="mfl">📖 Genshin Wiki</span><input class="mfi" id="m-link-wiki" value="${c?.linkWiki||''}" placeholder="https://genshin-impact.fandom.com/..." autocomplete="off"></div>
+    <div class="mfrow"><span class="mfl">🎥 Collected Miscellany</span><input class="mfi noauto-field" id="m-link-misc" name="f-misc-${Date.now()}" value="${c?.linkMisc||''}" placeholder="https://youtube.com/..." autocomplete="off" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')"></div>
+    <div class="mfrow"><span class="mfl">📖 Genshin Wiki</span><input class="mfi noauto-field" id="m-link-wiki" name="f-wiki-${Date.now()}" value="${c?.linkWiki||''}" placeholder="https://genshin-impact.fandom.com/..." autocomplete="off" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')"></div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="msave" onclick="saveChar()">✓ Save</button>
@@ -2871,6 +2986,13 @@ function _openAddModalInner(editIdx) {
   });
   _activeTeamTab = 0;
   _rebuildTeamTabsNav();
+  // Artifact Slot Stats builds: gebruik artSlotBuilds indien dit bestaan,
+  // anders migreer die ou enkel-artSlots formaat na 1 build.
+  const slotBuildsToFill = c?.artSlotBuilds?.length ? c.artSlotBuilds
+    : [{ label:'', flower:'HP', plume:'ATK', sands:c?.artSlots?.sands||'', goblet:c?.artSlots?.goblet||'', circlet:c?.artSlots?.circlet||'' }];
+  slotBuildsToFill.forEach(b=>addSlotBuildRow(b));
+  _activeSlotTab = 0;
+  _rebuildSlotTabsNav();
   (c?.talents||[]).forEach((t,i)=>addTalRow(t,'pre'+i));
   if(!(c?.talents?.length)) addTalRow();
   // Video guides: migrate old single-trailer-link chars automatically
@@ -2947,12 +3069,10 @@ async function saveChar() {
       elem:_selEl, weapon:_selWep, stars,
       charImg:_pendingImgs['char']||'',
       weapons:collectWeps(), artSets:collectArts(),
-      artSlots:{
-        flower:'HP', plume:'ATK',
-        sands:(document.getElementById('slot-sands')||{}).value||'',
-        goblet:(document.getElementById('slot-goblet')||{}).value||'',
-        circlet:(document.getElementById('slot-circlet')||{}).value||''
-      },
+      artSlotBuilds:collectSlotBuilds(),
+      // artSlots bly hier as 'n "spieël" van die eerste build vir agterwaartse
+      // vergelykbaarheid met enige ou kode/data wat nog na c.artSlots kyk.
+      artSlots:(collectSlotBuilds()[0] || {flower:'HP',plume:'ATK',sands:'',goblet:'',circlet:''}),
       substats:document.getElementById('m-subs').value,
       teams:collectTeams(), talents:collectTals(),
       notes:document.getElementById('m-notes').value.trim(),
@@ -3233,13 +3353,38 @@ function showMyChar(idx) {
   artHtml += '</div>';
   document.getElementById('artifact-slots').innerHTML = artSets.length ? artHtml : '<div style="color:var(--muted);font-size:13px;">No artifacts set</div>';
 
-  // Slot stats with icons from file
+  // Slot stats with icons from file — supports meerdere builds (bv. Burst
+  // Support vs Melt DPS) met tabs as daar meer as een is.
   const SLOTS=[{k:'flower',l:'Flower'},{k:'plume',l:'Plume'},{k:'sands',l:'Sands'},{k:'goblet',l:'Goblet'},{k:'circlet',l:'Circlet'}];
-  document.getElementById('stat-row').innerHTML=SLOTS.map(s=>{
-    const sf=SLOT_ICONS[s.k];
-    const ico=sf?`<img src="${sf}" onerror="this.style.display='none'" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px;">`:'';
-    return `<div class="stat-box"><div class="stat-piece">${ico}${s.l}</div><div class="stat-val">${c.artSlots?.[s.k]||'—'}</div></div>`;
-  }).join('');
+  const slotBuilds = (c.artSlotBuilds && c.artSlotBuilds.length) ? c.artSlotBuilds : [c.artSlots || {}];
+  function renderSlotBuild(bidx) {
+    window._activeViewSlotBuild = window._activeViewSlotBuild || {};
+    window._activeViewSlotBuild[key] = bidx;
+    const b = slotBuilds[bidx] || {};
+    slotBuilds.forEach((_, i) => {
+      const btn = document.getElementById('slotbuildbtn-'+i);
+      if (btn) {
+        btn.style.background = i===bidx ? 'rgba(200,168,75,0.15)' : 'var(--panel2)';
+        btn.style.color = i===bidx ? 'var(--gold)' : 'var(--muted)';
+        btn.style.borderColor = i===bidx ? 'var(--gold)' : 'rgba(200,168,75,0.22)';
+      }
+    });
+    document.getElementById('stat-row').innerHTML=SLOTS.map(s=>{
+      const sf=SLOT_ICONS[s.k];
+      const ico=sf?`<img src="${sf}" onerror="this.style.display='none'" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px;">`:'';
+      return `<div class="stat-box"><div class="stat-piece">${ico}${s.l}</div><div class="stat-val">${b[s.k]||'—'}</div></div>`;
+    }).join('');
+  }
+  const slotTabsEl = document.getElementById('slot-build-tabs');
+  if (slotTabsEl) {
+    slotTabsEl.innerHTML = slotBuilds.length > 1
+      ? slotBuilds.map((b,i)=>`<button id="slotbuildbtn-${i}" onclick="window._renderSlotBuildFn(${i})" style="padding:4px 14px;border-radius:6px;border:1px solid rgba(200,168,75,0.22);background:var(--panel2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;letter-spacing:.5px;transition:all .15s;margin:0 6px 8px 0;">${b.label||('Build '+(i+1))}</button>`).join('')
+      : '';
+  }
+  window._renderSlotBuildFn = renderSlotBuild;
+  let activeSlotBuild = (window._activeViewSlotBuild && window._activeViewSlotBuild[key]) || 0;
+  if (activeSlotBuild >= slotBuilds.length) activeSlotBuild = 0;
+  renderSlotBuild(activeSlotBuild);
 
   // Substats
   document.getElementById('substat-list').innerHTML=(c.substats||'').split(',').filter(s=>s.trim()).map((s,i)=>`<div class="sub-chip"><span class="priority" style="background:rgba(200,168,75,0.15);border-radius:3px;padding:1px 5px;margin-right:4px;">#${i+1}</span>${s.trim()}</div>`).join('');
@@ -3409,7 +3554,7 @@ else showView('dashboard');
   <div style="background:#0d0f1a;border:1px solid rgba(200,168,75,0.3);border-radius:20px;padding:28px 26px;width:300px;text-align:center;box-shadow:0 0 60px rgba(0,0,0,0.8);">
     <div style="font-family:'Cinzel',serif;font-size:15px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">⚙️ Admin Settings</div>
     <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:20px;">Voer wagwoord in om te wysig</div>
-    <input type="password" id="bg-lock-pw" placeholder="Wagwoord..." style="width:100%;background:#13162a;border:1px solid rgba(200,168,75,0.25);border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;padding:10px 14px;outline:none;margin-bottom:10px;" onkeydown="if(event.key==='Enter')bgConfirmLockPw()">
+    <input type="password" id="bg-lock-pw" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" placeholder="Wagwoord..." style="width:100%;background:#13162a;border:1px solid rgba(200,168,75,0.25);border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;padding:10px 14px;outline:none;margin-bottom:10px;" onkeydown="if(event.key==='Enter')bgConfirmLockPw()">
     <div id="bg-lock-pw-err" style="color:#e05050;font-size:11px;margin-bottom:10px;display:none;">❌ Verkeerde wagwoord</div>
     <div style="display:flex;gap:8px;justify-content:center;">
       <button onclick="bgConfirmLockPw()" style="background:rgba(200,168,75,0.18);border:1px solid rgba(200,168,75,0.5);border-radius:8px;padding:9px 22px;cursor:pointer;font-size:13px;font-weight:700;color:#ffe08a;font-family:'Rajdhani',sans-serif;">🔓 Unlock</button>
