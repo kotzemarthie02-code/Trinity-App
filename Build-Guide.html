@@ -2723,7 +2723,14 @@ function addTeamRow(teamData) {
   } else if(teamData && teamData.members) {
     teamLabel=teamData.label||''; teamDesc=teamData.desc||''; ms=teamData.members; tabCount=ms.length||4;
   } else {
-    ms=[]; teamLabel=''; teamDesc=''; tabCount=4;
+    // Nuwe leë span (Knoppie "+ Add team" geklik) — vul outomaties lid #1
+    // met die huidige karakter in (naam + prentjie is klaar reg hier), sodat
+    // jy nie elke keer van voor af hoef te tik nie. Pas dit gerus aan of
+    // maak skoon as hierdie spesifieke span haar nie insluit nie.
+    const curName = (document.getElementById('m-name')||{}).value || '';
+    const curImg = _pendingImgs['char'] || '';
+    ms = curName ? [{img:curImg,name:curName},{img:'',name:''},{img:'',name:''},{img:'',name:''}] : [];
+    teamLabel=''; teamDesc=''; tabCount=4;
   }
   if(!ms.length) ms=[{img:'',name:''},{img:'',name:''},{img:'',name:''},{img:'',name:''}];
   while(ms.length<4) ms.push({img:'',name:''});
