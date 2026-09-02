@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
-    <title>Character View</title>
+    <title>🎯 Character Tracker</title>
     <style>
         body { 
             background: url('CharacterView.jpg') no-repeat center center fixed; 
@@ -72,6 +72,9 @@
         h3 { color: #ffe14b; font-size: 16px; margin-bottom: 10px; }
         
         .weapon-grid, .talent-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-bottom: 6px; }
+        .tracker-section-title { color: #ffe14b; font-size: 15px; margin: 18px 0 8px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .tracker-section-title:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
         .future-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 5px; }
         
         .ascend-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; }
@@ -222,14 +225,15 @@
 
 <!-- ==================== TAB NAV ==================== -->
 <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('weapons')">⚔️ Weapons &amp; Artifacts</button>
+    <button class="tab-btn active" onclick="switchTab('tracker')">📊 Tracker</button>
+    <button class="tab-btn" onclick="switchTab('weapons')">⚔️ Weapons &amp; Artifacts</button>
     <button class="tab-btn" onclick="switchTab('talents')">📖 Talents</button>
     <button class="tab-btn" onclick="switchTab('ascend')">⬆️ Ascend</button>
     <button class="tab-btn" onclick="switchTab('future')">🌟 Future Weapon</button>
 </div>
 
 <!-- ==================== WEAPONS [NOW] + ARTIFACTS ==================== -->
-<div class="tab-panel-row active" id="tab-weapons">
+<div class="tab-panel-row" id="tab-weapons">
     <div class="panel half-panel">
         <div class="status-circle" onclick="cycleColor(this)"></div>
         <h2>Weapons [Now]</h2>
@@ -525,6 +529,102 @@
     </div>
 </div>
 </div><!-- end tab-future -->
+
+<!-- ==================== TRACKER (Target Goal vs Current) ==================== -->
+<div class="tab-panel active" id="tab-tracker">
+    <div class="bottom-row" style="align-items:flex-start; margin-bottom:20px;">
+
+        <!-- ── LEFT: TARGET GOAL ── -->
+        <div class="panel half-panel">
+            <h2>🎯 Target Goal</h2>
+
+            <h3 class="tracker-section-title">📊 Character Stats</h3>
+            <div class="stat-grid">
+                <div class="field"><label>Max HP:</label><input type="text" class="stat-input" data-stat="hp" data-side="target" placeholder="e.g. 22000"></div>
+                <div class="field"><label>ATK:</label><input type="text" class="stat-input" data-stat="atk" data-side="target" placeholder="e.g. 2000"></div>
+                <div class="field"><label>DEF:</label><input type="text" class="stat-input" data-stat="def" data-side="target" placeholder="e.g. 1000"></div>
+                <div class="field"><label>Elemental Mastery:</label><input type="text" class="stat-input" data-stat="em" data-side="target" placeholder="e.g. 130"></div>
+                <div class="field"><label>Energy Recharge %:</label><input type="text" class="stat-input" data-stat="er" data-side="target" placeholder="e.g. 140"></div>
+                <div class="field"><label>CRIT Rate %:</label><input type="text" class="stat-input" data-stat="critrate" data-side="target" placeholder="e.g. 70"></div>
+                <div class="field"><label>CRIT DMG %:</label><input type="text" class="stat-input" data-stat="critdmg" data-side="target" placeholder="e.g. 180"></div>
+                <div class="field"><label>DMG Bonus %:</label><input type="text" class="stat-input" data-stat="dmgbonus" data-side="target" placeholder="e.g. 46.6"></div>
+                <div class="field"><label>Healing Bonus %:</label><input type="text" class="stat-input" data-stat="healbonus" data-side="target" placeholder="e.g. 0"></div>
+            </div>
+
+            <h3 class="tracker-section-title">⚔️ Weapon</h3>
+            <div class="stat-grid">
+                <div class="field"><label>Weapon Name:</label><input type="text" class="wpn-input" data-field="name" data-side="target" placeholder="e.g. Columbina"></div>
+                <div class="field"><label>Weapon Type:</label><input type="text" class="wpn-input" data-field="type" data-side="target" placeholder="e.g. Sword"></div>
+                <div class="field"><label>Weapon Level:</label><input type="text" class="wpn-input" data-field="level" data-side="target" placeholder="e.g. 90"></div>
+                <div class="field"><label>Refinement:</label><input type="text" class="wpn-input" data-field="refine" data-side="target" placeholder="e.g. R1"></div>
+            </div>
+
+            <h3 class="tracker-section-title">🧩 Artifacts</h3>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                <div class="field" style="width:60%; margin-bottom:0;"><label>Artifact Set:</label><select class="art-list-drop tracker-art-set" data-side="target"></select></div>
+            </div>
+            <div class="stat-grid">
+                <div class="field"><label>🌸 Flower – Main/Notes:</label><input type="text" class="art-input" data-field="flower" data-side="target"></div>
+                <div class="field"><label>🪶 Plume – Main/Notes:</label><input type="text" class="art-input" data-field="plume" data-side="target"></div>
+                <div class="field"><label>⏳ Sands – Main/Notes:</label><input type="text" class="art-input" data-field="sands" data-side="target"></div>
+                <div class="field"><label>🏆 Goblet – Main/Notes:</label><input type="text" class="art-input" data-field="goblet" data-side="target"></div>
+                <div class="field"><label>👑 Circlet – Main/Notes:</label><input type="text" class="art-input" data-field="circlet" data-side="target"></div>
+            </div>
+
+            <h3 class="tracker-section-title">📖 Talents</h3>
+            <div class="stat-grid">
+                <div class="field"><label>Normal Attack LV:</label><input type="text" class="tal-input" data-field="na" data-side="target" placeholder="e.g. 10"></div>
+                <div class="field"><label>Elemental Skill LV:</label><input type="text" class="tal-input" data-field="es" data-side="target" placeholder="e.g. 10"></div>
+                <div class="field"><label>Elemental Burst LV:</label><input type="text" class="tal-input" data-field="eb" data-side="target" placeholder="e.g. 10"></div>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: CURRENT (HoYoLAB style) ── -->
+        <div class="panel half-panel">
+            <h2>📈 Current</h2>
+
+            <h3 class="tracker-section-title">📊 Character Stats</h3>
+            <div class="stat-grid">
+                <div class="field"><label>Max HP:</label><input type="text" class="stat-input" data-stat="hp" data-side="current" placeholder="e.g. 20000"></div>
+                <div class="field"><label>ATK:</label><input type="text" class="stat-input" data-stat="atk" data-side="current" placeholder="e.g. 1800"></div>
+                <div class="field"><label>DEF:</label><input type="text" class="stat-input" data-stat="def" data-side="current" placeholder="e.g. 900"></div>
+                <div class="field"><label>Elemental Mastery:</label><input type="text" class="stat-input" data-stat="em" data-side="current" placeholder="e.g. 100"></div>
+                <div class="field"><label>Energy Recharge %:</label><input type="text" class="stat-input" data-stat="er" data-side="current" placeholder="e.g. 130"></div>
+                <div class="field"><label>CRIT Rate %:</label><input type="text" class="stat-input" data-stat="critrate" data-side="current" placeholder="e.g. 62"></div>
+                <div class="field"><label>CRIT DMG %:</label><input type="text" class="stat-input" data-stat="critdmg" data-side="current" placeholder="e.g. 180"></div>
+                <div class="field"><label>DMG Bonus %:</label><input type="text" class="stat-input" data-stat="dmgbonus" data-side="current" placeholder="e.g. 46.6"></div>
+                <div class="field"><label>Healing Bonus %:</label><input type="text" class="stat-input" data-stat="healbonus" data-side="current" placeholder="e.g. 0"></div>
+            </div>
+
+            <h3 class="tracker-section-title">⚔️ Weapon</h3>
+            <div class="stat-grid">
+                <div class="field"><label>Weapon Name:</label><input type="text" class="wpn-input" data-field="name" data-side="current" placeholder="e.g. Columbina"></div>
+                <div class="field"><label>Weapon Type:</label><input type="text" class="wpn-input" data-field="type" data-side="current" placeholder="e.g. Sword"></div>
+                <div class="field"><label>Weapon Level:</label><input type="text" class="wpn-input" data-field="level" data-side="current" placeholder="e.g. 80"></div>
+                <div class="field"><label>Refinement:</label><input type="text" class="wpn-input" data-field="refine" data-side="current" placeholder="e.g. R1"></div>
+            </div>
+
+            <h3 class="tracker-section-title">🧩 Artifacts</h3>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                <div class="field" style="width:60%; margin-bottom:0;"><label>Artifact Set:</label><select class="art-list-drop tracker-art-set" data-side="current"></select></div>
+            </div>
+            <div class="stat-grid">
+                <div class="field"><label>🌸 Flower – Main/Notes:</label><input type="text" class="art-input" data-field="flower" data-side="current"></div>
+                <div class="field"><label>🪶 Plume – Main/Notes:</label><input type="text" class="art-input" data-field="plume" data-side="current"></div>
+                <div class="field"><label>⏳ Sands – Main/Notes:</label><input type="text" class="art-input" data-field="sands" data-side="current"></div>
+                <div class="field"><label>🏆 Goblet – Main/Notes:</label><input type="text" class="art-input" data-field="goblet" data-side="current"></div>
+                <div class="field"><label>👑 Circlet – Main/Notes:</label><input type="text" class="art-input" data-field="circlet" data-side="current"></div>
+            </div>
+
+            <h3 class="tracker-section-title">📖 Talents</h3>
+            <div class="stat-grid">
+                <div class="field"><label>Normal Attack LV:</label><input type="text" class="tal-input" data-field="na" data-side="current" placeholder="e.g. 6"></div>
+                <div class="field"><label>Elemental Skill LV:</label><input type="text" class="tal-input" data-field="es" data-side="current" placeholder="e.g. 10"></div>
+                <div class="field"><label>Elemental Burst LV:</label><input type="text" class="tal-input" data-field="eb" data-side="current" placeholder="e.g. 10"></div>
+            </div>
+        </div>
+    </div>
+</div><!-- end tab-tracker -->
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
