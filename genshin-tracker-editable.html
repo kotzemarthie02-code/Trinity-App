@@ -736,8 +736,17 @@ function updateAvatar(c){
   const img = document.getElementById("cAvatarImg");
   document.getElementById("cAvatar").style.background = col + "33";
   fallback.style.color = col;
-  fallback.textContent = c.name.slice(0,2).toUpperCase();
+  // Only show the initials once we know the picture failed to load —
+  // otherwise the letters sit on top of a perfectly good image.
+  fallback.textContent = "";
   img.style.display = "";
+  img.onerror = function(){
+    img.style.display = "none";
+    fallback.textContent = c.name.slice(0,2).toUpperCase();
+  };
+  img.onload = function(){
+    fallback.textContent = "";
+  };
   img.src = avatarImageSrc(c);
 }
 
@@ -1370,10 +1379,16 @@ function updateAllDiffsAndProgress(){
   applyDiffAndStatus("stat", c.stats);
 
   Object.entries(c.talents).forEach(([key, t])=>{
+    const untouched = t.target === 0 && t.current === 0;
     const diff = calcDiff(t.target, t.current);
     const cell = document.getElementById("diff-talent-" + key);
-    cell.textContent = diff >= 0 ? "✅" : `${diff}`;
-    cell.className = "num " + (diff >= 0 ? "diff-ok" : "diff-bad");
+    if (untouched){
+      cell.textContent = "";
+      cell.className = "num";
+    } else {
+      cell.textContent = diff >= 0 ? "✅" : `${diff}`;
+      cell.className = "num " + (diff >= 0 ? "diff-ok" : "diff-bad");
+    }
   });
 
   // progress ring
