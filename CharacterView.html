@@ -8,12 +8,12 @@
     <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
     <title>🎯 Character Tracker</title>
     <style>
-        body { 
-            background: url('CharacterView.jpg') no-repeat center center fixed; 
-            background-size: cover; 
-            color: white; 
-            font-family: sans-serif; 
-            padding: 20px; 
+        body {
+            background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('CharacterView.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            font-family: sans-serif;
+            padding: 20px;
             margin: 0;
         }
 
@@ -173,6 +173,241 @@
         .prog-summary { font-size:13px; color:#aaa; margin-top:14px; display:flex; align-items:center; gap:10px; }
         .prog-summary-bar { flex:1; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
         .prog-summary-fill { height:100%; background:var(--elem,#ffe14b); border-radius:4px; transition:width 0.4s; }
+
+        /* ── PINNED NOTES (Tracker tab) ── */
+        #tab-tracker { position: relative; }
+        body.pin-mode-active #tab-tracker { cursor: crosshair; }
+        #pinMarkersLayer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:20; }
+        .pin-dot {
+            position:absolute; transform:translate(-50%,-50%);
+            width:22px; height:22px; border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            font-size:12px; cursor:pointer; pointer-events:auto;
+            box-shadow:0 0 0 2px rgba(0,0,0,0.85), 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .pin-dot .pin-tooltip {
+            display:none; position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+            background:rgba(0,0,0,0.95); border:1px solid rgba(255,255,255,0.2);
+            color:#fff; padding:7px 11px; border-radius:9px; font-size:12px;
+            white-space:normal; width:max-content; max-width:220px; text-align:left;
+            box-shadow:0 6px 18px rgba(0,0,0,0.45); z-index:30;
+        }
+        .pin-dot:hover .pin-tooltip { display:block; }
+        .pin-dot.pin-flash { animation:pinFlash 1.1s ease-out; }
+        @keyframes pinFlash {
+            0%{ box-shadow:0 0 0 2px rgba(0,0,0,0.85), 0 0 0 10px rgba(255,225,75,0.5); }
+            100%{ box-shadow:0 0 0 2px rgba(0,0,0,0.85), 0 0 0 0 rgba(255,225,75,0); }
+        }
+        .pin-list-row.pin-row-flash { animation:pinRowFlash 1.1s ease-out; }
+        @keyframes pinRowFlash {
+            0%{ background:rgba(255,225,75,0.35); }
+            100%{ background:rgba(255,225,75,0); }
+        }
+        .pin-popup {
+            position:fixed; z-index:9999; background:rgba(10,10,10,0.97);
+            border:1px solid #ffe14b; border-radius:12px; padding:12px;
+            box-shadow:0 10px 30px rgba(0,0,0,0.6); width:280px;
+        }
+        .pin-popup-emojis { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+        .note-emoji-btn {
+            background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.2);
+            border-radius:8px; font-size:15px; line-height:1; padding:6px 9px;
+            cursor:pointer; transition:background .15s, transform .1s;
+        }
+        .note-emoji-btn:hover { background:rgba(255,255,255,0.16); transform:translateY(-1px); }
+        .note-emoji-btn.selected { background:rgba(255,225,75,0.3); border-color:#ffe14b; }
+        .pin-popup input[type="text"] { width:100%; margin-bottom:10px; box-sizing:border-box; }
+        .pin-popup-actions { display:flex; gap:8px; }
+        .pin-btn-save, .pin-btn-cancel { flex:1; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer; font-family:sans-serif; }
+        .pin-btn-save { background:rgba(255,225,75,0.15); border:1px solid #ffe14b; color:#ffe14b; }
+        .pin-btn-cancel { background:rgba(255,255,255,0.08); border:1px solid #666; color:white; }
+        .pin-list-row {
+            display:flex; align-items:center; gap:9px; padding:8px 4px;
+            border-top:1px solid rgba(255,255,255,0.08); font-size:13px; cursor:pointer;
+        }
+        .pin-list-row:first-child { border-top:none; }
+        .pin-list-row:hover { background:rgba(255,255,255,0.05); }
+        .pin-list-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .pin-list-text { flex:1; color:white; }
+        .pin-list-del {
+            background:none; border:none; color:#aaa; cursor:pointer; font-size:13px;
+            padding:2px 6px; border-radius:6px; flex-shrink:0;
+        }
+        .pin-list-del:hover { color:#ff6b6b; background:rgba(244,67,54,0.15); }
+        .addpin-btn {
+            background:rgba(255,225,75,0.1); border:1px solid #ffe14b; color:#ffe14b;
+            padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;
+            font-size:13px; font-family:sans-serif;
+        }
+        .addpin-btn:hover { background:rgba(255,225,75,0.2); }
+
+        /* ── STATS TABLE (Target vs Current vs Diff vs Status) ── */
+        .stat-table-header, .stat-row {
+            display:grid;
+            grid-template-columns: 1.6fr 1fr 1fr 0.9fr 56px 32px;
+            gap:10px;
+            align-items:center;
+        }
+        .stat-table-header {
+            font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:.03em;
+            padding:0 6px 8px 6px; font-weight:700;
+        }
+        .stat-table-header span:nth-child(n+2) { text-align:right; }
+        .stat-table-header span:nth-child(5) { text-align:center; }
+        #statsTableBody .stat-row { padding:9px 6px; border-top:1px solid rgba(255,255,255,0.08); }
+        #statsTableBody .stat-row:first-child { border-top:none; }
+        .stat-cell-input {
+            background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.16);
+            color:#fff; border-radius:8px; padding:8px 10px; font-size:14px; width:100%;
+            box-sizing:border-box; font-family:inherit;
+        }
+        .stat-cell-input:focus { outline:2px solid #ffe14b; }
+        .stat-label-input { text-align:left; font-weight:700; }
+        .stat-num-input { text-align:right; }
+        .stat-num-input::-webkit-outer-spin-button, .stat-num-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .stat-num-input[type=number] { -moz-appearance:textfield; }
+        .stat-diff { text-align:right; font-weight:700; font-size:14px; }
+        .stat-diff.diff-ok { color:#4ade80; }
+        .stat-diff.diff-bad { color:#f87171; }
+        .stat-diff.diff-warn { color:#fbbf24; }
+        .stat-diff.diff-empty { color:transparent; }
+        .diff-ok { color:#4ade80; font-weight:700; }
+        .diff-bad { color:#f87171; font-weight:700; }
+        .diff-warn { color:#fbbf24; font-weight:700; }
+        .diff-empty { color:transparent; }
+        .stat-status-wrap { display:flex; justify-content:center; }
+        .status-dot { display:inline-block; width:16px; height:16px; border-radius:5px; }
+        .status-grey { background:#888888; box-shadow:0 0 6px rgba(136,136,136,0.4); }
+        .status-green { background:#4ade80; box-shadow:0 0 6px rgba(74,222,128,0.6); }
+        .status-orange { background:#fbbf24; box-shadow:0 0 6px rgba(251,191,36,0.6); }
+        .status-red { background:#f87171; box-shadow:0 0 6px rgba(248,113,113,0.6); }
+        .row-del-btn {
+            background:none; border:none; color:#aaa; cursor:pointer; font-size:15px;
+            padding:2px 6px; border-radius:6px; justify-self:center;
+        }
+        .row-del-btn:hover { color:#ff6b6b; background:rgba(244,67,54,0.15); }
+
+        /* ── STILL NEEDED (auto-generated) ── */
+        .need-row { display:flex; justify-content:space-between; align-items:center; padding:8px 4px; border-top:1px solid rgba(255,255,255,0.07); font-size:13px; color:#ddd; }
+        .need-row:first-child { border-top:none; }
+        .need-dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:8px; background:#f87171; flex-shrink:0; }
+
+        /* ── WEAPON / TALENT / ARTIFACT TRACKER (copied+adapted from genshin-tracker-editable.html) ── */
+        #trackerExtras .field-group { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+        #trackerExtras .field-label { font-size:11px; color:#aaa; font-weight:bold; margin-bottom:2px; }
+        #trackerExtras input, #trackerExtras select { width:100%; box-sizing:border-box; }
+        .weapon-row { display:flex; gap:10px; margin-bottom:12px; }
+        .weapon-block { margin-bottom:12px; }
+        .weapon-atk-row { display:flex; align-items:center; gap:8px; }
+        .weapon-atk-row input { flex:1; }
+        .weapon-substat-row { display:flex; align-items:center; gap:8px; }
+        .weapon-substat-row select { flex:1.3; min-width:0; }
+        .weapon-substat-row input { flex:1; min-width:0; }
+        .weapon-refine-info { display:flex; align-items:center; gap:6px; font-size:12px; color:#aaa; margin-top:6px; }
+        .weapon-refine-input { flex:1; background:transparent; border:none; border-bottom:1px dashed rgba(255,255,255,0.25); color:#ccc; font-size:12px; padding:2px 2px; border-radius:0; }
+        .weapon-refine-input:focus { outline:none; border-bottom-color:#ffe14b; }
+        .art-toggle {
+            display:flex; border:1px solid rgba(255,225,75,0.4); border-radius:20px; overflow:hidden;
+            background:rgba(255,255,255,0.06); cursor:pointer; padding:0; font-size:9px; font-weight:900; flex-shrink:0;
+        }
+        .art-toggle span { padding:6px 8px; color:#aaa; }
+        .art-toggle.is-pct .art-toggle-label-pct, .art-toggle.is-flat .art-toggle-label-flat {
+            background: rgba(255,225,75,0.9); color:#111; border-radius:20px;
+        }
+
+        /* ── TALENT TRACKER (netjies, sonder growwe tabel-lyne) ── */
+        .talent-tracker-header, .talent-tracker-row {
+            display:grid; grid-template-columns: 1.4fr 0.8fr 0.8fr 0.9fr 50px;
+            gap:10px; align-items:center;
+        }
+        .talent-tracker-header {
+            font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:.03em;
+            padding:0 6px 8px 6px; font-weight:700;
+        }
+        .talent-tracker-header span:nth-child(n+2) { text-align:right; }
+        .talent-tracker-header span:nth-child(5) { text-align:center; }
+        .talent-tracker-row { padding:9px 6px; border-top:1px solid rgba(255,255,255,0.08); }
+        .talent-tracker-row:first-child { border-top:none; }
+        .talent-tracker-label { font-weight:700; font-size:14px; color:#fff; }
+        .talent-tracker-row input[type="number"] {
+            background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.16);
+            color:#fff; border-radius:8px; padding:8px 10px; font-size:14px; text-align:right;
+            box-sizing:border-box; font-family:inherit; width:100%;
+        }
+        .talent-tracker-row input[type="number"]:focus { outline:2px solid #ffe14b; }
+        .talent-tracker-row .status-dot { margin:0 auto; }
+
+        /* ── ARTIFACTS ── */
+        .affix-summary { border:1px solid rgba(76,255,143,0.4); background:rgba(76,255,143,0.05); border-radius:14px; padding:14px 16px; margin-bottom:16px; }
+        .affix-summary-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .affix-summary-title { font-size:13px; font-weight:800; color:white; }
+        .mark-affix-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); color:#fff; border-radius:20px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+        .mark-affix-btn:hover { background:rgba(255,255,255,0.16); }
+        .affix-row { display:flex; align-items:flex-start; gap:6px; padding:6px 0; }
+        .affix-row + .affix-row { border-top:1px dashed rgba(255,255,255,0.08); }
+        .affix-row-label { width:110px; flex-shrink:0; font-size:12px; color:#aaa; padding-top:6px; }
+        .affix-chips { display:flex; flex-wrap:wrap; gap:8px; flex:1; }
+        .affix-chip { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); color:#aaa; border-radius:20px; padding:6px 12px; font-size:12px; font-weight:700; }
+        .affix-chip.is-marked { color:#ffe14b; border-color:rgba(255,225,75,0.5); background:rgba(255,225,75,0.08); }
+        .affix-chip-empty { font-style:italic; font-weight:500; }
+
+        .art-sets-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+        .art-set-chip { display:flex; align-items:center; gap:2px; background:rgba(255,225,75,0.1); border:1px solid rgba(255,225,75,0.4); border-radius:8px; padding:4px 4px 4px 10px; }
+        .art-set-chip input { background:transparent; border:none; color:#ffe14b; font-weight:700; font-size:12px; width:130px; padding:2px; }
+        .art-set-chip input:focus { outline:none; }
+        .art-set-remove { background:none; border:none; color:#f87171; cursor:pointer; font-size:15px; line-height:1; padding:2px 6px; border-radius:6px; }
+        .art-set-remove:hover { background:rgba(244,67,54,0.15); }
+        .art-set-add-btn { background:rgba(255,255,255,0.07); border:1px dashed rgba(255,255,255,0.35); color:#ccc; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+        .art-set-add-btn:hover { background:rgba(255,255,255,0.15); }
+
+        .art-grid { display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:10px; overflow-x:visible; padding-bottom:4px; }
+        .art-card { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px; min-width:0; display:flex; flex-direction:column; height:100%; }
+        .art-subs-wrap { margin-top:auto; }
+        .art-card-head { font-size:12px; font-weight:800; margin-bottom:6px; color:#eee; }
+        .art-input { width:100%; font-size:11.5px; padding:5px 6px; margin-bottom:5px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:6px; box-sizing:border-box; }
+        .art-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+        .art-row-2 .art-input { width:100%; }
+        .art-main { border-top:1px dashed rgba(255,255,255,0.1); padding-top:5px; margin-top:2px; }
+        .art-main .art-input { font-weight:700; color:#ffe14b; }
+        .art-subs { border-top:1px dashed rgba(255,255,255,0.1); padding-top:5px; margin-top:2px; }
+        @media(max-width:760px){ .art-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); overflow-x:visible; } }
+        @media(max-width:420px){ .art-grid{ grid-template-columns: 1fr; } }
+        .art-card.is-locked { opacity:0.92; }
+        .art-lock-tag { font-size:9.5px; font-weight:800; color:#ffb4b4; background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.35); border-radius:6px; padding:2px 6px; display:inline-block; margin-bottom:5px; }
+        .art-lock-row { display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#eee; margin-bottom:4px; }
+        .art-lock-label { color:#aaa; }
+        .art-lock-value { font-weight:800; color:#ffe14b; }
+        .art-input-locked { opacity:0.55; cursor:not-allowed; font-weight:700; color:#ffe14b; margin-bottom:0; }
+        .art-field-label { font-size:9px; text-transform:uppercase; letter-spacing:.04em; color:#aaa; margin:4px 0 2px; }
+        .art-select { width:100%; font-size:11.5px; padding:5px 6px; margin-bottom:3px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,225,75,0.4); color:#fff; border-radius:6px; box-sizing:border-box; }
+        .art-select-sm { font-size:10.5px; padding:4px 4px; }
+        .art-field-row { display:flex; align-items:flex-end; gap:5px; }
+        .art-field-col { flex:1; min-width:0; }
+        .art-subs-head { font-size:10px; font-weight:800; color:#ffe14b; margin:6px 0 4px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:5px; }
+        .art-sub-row-v2 { display:grid; grid-template-columns: 1.15fr 0.65fr auto auto; gap:3px; align-items:center; margin-bottom:4px; }
+        .art-input-sm { font-size:10.5px; padding:4px 4px; margin-bottom:0; }
+        .art-trash-btn { background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.35); color:#f87171; border-radius:6px; padding:3px 6px; font-size:10px; cursor:pointer; flex-shrink:0; }
+        .art-trash-btn:hover { background:rgba(248,113,113,0.25); }
+        .art-add-sub-btn { width:100%; margin-top:2px; background:rgba(255,225,75,0.1); border:1px dashed rgba(255,225,75,0.5); color:#ffe14b; border-radius:8px; padding:5px; font-size:10.5px; font-weight:700; cursor:pointer; }
+        .art-add-sub-btn:hover { background:rgba(255,225,75,0.2); }
+
+        /* ── MARK AFFIX modal ── */
+        .mark-affix-modal { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:200; padding:16px; }
+        .mark-affix-box { width:100%; max-width:420px; max-height:82vh; overflow-y:auto; background:#141414; border:1px solid rgba(255,255,255,0.15); border-radius:16px; }
+        .mark-affix-header { position:sticky; top:0; background:#141414; z-index:1; display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.1); }
+        .mark-affix-tabs { display:flex; gap:4px; }
+        .mark-affix-tab { background:none; border:none; color:#aaa; font-size:13px; font-weight:700; padding:8px 12px; border-radius:9px; cursor:pointer; font-family:sans-serif; }
+        .mark-affix-tab.active { color:#111; background:#ffe14b; }
+        .mark-affix-close { background:none; border:none; color:#aaa; font-size:16px; cursor:pointer; padding:4px 8px; }
+        .mark-affix-close:hover { color:#f87171; }
+        .mark-affix-body { padding:14px; }
+        .mark-affix-group + .mark-affix-group { margin-top:16px; }
+        .mark-affix-group-title { font-size:11px; font-weight:800; color:#ffe14b; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; }
+        .mark-affix-options { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; }
+        .mark-affix-option { display:flex; align-items:center; gap:8px; font-size:12.5px; color:#eee; cursor:pointer; }
+        .mark-affix-option input { accent-color:#ffe14b; width:15px; height:15px; flex-shrink:0; }
+        .mark-affix-footer { position:sticky; bottom:0; background:#141414; padding:12px 14px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:flex-end; }
+        .mark-affix-footer .mark-affix-btn { background:rgba(255,225,75,0.15); border:1px solid #ffe14b; color:#ffe14b; }
     </style>
 </head>
 <body>
@@ -186,6 +421,7 @@
     <a href="https://act.hoyolab.com/ys/event/calculator-sea/index.html?bbs_presentation_style=fullscreen&bbs_auth_required=true&utm_source=hoyolab&utm_medium=tools&lang=en-us&bbs_theme=light&bbs_theme_device=1#/" target="_blank" style="background:rgba(255,193,7,0.15);border:1px solid #ffc107;color:#ffc107;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:13px;white-space:nowrap;">🧮 Calculator</a>
     <button onclick="resetCurrentChar()" style="background:rgba(244,67,54,0.2);border:1px solid #f44336;color:#ff6b6b;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:14px;">↺ Reset</button>
 </div>
+
 
 <!-- ==================== CHARACTER INFO ==================== -->
 <div class="panel" id="mainPanel">
@@ -225,15 +461,14 @@
 
 <!-- ==================== TAB NAV ==================== -->
 <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('tracker')">📊 Tracker</button>
-    <button class="tab-btn" onclick="switchTab('weapons')">⚔️ Weapons &amp; Artifacts</button>
+    <button class="tab-btn active" onclick="switchTab('weapons')">⚔️ Weapons &amp; Artifacts</button>
     <button class="tab-btn" onclick="switchTab('talents')">📖 Talents</button>
     <button class="tab-btn" onclick="switchTab('ascend')">⬆️ Ascend</button>
     <button class="tab-btn" onclick="switchTab('future')">🌟 Future Weapon</button>
 </div>
 
 <!-- ==================== WEAPONS [NOW] + ARTIFACTS ==================== -->
-<div class="tab-panel-row" id="tab-weapons">
+<div class="tab-panel-row active" id="tab-weapons">
     <div class="panel half-panel">
         <div class="status-circle" onclick="cycleColor(this)"></div>
         <h2>Weapons [Now]</h2>
@@ -530,102 +765,6 @@
 </div>
 </div><!-- end tab-future -->
 
-<!-- ==================== TRACKER (Target Goal vs Current) ==================== -->
-<div class="tab-panel active" id="tab-tracker">
-    <div class="bottom-row" style="align-items:flex-start; margin-bottom:20px;">
-
-        <!-- ── LEFT: TARGET GOAL ── -->
-        <div class="panel half-panel">
-            <h2>🎯 Target Goal</h2>
-
-            <h3 class="tracker-section-title">📊 Character Stats</h3>
-            <div class="stat-grid">
-                <div class="field"><label>Max HP:</label><input type="text" class="stat-input" data-stat="hp" data-side="target" placeholder="e.g. 22000"></div>
-                <div class="field"><label>ATK:</label><input type="text" class="stat-input" data-stat="atk" data-side="target" placeholder="e.g. 2000"></div>
-                <div class="field"><label>DEF:</label><input type="text" class="stat-input" data-stat="def" data-side="target" placeholder="e.g. 1000"></div>
-                <div class="field"><label>Elemental Mastery:</label><input type="text" class="stat-input" data-stat="em" data-side="target" placeholder="e.g. 130"></div>
-                <div class="field"><label>Energy Recharge %:</label><input type="text" class="stat-input" data-stat="er" data-side="target" placeholder="e.g. 140"></div>
-                <div class="field"><label>CRIT Rate %:</label><input type="text" class="stat-input" data-stat="critrate" data-side="target" placeholder="e.g. 70"></div>
-                <div class="field"><label>CRIT DMG %:</label><input type="text" class="stat-input" data-stat="critdmg" data-side="target" placeholder="e.g. 180"></div>
-                <div class="field"><label>DMG Bonus %:</label><input type="text" class="stat-input" data-stat="dmgbonus" data-side="target" placeholder="e.g. 46.6"></div>
-                <div class="field"><label>Healing Bonus %:</label><input type="text" class="stat-input" data-stat="healbonus" data-side="target" placeholder="e.g. 0"></div>
-            </div>
-
-            <h3 class="tracker-section-title">⚔️ Weapon</h3>
-            <div class="stat-grid">
-                <div class="field"><label>Weapon Name:</label><input type="text" class="wpn-input" data-field="name" data-side="target" placeholder="e.g. Columbina"></div>
-                <div class="field"><label>Weapon Type:</label><input type="text" class="wpn-input" data-field="type" data-side="target" placeholder="e.g. Sword"></div>
-                <div class="field"><label>Weapon Level:</label><input type="text" class="wpn-input" data-field="level" data-side="target" placeholder="e.g. 90"></div>
-                <div class="field"><label>Refinement:</label><input type="text" class="wpn-input" data-field="refine" data-side="target" placeholder="e.g. R1"></div>
-            </div>
-
-            <h3 class="tracker-section-title">🧩 Artifacts</h3>
-            <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-                <div class="field" style="width:60%; margin-bottom:0;"><label>Artifact Set:</label><select class="art-list-drop tracker-art-set" data-side="target"></select></div>
-            </div>
-            <div class="stat-grid">
-                <div class="field"><label>🌸 Flower – Main/Notes:</label><input type="text" class="art-input" data-field="flower" data-side="target"></div>
-                <div class="field"><label>🪶 Plume – Main/Notes:</label><input type="text" class="art-input" data-field="plume" data-side="target"></div>
-                <div class="field"><label>⏳ Sands – Main/Notes:</label><input type="text" class="art-input" data-field="sands" data-side="target"></div>
-                <div class="field"><label>🏆 Goblet – Main/Notes:</label><input type="text" class="art-input" data-field="goblet" data-side="target"></div>
-                <div class="field"><label>👑 Circlet – Main/Notes:</label><input type="text" class="art-input" data-field="circlet" data-side="target"></div>
-            </div>
-
-            <h3 class="tracker-section-title">📖 Talents</h3>
-            <div class="stat-grid">
-                <div class="field"><label>Normal Attack LV:</label><input type="text" class="tal-input" data-field="na" data-side="target" placeholder="e.g. 10"></div>
-                <div class="field"><label>Elemental Skill LV:</label><input type="text" class="tal-input" data-field="es" data-side="target" placeholder="e.g. 10"></div>
-                <div class="field"><label>Elemental Burst LV:</label><input type="text" class="tal-input" data-field="eb" data-side="target" placeholder="e.g. 10"></div>
-            </div>
-        </div>
-
-        <!-- ── RIGHT: CURRENT (HoYoLAB style) ── -->
-        <div class="panel half-panel">
-            <h2>📈 Current</h2>
-
-            <h3 class="tracker-section-title">📊 Character Stats</h3>
-            <div class="stat-grid">
-                <div class="field"><label>Max HP:</label><input type="text" class="stat-input" data-stat="hp" data-side="current" placeholder="e.g. 20000"></div>
-                <div class="field"><label>ATK:</label><input type="text" class="stat-input" data-stat="atk" data-side="current" placeholder="e.g. 1800"></div>
-                <div class="field"><label>DEF:</label><input type="text" class="stat-input" data-stat="def" data-side="current" placeholder="e.g. 900"></div>
-                <div class="field"><label>Elemental Mastery:</label><input type="text" class="stat-input" data-stat="em" data-side="current" placeholder="e.g. 100"></div>
-                <div class="field"><label>Energy Recharge %:</label><input type="text" class="stat-input" data-stat="er" data-side="current" placeholder="e.g. 130"></div>
-                <div class="field"><label>CRIT Rate %:</label><input type="text" class="stat-input" data-stat="critrate" data-side="current" placeholder="e.g. 62"></div>
-                <div class="field"><label>CRIT DMG %:</label><input type="text" class="stat-input" data-stat="critdmg" data-side="current" placeholder="e.g. 180"></div>
-                <div class="field"><label>DMG Bonus %:</label><input type="text" class="stat-input" data-stat="dmgbonus" data-side="current" placeholder="e.g. 46.6"></div>
-                <div class="field"><label>Healing Bonus %:</label><input type="text" class="stat-input" data-stat="healbonus" data-side="current" placeholder="e.g. 0"></div>
-            </div>
-
-            <h3 class="tracker-section-title">⚔️ Weapon</h3>
-            <div class="stat-grid">
-                <div class="field"><label>Weapon Name:</label><input type="text" class="wpn-input" data-field="name" data-side="current" placeholder="e.g. Columbina"></div>
-                <div class="field"><label>Weapon Type:</label><input type="text" class="wpn-input" data-field="type" data-side="current" placeholder="e.g. Sword"></div>
-                <div class="field"><label>Weapon Level:</label><input type="text" class="wpn-input" data-field="level" data-side="current" placeholder="e.g. 80"></div>
-                <div class="field"><label>Refinement:</label><input type="text" class="wpn-input" data-field="refine" data-side="current" placeholder="e.g. R1"></div>
-            </div>
-
-            <h3 class="tracker-section-title">🧩 Artifacts</h3>
-            <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-                <div class="field" style="width:60%; margin-bottom:0;"><label>Artifact Set:</label><select class="art-list-drop tracker-art-set" data-side="current"></select></div>
-            </div>
-            <div class="stat-grid">
-                <div class="field"><label>🌸 Flower – Main/Notes:</label><input type="text" class="art-input" data-field="flower" data-side="current"></div>
-                <div class="field"><label>🪶 Plume – Main/Notes:</label><input type="text" class="art-input" data-field="plume" data-side="current"></div>
-                <div class="field"><label>⏳ Sands – Main/Notes:</label><input type="text" class="art-input" data-field="sands" data-side="current"></div>
-                <div class="field"><label>🏆 Goblet – Main/Notes:</label><input type="text" class="art-input" data-field="goblet" data-side="current"></div>
-                <div class="field"><label>👑 Circlet – Main/Notes:</label><input type="text" class="art-input" data-field="circlet" data-side="current"></div>
-            </div>
-
-            <h3 class="tracker-section-title">📖 Talents</h3>
-            <div class="stat-grid">
-                <div class="field"><label>Normal Attack LV:</label><input type="text" class="tal-input" data-field="na" data-side="current" placeholder="e.g. 6"></div>
-                <div class="field"><label>Elemental Skill LV:</label><input type="text" class="tal-input" data-field="es" data-side="current" placeholder="e.g. 10"></div>
-                <div class="field"><label>Elemental Burst LV:</label><input type="text" class="tal-input" data-field="eb" data-side="current" placeholder="e.g. 10"></div>
-            </div>
-        </div>
-    </div>
-</div><!-- end tab-tracker -->
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
@@ -662,7 +801,7 @@ function updateProgSummary() {
     const e3=document.getElementById('progSummaryFill'); if(e3) e3.style.width=pct+'%';
 }
 async function saveProgData() {
-    const charName = document.getElementById('charName').innerText;
+    const charName = getActiveCharName();
     if (!charName || charName==='-') return;
     let all = await fbGet('myProgress') || {};
     all[charName] = _progData;
@@ -675,6 +814,15 @@ async function loadProgData(charName) {
         item.classList.toggle('done', !!_progData[item.dataset.key]);
     });
     updateProgSummary();
+}
+
+// Betroubare, eenvormige manier om te bepaal watter karakter tans gekies is.
+function getActiveCharName() {
+    const el = document.getElementById('charName');
+    if (!el) return null;
+    const name = (el.innerText || '').trim();
+    if (!name || name === '-' || name === 'Character Name') return null;
+    return name;
 }
 
 const charDatabase = {
@@ -875,6 +1023,12 @@ let characterDetails = {};
 // (dis wat status-kleure en getikte details laat verdwyn het wanneer jy vinnig karakters wissel)
 let isLoadingChar = false;
 
+// Voorkom dat 'n stadige/oorvleuelende laai (bv. vinnig tussen karakters klik) die
+// verkeerde karakter se data op die skerm oorskryf. Elke keer as 'n karakter gekies
+// word kry dit 'n nuwe "token"; enige ou, stadiger laai wat later klaarmaak, herken
+// dat dit verouderd is en doen niks nie.
+let charSwitchToken = 0;
+
 function fillDropdown(selector, list) {
     document.querySelectorAll(selector).forEach(dropdown => {
         dropdown.innerHTML = '<option value="">Select</option>';
@@ -1038,7 +1192,7 @@ async function cycleColor(el) {
 
     // Find which panel this circle belongs to and map to guide task name
     const panel = el.closest('.panel');
-    const charName = document.getElementById('charName').innerText;
+    const charName = getActiveCharName();
     if (charName && panel) {
         const h2 = panel.querySelector('h2');
         let guideTask = null;
@@ -1068,7 +1222,7 @@ async function cycleColor(el) {
 
 
 async function resetCurrentChar() {
-    const charName = document.getElementById('charName').innerText;
+    const charName = getActiveCharName();
     if (!charName || charName === "Character Name" || charName === "-") return;
     
     // Clear only selects and inputs (NOT char info, talents, circles)
@@ -1109,10 +1263,11 @@ async function resetCurrentChar() {
         document.getElementById('talentES').innerText = data.talents.elementalSkill;
         document.getElementById('talentEB').innerText = data.talents.elementalBurst;
     }
+
 }
 
 async function autoSave() {
-    const charName = document.getElementById('charName').innerText;
+    const charName = getActiveCharName();
     if (!charName || charName === "Character Name") return;
 
     if (!characterDetails[charName]) characterDetails[charName] = {};
@@ -1120,12 +1275,12 @@ async function autoSave() {
     // Statiese (nie-repeater) selects/inputs stoor soos voorheen, via hul index -
     // maar rye binne 'n .repeater-row word HIER uitgesluit sodat "+ Add"
     // nooit die indeks van ander velde laat skuif nie.
-    const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row'));
+    const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras'));
     selects.forEach((sel, index) => {
         characterDetails[charName]["sel_" + index] = sel.value;
     });
 
-    const inputs = [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row'));
+    const inputs = [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row') && !inp.closest('#statsTableBody') && !inp.closest('#trackerExtras'));
     inputs.forEach((inp, index) => {
         characterDetails[charName]["inp_" + index] = inp.value;
     });
@@ -1151,30 +1306,32 @@ async function autoSave() {
     await fbSet('characterDetails', characterDetails);
 }
 
-async function loadCharData(charName) {
+async function loadCharData(charName, myToken) {
     isLoadingChar = true;
     try {
     // Laai characterDetails uit Firebase as dit nog nie in geheue is nie
     if (!characterDetails[charName]) {
         const allDetails = await fbGet('characterDetails');
+        if (myToken !== charSwitchToken) return; // 'n nuwer karakter is intussen gekies - los hierdie stadige laai
         if (allDetails) characterDetails = allDetails;
     }
+    if (myToken !== charSwitchToken) return;
     const data = characterDetails[charName];
 
     // Reset circles to grey first
     document.querySelectorAll('.panel .status-circle').forEach(c => c.style.backgroundColor = 'rgb(85, 85, 85)');
 
     if (!data) {
-        [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row')).forEach(sel => { sel.value = ""; });
-        [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row')).forEach(inp => { inp.value = ""; });
+        [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras')).forEach(sel => { sel.value = ""; });
+        [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row') && !inp.closest('#statsTableBody') && !inp.closest('#trackerExtras')).forEach(inp => { inp.value = ""; });
         // Geen data nie (nuwe karakter) -> elke repeater-groep terug na 1 leë ry
         Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, 1));
     } else {
-        const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row'));
+        const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras'));
         selects.forEach((sel, index) => {
             sel.value = data["sel_" + index] || "";
         });
-        const inputs = [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row'));
+        const inputs = [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row') && !inp.closest('#statsTableBody') && !inp.closest('#trackerExtras'));
         inputs.forEach((inp, index) => { inp.value = data["inp_" + index] || ""; });
 
         // Repeater-groepe herstel: eers die regte aantal rye maak, dan waardes instel
@@ -1198,6 +1355,7 @@ async function loadCharData(charName) {
     const guideStatusToCVColor = { 0: 0, 1: 1, 2: 3, 3: 2 };
 
     const guideProgressAll = await fbGet('guideProgress') || {};
+    if (myToken !== charSwitchToken) return;
     const prog = guideProgressAll[charName] || {};
 
     const circleTaskMap = [
@@ -1207,6 +1365,9 @@ async function loadCharData(charName) {
 
     const circles = document.querySelectorAll('.panel .status-circle');
     circles.forEach((c, i) => {
+        // Maak altyd eers skoon/grys (soos by die begin) sodat 'n nuwe of leë
+        // karakter nooit die vorige karakter se kleur "erf" nie.
+        c.style.backgroundColor = guideColors[0];
         const task = circleTaskMap[i];
         if (task && prog[task] !== undefined) {
             c.style.backgroundColor = guideColors[guideStatusToCVColor[prog[task]] ?? 0];
@@ -1215,11 +1376,12 @@ async function loadCharData(charName) {
         }
     });
     } finally {
-        isLoadingChar = false;
+        if (myToken === charSwitchToken) isLoadingChar = false;
     }
 }
 
 async function updateChar(name) {
+    const myToken = ++charSwitchToken;
     const content = document.getElementById('charContent');
     if(!name || !charDatabase[name]) {
         content.style.display = "none";
@@ -1253,9 +1415,11 @@ async function updateChar(name) {
     document.getElementById('talentES').innerText = data.talents.elementalSkill;
     document.getElementById('talentEB').innerText = data.talents.elementalBurst;
 
-    await loadCharData(name);
+    await loadCharData(name, myToken);
+    if (myToken !== charSwitchToken) return; // 'n nuwer karakter is intussen gekies
     updateElemTheme(name);
     await loadProgData(name);
+    if (myToken !== charSwitchToken) return;
 }
 
 document.addEventListener('change', (e) => { if (isLoadingChar || (e.target && e.target.id === 'charSelect')) return; autoSave(); });
@@ -1318,3 +1482,5 @@ window.onload = async () => {
 };
 
 </script>
+</body>
+</html>
