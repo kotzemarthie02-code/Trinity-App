@@ -1920,11 +1920,37 @@ window.onFirebaseTrackerReady = function(uid){
   window._fbOnValue(window._fbRef(window._fbDb, "users/" + uid + "/genshinTracker"), (snapshot)=>{
     const data = snapshot.val();
     if (Array.isArray(data) && data.length){
+      // Every saveToFirebase() call (fired ~300ms after you stop typing)
+      // "echoes" straight back into this same onValue listener. If we
+      // always re-rendered here, that echo would wipe out and rebuild
+      // every <input> on the page — including the one you're mid-keystroke
+      // in — which is exactly what caused typing to feel like it was
+      // fighting the auto-save. Two guards fix that:
+
+      // 1) If the incoming data is identical to what's already in memory,
+      //    it's just our own save syncing back down — nothing changed, so
+      //    there's nothing to re-render.
+      if (JSON.stringify(data) === JSON.stringify(characters)) return;
+
       characters = data;
       saveCharacterData();
       const ownedNames = syncWithTrainingGuide();
       renderTop();
-      renderCharacterPage();
+
+      // 2) If the data genuinely changed (e.g. you edited on another
+      //    device) but you're actively focused in an input field right
+      //    now, don't yank focus out from under you. The in-memory
+      //    `characters` is already up to date, so the next render (after
+      //    you blur/finish typing) will pick it up.
+      const active = document.activeElement;
+      const isEditingInput = active && (
+        active.classList.contains("stat-input") ||
+        active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA"
+      );
+      if (!isEditingInput) {
+        renderCharacterPage();
+      }
     } else {
       // Nothing saved in Firebase yet for this user — push up what we
       // have locally so it starts syncing from here on.
