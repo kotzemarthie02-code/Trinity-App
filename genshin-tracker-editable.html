@@ -1939,9 +1939,10 @@ window.onFirebaseTrackerReady = function(uid){
 
       // 2) If the data genuinely changed (e.g. you edited on another
       //    device) but you're actively focused in an input field right
-      //    now, don't yank focus out from under you. The in-memory
-      //    `characters` is already up to date, so the next render (after
-      //    you blur/finish typing) will pick it up.
+      //    now, don't yank focus out from under you by rebuilding the
+      //    <input> elements. The in-memory `characters` is already up to
+      //    date, so the next full render (after you blur/finish typing)
+      //    will pick it up.
       const active = document.activeElement;
       const isEditingInput = active && (
         active.classList.contains("stat-input") ||
@@ -1949,7 +1950,13 @@ window.onFirebaseTrackerReady = function(uid){
         active.tagName === "TEXTAREA"
       );
       if (!isEditingInput) {
-        renderCharacterPage();
+        renderCharacterPage(); // full rebuild — also refreshes Diff/Status/%
+      } else {
+        // Rebuilding inputs is what breaks typing — but Difference, Status
+        // and the % ring don't live inside any <input>, so they're always
+        // safe to refresh. Keep them live instead of leaving them blank/
+        // stale until you finish typing.
+        updateAllDiffsAndProgress();
       }
     } else {
       // Nothing saved in Firebase yet for this user — push up what we
