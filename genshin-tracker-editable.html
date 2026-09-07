@@ -55,6 +55,18 @@
     transition: background .15s, transform .1s;
   }
   .icon-btn:hover{ background: rgba(255,255,255,0.16); transform: translateY(-1px); }
+  .home-btn-wrap{ position:relative; display:inline-flex; }
+  .save-status{
+    position:absolute; top:-6px; right:-6px;
+    width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:900; color:#fff;
+    background:#4ade80; box-shadow:0 0 0 2px rgba(12,13,26,0.9);
+    opacity:0; transform:scale(0.6); transition:opacity .2s, transform .2s;
+    pointer-events:none;
+  }
+  .save-status.show{ opacity:1; transform:scale(1); }
+  .save-status.fail{ background:#f87171; }
 
   .summary-strip{
     display:flex; align-items:center; flex-wrap:wrap; gap:8px;
@@ -428,7 +440,10 @@
 
   <div class="header-row">
     <h1>💜 Genshin Character Tracker
-      <button type="button" id="homeBtn" class="icon-btn" title="Terug na Dashboard">🏠</button>
+      <span class="home-btn-wrap">
+        <button type="button" id="homeBtn" class="icon-btn" title="Terug na Dashboard">🏠</button>
+        <span id="saveStatus" class="save-status"></span>
+      </span>
     </h1>
     <div class="char-select-wrap">
       <span class="field-label">Character</span>
@@ -1837,7 +1852,22 @@ const TRACKER_STORAGE_KEY = "genshinTrackerCharacterData";
 function saveCharacterData(){
   try {
     localStorage.setItem(TRACKER_STORAGE_KEY, JSON.stringify(characters));
-  } catch(e){ /* storage full / unavailable — nothing else we can do */ }
+    flashSaveStatus();
+  } catch(e){
+    // storage full / blocked by the browser — let the user know instead
+    // of silently losing their data.
+    flashSaveStatus(true);
+  }
+}
+
+function flashSaveStatus(failed){
+  const el = document.getElementById("saveStatus");
+  if (!el) return;
+  el.textContent = failed ? "✗" : "✓";
+  el.classList.toggle("fail", !!failed);
+  el.classList.add("show");
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(()=> el.classList.remove("show"), 1200);
 }
 
 function loadCharacterData(){
@@ -1855,10 +1885,18 @@ function scheduleSave(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveCharacterData, 300);
 }
-["input","change","click","dblclick","keydown"].forEach(evt=>{
-  document.addEventListener(evt, scheduleSave);
+["input","change","click","dblclick","keydown","mouseup","touchend"].forEach(evt=>{
+  document.addEventListener(evt, scheduleSave, true); // capture:true so it always
+  // fires even for clicks inside elements that stop propagation elsewhere
 });
 window.addEventListener("beforeunload", saveCharacterData);
+window.addEventListener("pagehide", saveCharacterData);
+document.addEventListener("visibilitychange", ()=>{
+  if (document.visibilityState === "hidden") saveCharacterData();
+});
+// Safety net: save every few seconds regardless of which events fired,
+// in case some future edit path doesn't trigger the listeners above.
+setInterval(saveCharacterData, 4000);
 
 /* ---------------------------------------------------------------
    6) START THE APP
