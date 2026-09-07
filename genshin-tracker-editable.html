@@ -428,7 +428,7 @@
 
   <div class="header-row">
     <h1>💜 Genshin Character Tracker
-      <button type="button" id="homeBtn" class="icon-btn" title="Terug na bo">🏠</button>
+      <button type="button" id="homeBtn" class="icon-btn" title="Terug na Dashboard">🏠</button>
     </h1>
     <div class="char-select-wrap">
       <span class="field-label">Character</span>
@@ -1430,7 +1430,8 @@ function updateAllDiffsAndProgress(){
    --------------------------------------------------------------- */
 
 document.getElementById("homeBtn").addEventListener("click", ()=>{
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  saveCharacterData();
+  window.location.href = "Dashboard.html";
 });
 document.getElementById("characterSelect").addEventListener("change", (e)=>{
   openCharacter(Number(e.target.value));
@@ -1825,9 +1826,45 @@ document.getElementById("pinNotesList").addEventListener("click", (e)=>{
 });
 
 /* ---------------------------------------------------------------
+   5b) SAVE / LOAD — everything you type (stats, notes, pinned
+   notes, weapon, artifacts, etc.) is kept in localStorage under
+   this key, so it's still there after you close the tab and come
+   back. Without this, all typed-in detail only lived in memory
+   and disappeared the moment the page was reloaded.
+   --------------------------------------------------------------- */
+const TRACKER_STORAGE_KEY = "genshinTrackerCharacterData";
+
+function saveCharacterData(){
+  try {
+    localStorage.setItem(TRACKER_STORAGE_KEY, JSON.stringify(characters));
+  } catch(e){ /* storage full / unavailable — nothing else we can do */ }
+}
+
+function loadCharacterData(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(TRACKER_STORAGE_KEY));
+    if (Array.isArray(raw) && raw.length) characters = raw;
+  } catch(e){ /* no saved data yet, or it's corrupted — keep the defaults */ }
+}
+
+// Auto-save shortly after ANY edit (typing, ticking, clicking Save on a
+// popup, deleting a row, dragging a pin, etc.) — a short debounce so fast
+// typing doesn't write to storage on every keystroke.
+let saveTimer = null;
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveCharacterData, 300);
+}
+["input","change","click","dblclick","keydown"].forEach(evt=>{
+  document.addEventListener(evt, scheduleSave);
+});
+window.addEventListener("beforeunload", saveCharacterData);
+
+/* ---------------------------------------------------------------
    6) START THE APP
    --------------------------------------------------------------- */
 (function initApp(){
+  loadCharacterData();
   const ownedNames = syncWithTrainingGuide();
   const firstOwnedIndex = characters.findIndex(c => ownedNames.includes(c.name));
   openCharacter(firstOwnedIndex >= 0 ? firstOwnedIndex : 0);
