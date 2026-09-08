@@ -1914,35 +1914,34 @@ function saveToFirebase(){
 }
 
 // Called by the Firebase module script (below) once we know who's
-// logged in. Pulls their saved tracker data and re-renders with it.
+// logged in. Pulls their saved tracker data and re-renders with it —
+// but ONLY the first time this fires after login/page-load. After that,
+// this tab only ever WRITES to Firebase (via saveToFirebase inside
+// saveCharacterData); it never pulls again. Continuously reacting to
+// every incoming snapshot was the actual cause of Difference/Status/%
+// going blank or resetting after switching characters or navigating
+// back to the tracker: a delayed/echoed snapshot could arrive at any
+// moment (including mid-edit or right after a character switch) and
+// silently overwrite what was already correctly on screen. Loading
+// once on open is all "save my data so it's here when I log back in"
+// actually needs.
+let firebaseSyncApplied = false;
 window.onFirebaseTrackerReady = function(uid){
   window._fbUid = uid;
   window._fbOnValue(window._fbRef(window._fbDb, "users/" + uid + "/genshinTracker"), (snapshot)=>{
+    if (firebaseSyncApplied) return;
+    firebaseSyncApplied = true;
+
     const data = snapshot.val();
     if (Array.isArray(data) && data.length){
-      // Every saveToFirebase() call (fired ~300ms after you stop typing)
-      // "echoes" straight back into this same onValue listener. If we
-      // always re-rendered here, that echo would wipe out and rebuild
-      // every <input> on the page — including the one you're mid-keystroke
-      // in — which is exactly what caused typing to feel like it was
-      // fighting the auto-save. Two guards fix that:
-
-      // 1) If the incoming data is identical to what's already in memory,
-      //    it's just our own save syncing back down — nothing changed, so
-      //    there's nothing to re-render.
-      if (JSON.stringify(data) === JSON.stringify(characters)) return;
-
       characters = data;
       saveCharacterData();
-      const ownedNames = syncWithTrainingGuide();
+      syncWithTrainingGuide();
       renderTop();
 
-      // 2) If the data genuinely changed (e.g. you edited on another
-      //    device) but you're actively focused in an input field right
-      //    now, don't yank focus out from under you by rebuilding the
-      //    <input> elements. The in-memory `characters` is already up to
-      //    date, so the next full render (after you blur/finish typing)
-      //    will pick it up.
+      // If you're already mid-keystroke by the time this arrives, don't
+      // yank focus out from under you — but Difference/Status/% never
+      // live inside an <input>, so they're always safe to refresh.
       const active = document.activeElement;
       const isEditingInput = active && (
         active.classList.contains("stat-input") ||
@@ -1950,12 +1949,8 @@ window.onFirebaseTrackerReady = function(uid){
         active.tagName === "TEXTAREA"
       );
       if (!isEditingInput) {
-        renderCharacterPage(); // full rebuild — also refreshes Diff/Status/%
+        renderCharacterPage();
       } else {
-        // Rebuilding inputs is what breaks typing — but Difference, Status
-        // and the % ring don't live inside any <input>, so they're always
-        // safe to refresh. Keep them live instead of leaving them blank/
-        // stale until you finish typing.
         updateAllDiffsAndProgress();
       }
     } else {
