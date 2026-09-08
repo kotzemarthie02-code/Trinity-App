@@ -1320,7 +1320,15 @@ function renderArtifacts(){
 // Makes sure the character has a markedAffix object, even if this
 // character was created before this feature existed.
 function ensureMarkedAffix(c){
-  if (!c.markedAffix) c.markedAffix = { main:{ sands:"", goblet:"", circlet:"" }, minor:[] };
+  if (!c.markedAffix || typeof c.markedAffix !== "object") c.markedAffix = {};
+  if (!c.markedAffix.main || typeof c.markedAffix.main !== "object"){
+    c.markedAffix.main = { sands:"", goblet:"", circlet:"" };
+  } else {
+    ["sands","goblet","circlet"].forEach(k=>{
+      if (typeof c.markedAffix.main[k] !== "string") c.markedAffix.main[k] = "";
+    });
+  }
+  if (!Array.isArray(c.markedAffix.minor)) c.markedAffix.minor = [];
   return c.markedAffix;
 }
 
