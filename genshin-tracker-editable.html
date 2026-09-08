@@ -153,6 +153,12 @@
     color:#f2f2fa; border-radius:8px; padding:7px 10px; font-size:13px;
   }
   input:focus, select:focus, textarea:focus{ outline:2px solid #8b7bf7; }
+  /* The <select> itself is styled light-text-on-dark to match the page,
+     but the browser draws the OPEN dropdown list with its own (usually
+     white) background — without this, the light text became nearly
+     invisible against that white popup. Forcing a dark background on
+     the <option> elements keeps them readable. */
+  select option{ background:#171732; color:#f2f2fa; }
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   input[type="number"]{ -moz-appearance:textfield; appearance:textfield; }
@@ -834,7 +840,12 @@ const SUB_STAT_OPTIONS = ["HP%","HP","ATK%","ATK","DEF%","DEF","Elemental Master
 const AFFIX_ICONS = { sands:"⏳", goblet:"🏆", circlet:"👑" };
 const AFFIX_GROUP_NAMES = { sands:"Sands of Eon", goblet:"Goblet of Eonothem", circlet:"Circlet of Logos" };
 // Minor (sub-stat) choices offered on the "Minor Affixes" tab.
-const MINOR_AFFIX_OPTIONS = ["HP%","ATK%","DEF%","CRIT Rate%","CRIT DMG%","Elemental Mastery","Energy Recharge%","Healing Bonus%"];
+// Same 10 real substats the game actually has (kept identical to
+// SUB_STAT_OPTIONS above, on purpose) — used for the Mark Affix
+// "Minor Affixes" checklist. It used to be its own separate, slightly
+// wrong list (had "Healing Bonus%", which isn't a real substat, and
+// was missing the flat HP/ATK/DEF versions).
+const MINOR_AFFIX_OPTIONS = SUB_STAT_OPTIONS;
 
 // Splits an old-style stored value like "+24.1%" or "18" into a plain
 // number string + whether it was a % or a Flat number, so the %/Flat
