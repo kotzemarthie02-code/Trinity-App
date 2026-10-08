@@ -530,6 +530,7 @@ body::after {
       <!-- JS injects char entries here -->
     </div>
 
+    <div id="bg-prof-side"><div class="bg-prof"></div></div>
     <button class="domain-btn" onclick="showView('domain')">
       <span>🏛</span> Domains
     </button>
@@ -688,6 +689,7 @@ body::after {
   window._fbref = ref;
   window._fbset = set;
   window._fbget = get;
+  window._fbonValue = onValue;
   window.fbSaveChars = async function(arr) {
     // GEEN try/catch om die HELE funksie nie — as Firebase regtig faal (bv. reëls/
     // toestemming/internet), moet die fout na bo "gooi" sodat saveChars() dit optel
@@ -753,12 +755,7 @@ body::after {
           try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
         }
       }
-      const oSnap = await get(ref(db, 'buildguide_owned/' + uid));
-      if (oSnap.exists()) {
-        const owned = JSON.parse(oSnap.val().owned || '[]');
-        try { localStorage.setItem('bg_owned_' + uid, JSON.stringify(owned)); } catch(e) {}
-        try { localStorage.setItem('bg_owned_v3', JSON.stringify(owned)); } catch(e) {}
-      }
+      // Owned word nou per profiel deur BGProfile gelaai (Firebase buildguide_owned/<uid>)
       onValue(ref(db, 'buildguide/characters'), (snap) => {
         if (!snap.exists()) return;
         try {
@@ -1290,7 +1287,42 @@ const DOMAIN_ELEMS = {
   // Artifact (only the ones confirmed so far)
   'Hidden Palace of Zhou Formula':     ['Hydro'],
   'Frostladen Machinery':              ['Dendro','Electro','Hydro'],
-  "Moonchild's Treasures":             ['Hydro','Geo','Electro','Dendro']
+  "Moonchild's Treasures":             ['Hydro','Geo','Electro','Dendro'],
+  // Artifact — AANGEVUL (nog nie in-game bevestig nie; wysig gerus)
+  'Midsummer Courtyard':               ['Pyro','Cryo','Hydro'],
+  'Valley of Remembrance':             ['Pyro','Electro','Anemo'],
+  'Peak of Vindagnyr':                 ['Pyro','Electro'],
+  'Thorny Crown of the Mountain Wind': ['Cryo','Electro'],
+  'Guyun':                             ['Hydro','Cryo','Electro'],
+  'Ridge Watch':                       ['Cryo','Electro','Hydro'],
+  'Clear Pool and Mountain Cavern':    ['Pyro','Dendro'],
+  'The Lost Valley':                   ['Hydro','Cryo','Electro'],
+  'Waterfall Wen':                     ['Pyro','Cryo'],
+  'Momiji-Dyed Court':                 ['Hydro','Cryo','Electro'],
+  'Slumbering Court':                  ['Hydro','Anemo','Electro'],
+  'Spire of Solitary Enlightenment':   ['Pyro','Cryo','Electro'],
+  'City of Gold':                      ['Hydro','Cryo','Electro'],
+  'Derelict Masonry Dock':             ['Pyro','Cryo','Dendro'],
+  'Denouement of Sin':                 ['Pyro','Electro','Cryo'],
+  'Faded Theater':                     ['Pyro','Cryo','Hydro'],
+  'Molten Iron Fortress':              ['Hydro','Cryo','Electro'],
+  'Sanctum of Rainbow Spirits':        ['Pyro','Electro','Cryo'],
+  'Inverted Glacier':                  ['Pyro','Electro','Anemo'],
+  // Weekly Boss — AANGEVUL (nog nie in-game bevestig nie; wysig gerus)
+  'Lupus Boreas':                      ['Pyro','Electro'],
+  'Stormterror Dvalin':                ['Pyro','Cryo','Electro'],
+  'Childe':                            ['Cryo','Electro','Pyro'],
+  'Azhdaha':                           ['Hydro','Cryo','Electro','Pyro'],
+  'La Signora':                        ['Hydro','Electro'],
+  'The Raiden Shogun':                 ['Cryo','Pyro'],
+  'Scaramouche Boss':                  ['Hydro','Pyro'],
+  "Guardian of Apep's Oasis":          ['Pyro','Electro'],
+  'The Doctor - Dottore':              ['Pyro','Hydro','Electro'],
+  'The Game Before the Gate':          ['Pyro','Cryo','Electro'],
+  'All-Devouring Narwhal':             ['Pyro','Electro'],
+  'The Knave':                         ['Hydro','Cryo','Electro'],
+  'Lord of Eroded Primal Fire':        ['Hydro','Cryo'],
+  'Exalted Master of the Heretical Path':['Pyro','Cryo','Electro']
 };
 [WEAPON_DOMAIN_DB, ARTIFACT_DOMAIN_DB, TALENT_DOMAIN_DB, BOSS_DB].forEach(db => db.forEach(d => { if (DOMAIN_ELEMS[d.name]) d.elems = DOMAIN_ELEMS[d.name]; }));
 
@@ -1704,6 +1736,102 @@ function selectTeamVariant(id, idx) {
 
 // On load: show dashboard
 showView('dashboard');
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// BGProfile — streng per-profiel "Owned"-data (Firebase + localStorage)
+// • Elke profiel het sy EIE sleutel: bg_owned_<uid> / bg_tgowned_<uid>
+// • GEEN gedeelde fallback (bg_owned_v3) meer nie → een profiel se karakters
+//   kan nooit ander profiele "oorwaai" nie
+// • Firebase-luisteraars word per aktiewe profiel gewissel (en verlaat as jy wissel)
+// ═══════════════════════════════════════════════════════════
+window.BG_PROFILES = [
+  { uid:'Admin',    label:'Gebruiker', icon:'👑', color:'#c8a84b' },
+  { uid:'BF',       label:'BF',        icon:'💙', color:'#60aaee' },
+  { uid:'Ma',       label:'Ma',        icon:'🌸', color:'#e88aa8' },
+  { uid:'Vriendin', label:'Vriend',    icon:'💜', color:'#c090e0' }
+];
+window.BGProfile = (function () {
+  const mem = {}, tgMem = {};
+  let unsubO = null, unsubT = null, subUid = null;
+  const uid  = () => localStorage.getItem('trinity_uid') || 'Admin';
+  const oKey = u => 'bg_owned_' + u;
+  const tKey = u => 'bg_tgowned_' + u;
+  const readLS = k => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return Array.isArray(v) ? v : null; } catch (e) { return null; } };
+  const writeLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+  function getOwned(u) {
+    u = u || uid();
+    if (!mem[u]) {
+      // Eenmalige migrasie: ou gedeelde sleutel behoort net aan Admin
+      if (u === 'Admin' && localStorage.getItem(oKey('Admin')) === null) {
+        const old = readLS('bg_owned_v3'); if (old && old.length) writeLS(oKey('Admin'), old);
+      }
+      mem[u] = readLS(oKey(u)) || [];
+    }
+    return mem[u];
+  }
+  function setOwned(arr, u) {
+    u = u || uid(); mem[u] = arr.slice(); writeLS(oKey(u), mem[u]);
+    if (typeof window.fbSaveOwned === 'function') window.fbSaveOwned(u, mem[u]);
+  }
+  function getTG(u) { u = u || uid(); if (!tgMem[u]) tgMem[u] = readLS(tKey(u)) || []; return tgMem[u]; }
+
+  function whenFB(cb, tries) {
+    tries = tries || 0;
+    if (window._fbdb && window._fbonValue) return cb();
+    if (tries > 100) return;               // ~20s, daarna bly ons op localStorage
+    setTimeout(() => whenFB(cb, tries + 1), 200);
+  }
+  function notify() {
+    renderChips();
+    try { if (typeof window.refreshAllOwned === 'function') window.refreshAllOwned(); } catch (e) {}
+    document.dispatchEvent(new CustomEvent('bg-owned-changed'));
+  }
+  function unsub() { try { unsubO && unsubO(); } catch (e) {} try { unsubT && unsubT(); } catch (e) {} unsubO = unsubT = null; }
+  function subscribe(u) {
+    unsub(); subUid = u;
+    whenFB(() => {
+      if (uid() !== u || subUid !== u) return;
+      const db = window._fbdb, ref = window._fbref;
+      unsubO = window._fbonValue(ref(db, 'buildguide_owned/' + u), snap => {
+        if (uid() !== u) return;                       // verouderde callback → ignoreer
+        if (!snap.exists()) { const l = getOwned(u); if (l.length && window.fbSaveOwned) window.fbSaveOwned(u, l); return; }
+        let arr; try { arr = JSON.parse(snap.val().owned || '[]'); } catch (e) { return; }
+        if (JSON.stringify(arr) !== JSON.stringify(mem[u] || [])) { mem[u] = arr; writeLS(oKey(u), arr); notify(); }
+      });
+      unsubT = window._fbonValue(ref(db, 'users/' + u + '/ownedCharacters'), snap => {
+        if (uid() !== u || !snap.exists()) return;
+        const v = snap.val(), arr = Array.isArray(v) ? v : Object.values(v);
+        if (JSON.stringify(arr) !== JSON.stringify(tgMem[u] || [])) { tgMem[u] = arr; writeLS(tKey(u), arr); notify(); }
+      });
+    });
+  }
+  function switchTo(u) {
+    if (u === uid() && subUid === u) return;
+    try { localStorage.setItem('trinity_uid', u); } catch (e) {}
+    subscribe(u); notify();
+    document.dispatchEvent(new CustomEvent('bg-profile-changed', { detail: u }));
+  }
+  function reload() { const u = uid(); delete mem[u]; delete tgMem[u]; notify(); }
+  function info(u) { return window.BG_PROFILES.find(p => p.uid === (u || uid())) || { uid: u, label: u, icon: '👤', color: '#9a8f78' }; }
+  function renderChips() {
+    const cur = uid();
+    const html = window.BG_PROFILES.map(p => {
+      const n = getOwned(p.uid).length;
+      return `<button class="bg-pf${p.uid === cur ? ' on' : ''}" style="--pc:${p.color}" onclick="BGProfile.switchTo('${p.uid}')" title="Wissel na ${p.label}">${p.icon} ${p.label} <small>${n}</small></button>`;
+    }).join('');
+    document.querySelectorAll('.bg-prof').forEach(el => { if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html; } });
+  }
+  function init() { subscribe(uid()); renderChips(); }
+  window.addEventListener('storage', e => {
+    if (e.key === 'trinity_uid') { subscribe(uid()); notify(); }
+    else if (e.key && (e.key === oKey(uid()) || e.key === tKey(uid()))) reload();
+  });
+  document.addEventListener('DOMContentLoaded', init);
+  return { uid, getOwned, setOwned, getTG, switchTo, reload, info, renderChips, init };
+})();
 </script>
 
 <script>
@@ -2363,18 +2491,8 @@ function saveChars(arr) {
     return true;
   });
 }
-function getOwned() {
-  try {
-    const uid = localStorage.getItem('trinity_uid') || 'Admin';
-    return JSON.parse(localStorage.getItem('bg_owned_' + uid) || localStorage.getItem('bg_owned_v3') || '[]');
-  } catch(e) { return []; }
-}
-function setOwned(arr) {
-  const uid = localStorage.getItem('trinity_uid') || 'Admin';
-  localStorage.setItem('bg_owned_' + uid, JSON.stringify(arr));
-  localStorage.setItem('bg_owned_v3', JSON.stringify(arr));
-  if (typeof window.fbSaveOwned === 'function') window.fbSaveOwned(uid, arr);
-}
+function getOwned() { return BGProfile.getOwned(); }
+function setOwned(arr) { BGProfile.setOwned(arr); }
 function isOwned(key) { return getOwned().includes(key); }
 function toggleOwned(key) {
   let a = getOwned();
@@ -3795,7 +3913,7 @@ let _bgUnlocked = false;
 // ── Owned tellers ──
 function bgGetOwnedCount() {
   try {
-    const owned = JSON.parse(localStorage.getItem(bgOwnedKey()) || '[]');
+    const owned = getOwned();
     return myChars.filter((_, i) => owned.includes('my-' + i)).length;
   } catch(e) { return 0; }
 }
@@ -3805,6 +3923,7 @@ function bgUserInfo() {
   const uid = bgGetUID();
   if(uid === 'Admin')    return { icon:'👑', color:'#c8a84b' };
   if(uid === 'BF')       return { icon:'💙', color:'#60aaee' };
+  if(uid === 'Ma')       return { icon:'🌸', color:'#e88aa8' };
   if(uid === 'Vriendin') return { icon:'💜', color:'#c090e0' };
   return { icon:'👤', color:'#9a8f78' };
 }
@@ -3971,9 +4090,25 @@ bgRefreshAllOwned();
 .nm2{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);color:#fff;font:700 13px 'Rajdhani',sans-serif;padding:4px 8px}.nm2 small{display:block;font-weight:400;color:#cbb;font-size:11px}
 .dt-teams{display:grid;grid-template-columns:repeat(4,60px);gap:6px;align-content:start}
 .dt-slot.dim{opacity:.35;cursor:default}
+/* ── Profiele + permanente paneel + spanne ── */
+.bg-prof{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.bg-pf{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--muted);font:700 13px 'Rajdhani',sans-serif;cursor:pointer}
+.bg-pf small{opacity:.7;font-weight:600}
+.bg-pf.on{color:#fff;border-color:var(--pc,var(--gold));background:rgba(200,168,75,.14);box-shadow:0 0 0 1px var(--pc,var(--gold)) inset}
+#bg-prof-side{padding:8px 8px 0}
+#bg-prof-side .bg-prof{margin:0}
+#bg-prof-side .bg-pf{flex:1 1 45%;justify-content:center;padding:5px 6px;font-size:12px}
+.dt-panel{display:none}.dt-panel.on{display:block}
+.dt-teams{display:flex!important;flex-direction:column;gap:8px;grid-template-columns:none!important}
+.dt-tl{font:700 11px 'Rajdhani',sans-serif;color:var(--purple);letter-spacing:.6px;margin-bottom:3px;text-transform:uppercase}
+.dt-trow{display:grid;grid-template-columns:repeat(4,60px);gap:6px}
+.dt-slot .rl{position:absolute;top:1px;left:2px;font:700 8px 'Rajdhani',sans-serif;color:#fff;background:rgba(0,0,0,.65);padding:0 3px;border-radius:3px;z-index:2}
+.dt-empty{color:var(--muted);font-size:13px;align-self:center;padding:8px}
+.nm2 small+small{margin-top:1px}
 </style>
 <script>
 (function(){
+'use strict';
 const COLS=[
  {k:'weapons',t:'⚔️ Weapon Domains',max:4,db:()=>WEAPON_DOMAIN_DB,days:true},
  {k:'artifacts',t:'🏺 Artifact Domains',max:4,db:()=>ARTIFACT_DOMAIN_DB},
@@ -3981,22 +4116,41 @@ const COLS=[
  {k:'boss',t:'🐉 Weekly Boss',max:3,db:()=>BOSS_DB,boss:true}];
 const DAYS=[['Mon','Monday'],['Tue','Tuesday'],['Wed','Wednesday'],['Thu','Thursday'],['Fri','Friday'],['Sat','Saturday'],['Sun','Sunday']];
 const ALT={'Azhdaha':['Beneath the Dragon-Queller'],'Magatsu Mitake Narukami':['End of the Oneiric Euthymia','Plane of Euthymia'],'Stormterror Dvalin':['Confront Stormterror'],"Guardian of Apep's Oasis":['Apep'],'Andrius — Wolf of the North':['Wolvendom'],'La Signora':['Tenshukaku'],'Shouki no Kami':['Joururi Workshop']};
+const GROUPS=[['Mon / Thu / Sun','Mon / Thu'],['Tue / Fri / Sun','Tue / Fri'],['Wed / Sat / Sun','Wed / Sat']];
 const uid=()=>localStorage.getItem('trinity_uid')||'Admin';
 const KEY=()=>'bg_domtrk_'+uid();
-let st={goals:{weapons:[],artifacts:[],talents:[],boss:[]}};
-let curTab='weapons',curDay=DAYS[(new Date().getDay()+6)%7][0],q='';
-function load(){try{const r=JSON.parse(localStorage.getItem(KEY())||'null');if(r)st=Object.assign(st,r);}catch(e){}}
-function save(){try{localStorage.setItem(KEY(),JSON.stringify(st));}catch(e){}}
-const ck=c=>c.id||c.name.toLowerCase().replace(/\s/g,'-');
 const EMO={Pyro:'🔥',Hydro:'💧',Cryo:'❄️',Anemo:'🌀',Electro:'⚡',Geo:'🪨',Dendro:'🌿'};
+const ELEMS=['Pyro','Hydro','Electro','Cryo','Anemo','Geo','Dendro'];
+const norm=n=>String(n).toLowerCase().replace(/[^a-z0-9]/g,'');
+const capEl=e=>{e=String(e||'');return ELEMS.find(x=>x.toLowerCase()===e.toLowerCase())||'';};
+const isTrav=n=>/^traveler/i.test(String(n));
+const ck=c=>c.id||c.name.toLowerCase().replace(/\s/g,'-');
 function esc(t){return String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
-function img(c,fb){const l=c.filter(Boolean);if(!l.length)return fb;
- return `<img src="${esc(l[0])}" data-c="${encodeURIComponent(JSON.stringify(l))}" data-i="0" data-fb="${esc(fb)}" onerror="dtImgFail(this)">`;}
-window.dtImgFail=function(m){const l=JSON.parse(decodeURIComponent(m.dataset.c)),i=+m.dataset.i+1;
+
+// ── Staat: doelkarakters per profiel (ook streng per uid, en reset by wissel) ──
+let st,curTab='weapons',q='';
+const freshState=()=>({goals:{weapons:[],artifacts:[],talents:[],boss:[]}});
+function load(){st=freshState();try{const r=JSON.parse(localStorage.getItem(KEY())||'null');if(r&&r.goals)Object.keys(st.goals).forEach(k=>{if(Array.isArray(r.goals[k]))st.goals[k]=r.goals[k];});}catch(e){}}
+function save(){try{localStorage.setItem(KEY(),JSON.stringify(st));}catch(e){}}
+load();
+
+// ── PERMANENTE PRENTJIE-KAS ─────────────────────────────────────────
+// Eenmaal gevind, onthou ons die werkende URL (ook oor bladsy-herlaaie). Paneel-DOM word nooit
+// weggegooi nie, so prentjies herlaai/flikker nie wanneer jy tabs wissel nie.
+const IMGC=(()=>{try{return JSON.parse(localStorage.getItem('bg_domimg_v2')||'{}');}catch(e){return {};}})();
+const MISS=new Set(); // net per sessie (nie gestoor nie), sodat nuwe lêers later weer gevind word
+let _sv=0;const persistImg=()=>{clearTimeout(_sv);_sv=setTimeout(()=>{try{localStorage.setItem('bg_domimg_v2',JSON.stringify(IMGC));}catch(e){}},400);};
+function img(cands,fb,key){
+ const l=cands.filter(Boolean);
+ if(MISS.has(key)||!l.length)return `<span class="fb">${esc(fb)}</span>`;
+ const list=IMGC[key]?[IMGC[key],...l.filter(x=>x!==IMGC[key])]:l;
+ return `<img src="${esc(list[0])}" data-k="${esc(key)}" data-c="${encodeURIComponent(JSON.stringify(list))}" data-i="0" data-fb="${esc(fb)}" decoding="async" onload="dtImgOk(this)" onerror="dtImgFail(this)">`;}
+window.dtImgOk=function(m){const k=m.dataset.k,s=m.getAttribute('src');if(k&&IMGC[k]!==s){IMGC[k]=s;persistImg();}};
+window.dtImgFail=function(m){
+ const l=JSON.parse(decodeURIComponent(m.dataset.c)),i=+m.dataset.i+1,k=m.dataset.k;
+ if(IMGC[k]===m.getAttribute('src')){delete IMGC[k];persistImg();} // verouderde kas-inskrywing
  if(i<l.length){m.dataset.i=i;m.src=l[i];}
- else{console.warn('[Domain tracker] no image found for "'+m.dataset.fb+'". Tried e.g.:',l.slice(0,6).join(' | '));
-  const s=document.createElement('span');s.className='fb';s.textContent=m.dataset.fb;m.replaceWith(s);}};
-// Spaces -> underscores first (Cecilia_Garden.jpg), then other spellings / folders / extension cases
+ else{MISS.add(k);const s=document.createElement('span');s.className='fb';s.textContent=m.dataset.fb;m.replaceWith(s);}};
 function domCands(d){const n=[d.name,...(ALT[d.name]||[])];
  if(d.location&&d.location.includes('— '))n.push(d.location.split('— ')[1]);
  const DIRS=['Domains/',''],EXT=['jpg','png','jpeg','webp','JPG','PNG','JPEG','WEBP'],out=[],seen=new Set();
@@ -4007,37 +4161,18 @@ function domCands(d){const n=[d.name,...(ALT[d.name]||[])];
 function charCands(c){
  if(c.trav){const e=c.elem||'';return [e?e+'1.jpg':'', 'Traveler1.jpg', e?'Traveler_'+e+'1.jpg':''];}
  return [c.charImg,c.name+'1.jpg',c.name.replace(/ /g,'_')+'1.jpg'];}
-function slot(c,x,dim,click){
+const charKey=c=>'c:'+(c.trav?'Traveler'+(c.elem||''):c.name);
+function slot(c,x,dim,click,rl,rn){
  const ec=(typeof EL_COLORS!=='undefined'&&EL_COLORS[c.elem])||'#c8a84b';
- return `<div class="dt-slot set${dim?' dim':''}" style="border-color:${ec}" title="${esc(c.name)}${c.trav&&c.elem?' ('+esc(c.elem)+')':''}" ${click||''}>${img(charCands(c),EMO[c.elem]||'⭐')}${x||''}<div class="nm">${esc(c.name)}</div></div>`;}
-const TEAMS=3,SZ=4;
-// ── OWNED: Build-Guide ('my-<index>') + Training Guide (character names in 'ownedCharacters') ──
-let tgOwned=[];
-const norm=n=>String(n).toLowerCase().replace(/[^a-z0-9]/g,'');
-function readTG(){try{tgOwned=JSON.parse(localStorage.getItem('ownedCharacters')||'[]');}catch(e){tgOwned=[];}}
-function domainActive(){const v=document.getElementById('view-domain');return !!(v&&v.classList.contains('active'));}
-async function pullTG(){try{ // same Firebase path the Training Guide writes to
- if(!window._fbget||!window._fbdb)return;
- const s=await window._fbget(window._fbref(window._fbdb,'users/'+uid()+'/ownedCharacters'));
- if(!s.exists())return;const v=s.val(),arr=Array.isArray(v)?v:Object.values(v);
- if(JSON.stringify(arr)!==JSON.stringify(tgOwned)){tgOwned=arr;
-  try{localStorage.setItem('ownedCharacters',JSON.stringify(arr));}catch(e){}
-  if(domainActive())render();}
-}catch(e){}}
-function ownedChars(owned){
- const tg=new Set(tgOwned.map(norm)),out=[],seen=new Set();
- myChars.forEach((c,i)=>{const k=norm(c.name);if(owned.includes('my-'+i)||tg.has(k)){out.push({c,i});seen.add(k);}});
- tgOwned.forEach(n=>{const k=norm(n);if(!seen.has(k)){seen.add(k);out.push({c:{name:n},i:-1});}});
- return out;}
+ return `<div class="dt-slot set${dim?' dim':''}" style="border-color:${ec}" title="${esc(c.name)}${c.trav&&c.elem?' ('+esc(c.elem)+')':''}${rn?' — '+esc(rn):''}" ${click||''}>${img(charCands(c),EMO[c.elem]||'⭐',charKey(c))}${rl?`<span class="rl">${rl}</span>`:''}${x||''}<div class="nm">${esc(c.name)}</div></div>`;}
+
+// ── OWNED (per aktiewe profiel; Training Guide-lys ook per profiel) ──
 const CHAR_ELEM = {"aino":"Hydro","albedo":"Geo","alhaitham":"Dendro","aloy":"Cryo","alyosha":"Electro","amber":"Pyro","aratakiitto":"Geo","arlecchino":"Pyro","baizhu":"Dendro","barbara":"Hydro","beidou":"Electro","bennett":"Pyro","candace":"Hydro","charlotte":"Cryo","chasca":"Anemo","chevreuse":"Pyro","chiori":"Geo","chongyun":"Cryo","citlali":"Cryo","clorinde":"Electro","collei":"Dendro","columbina":"Hydro","cyno":"Electro","dahlia":"Hydro","dehya":"Pyro","diluc":"Pyro","diona":"Cryo","dori":"Electro","durin":"Pyro","emilie":"Dendro","escoffier":"Cryo","eula":"Cryo","faruzan":"Anemo","fischl":"Electro","flins":"Electro","freminet":"Cryo","furina":"Hydro","gaming":"Pyro","ganyu":"Cryo","gorou":"Geo","hutao":"Pyro","iansan":"Electro","ifa":"Anemo","illuga":"Geo","ineffa":"Electro","jahoda":"Anemo","jean":"Anemo","kachina":"Geo","kaedeharakazuha":"Anemo","kaeya":"Cryo","kamisatoayaka":"Cryo","kamisatoayato":"Hydro","kaveh":"Dendro","keqing":"Electro","kinich":"Dendro","kirara":"Dendro","klee":"Pyro","kujousara":"Electro","kukishinobu":"Electro","lanyan":"Anemo","lauma":"Dendro","layla":"Cryo","lisa":"Electro","lohen":"Cryo","lynette":"Anemo","lyney":"Pyro","mavuika":"Pyro","mika":"Cryo","mona":"Hydro","mualani":"Hydro","nahida":"Dendro","navia":"Geo","nefer":"Dendro","neuvillette":"Hydro","nicole":"Pyro","nilou":"Hydro","ningguang":"Geo","noelle":"Geo","odette":"Cryo","ororon":"Electro","prune":"Anemo","qiqi":"Cryo","raidenshogun":"Electro","razor":"Electro","rosaria":"Cryo","sandrone":"Cryo","sangonomiyakokomi":"Hydro","sayu":"Anemo","sethos":"Electro","shenhe":"Cryo","shikanoinheizou":"Anemo","sigewinne":"Hydro","skirk":"Cryo","sucrose":"Anemo","tartaglia":"Hydro","thoma":"Pyro","tighnari":"Dendro","varesa":"Electro","varka":"Anemo","venti":"Anemo","vesna":"Anemo","vodyanitsa":"Hydro","wanderer":"Anemo","wriothesley":"Cryo","xiangling":"Pyro","xianyun":"Anemo","xiao":"Anemo","xilonen":"Geo","xingqiu":"Hydro","xinyan":"Pyro","yaemiko":"Electro","yanfei":"Pyro","yaoyao":"Dendro","yelan":"Hydro","yoimiya":"Pyro","yumemizukimizuki":"Anemo","yunjin":"Geo","zhongli":"Geo","zibai":"Geo","linnea":"Geo"};
-const ELEMS=['Pyro','Hydro','Electro','Cryo','Anemo','Geo','Dendro'];
-const capEl=e=>{e=String(e||'');return ELEMS.find(x=>x.toLowerCase()===e.toLowerCase())||'';};
-const isTrav=n=>/^traveler/i.test(String(n));
 function travElem(c){const m=/^traveler\W*(\w+)?/i.exec(c.name);return capEl(m&&m[1])||capEl(c.elem);}
 function elemOf(c){return capEl(c.elem)||CHAR_ELEM[norm(c.name)]||'';}
-// Owned characters from both systems. ALL "Traveler <Element>" entries become ONE Traveler with the elements owned.
+const tgOwned=()=>BGProfile.getTG();
 function ownedChars(owned){
- const tg=new Set(tgOwned.map(norm)),out=[],seen=new Set();let tv=null;
+ const tg=new Set(tgOwned().map(norm)),out=[],seen=new Set();let tv=null;
  const add=(c,i)=>{
   if(isTrav(c.name)){
    if(!tv){tv={c:{name:'Traveler',trav:true,elems:[],any:false},i:-1,idxs:[]};out.push(tv);}
@@ -4045,29 +4180,122 @@ function ownedChars(owned){
    if(i>=0)tv.idxs.push(i);return;}
   const k=norm(c.name);if(seen.has(k))return;seen.add(k);out.push({c,i,idxs:i>=0?[i]:[]});};
  myChars.forEach((c,i)=>{if(owned.includes('my-'+i)||tg.has(norm(c.name)))add(c,i);});
- tgOwned.forEach(n=>add({name:n},-1));
- if(tv&&(tv.c.any||!tv.c.elems.length))tv.c.elems=ELEMS.slice(); // plain "Traveler" = supports all 7 elements
+ tgOwned().forEach(n=>add({name:n},-1));
+ if(tv&&(tv.c.any||!tv.c.elems.length))tv.c.elems=ELEMS.slice();
  return out;}
-// Returns the character to display in this domain's boxes, or null if it is not recommended here.
 function pickFor(d,o){
  const c=o.c,want=d.elems;
  if(want&&want.length){
   if(c.trav){const e=want.find(x=>c.elems.includes(x));return e?{name:'Traveler',trav:true,elem:e}:null;}
   const e=elemOf(c);return want.includes(e)?(c.elem?c:{...c,elem:e}):null;}
- // no element data for this domain -> region list fallback (Traveler can always join)
  if(c.trav)return {name:'Traveler',trav:true,elem:c.elems[0]};
  return (d.chars||[]).includes(ck(c))?(c.elem?c:{...c,elem:elemOf(c)}):null;}
-function team(d,col,owned){
- const goals=st.goals[col.k]||[];
- const fit=ownedChars(owned).map(o=>({o,x:pickFor(d,o)})).filter(f=>f.x);
- const isG=f=>f.o.idxs.some(i=>goals.includes(i));
- return [...fit.filter(isG),...fit.filter(f=>!isG(f))].slice(0,TEAMS*SZ).map(f=>f.x);}
-function card(d,col,owned){
- const t=team(d,col,owned);
- const slots=[...Array(TEAMS*SZ)].map((_,n)=>t[n]?slot(t[n]):`<div class="dt-slot" style="cursor:default;opacity:.35"><span class="pl">+</span></div>`).join('');
- return `<div class="dt-row2"><div class="dt-pic2">${img(domCands(d),d.icon||'🏛')}<div class="nm2">${esc(d.name)}${d.location?`<small>${esc(d.location)}</small>`:''}</div></div><div class="dt-teams">${slots}</div></div>`;}
-window.dtTab=function(k){curTab=k;render();};
 
+// ═══════════════════ SPAN-ALGORITME ═══════════════════
+// Rolle: D = Main DPS · S = Sub-DPS · P = Support · H = Healer/Shield
+// Voorkeurvolgorde per karakter (eerste letter = primêre rol).
+const ROLE_SLOTS=[{r:'D',n:'Main DPS',s:'DPS'},{r:'S',n:'Sub-DPS',s:'SUB'},{r:'P',n:'Support',s:'SUP'},{r:'H',n:'Healer / Shield',s:'HEAL'}];
+const ROLES={aino:'PH',albedo:'SP',alhaitham:'D',aloy:'P',alyosha:'P',amber:'S',arlecchino:'D',baizhu:'H',barbara:'H',beidou:'S',bennett:'HP',candace:'PH',charlotte:'HP',chasca:'D',chevreuse:'P',chiori:'D',chongyun:'SP',citlali:'PH',clorinde:'D',collei:'S',columbina:'HP',cyno:'D',dahlia:'HP',dehya:'D',diluc:'D',diona:'H',dori:'H',durin:'DP',emilie:'S',escoffier:'HP',eula:'D',faruzan:'P',fischl:'S',flins:'D',freminet:'D',furina:'SP',gaming:'D',ganyu:'D',gorou:'P',hutao:'D',iansan:'P',ifa:'H',illuga:'P',ineffa:'PS',jahoda:'H',jean:'HD',kachina:'S',kaedeharakazuha:'P',kaeya:'SP',kamisatoayaka:'D',kamisatoayato:'DS',kaveh:'DH',keqing:'D',kinich:'D',kirara:'HP',klee:'D',kujousara:'P',kukishinobu:'HS',lanyan:'PH',lauma:'P',layla:'PH',lisa:'SP',lohen:'S',lynette:'P',lyney:'D',mavuika:'D',mika:'H',mona:'SP',mualani:'D',nahida:'SP',navia:'D',nefer:'D',neuvillette:'D',nicole:'P',nilou:'P',ningguang:'D',noelle:'HD',odette:'S',ororon:'S',prune:'S',qiqi:'H',raidenshogun:'SP',razor:'D',rosaria:'S',sandrone:'SP',sangonomiyakokomi:'H',sayu:'H',sethos:'D',shenhe:'P',shikanoinheizou:'P',sigewinne:'H',skirk:'D',sucrose:'P',tartaglia:'D',thoma:'HS',tighnari:'D',varesa:'D',varka:'D',venti:'P',vesna:'S',vodyanitsa:'S',wanderer:'D',wriothesley:'D',xiangling:'S',xianyun:'P',xiao:'D',xilonen:'PS',xingqiu:'S',xinyan:'HS',yaemiko:'S',yanfei:'D',yaoyao:'H',yelan:'S',yoimiya:'D',yumemizukimizuki:'P',yunjin:'P',zhongli:'HP',zibai:'PS',linnea:'H'};
+function rolesOf(x){if(x.trav)return x.elem==='Geo'?'PH':'SP';return ROLES[norm(x.name)]||'S';}
+const sc=(c,r)=>{const p=c.roles.indexOf(r);return p<0?-99:([10,6,3][p]||2)+c.pref+(c.goal?5:0);};
+// D en S moet die domain se teëstander-elemente hê; P en H (Support/Healer) mag as terugval enige element wees.
+const elig=(c,r)=>c.roles.includes(r)&&(c.m||r==='P'||r==='H');
+
+function poolFor(d,col){
+ const goals=st.goals[col.k]||[],want=(d.elems&&d.elems.length)?d.elems:null,out=[];
+ ownedChars(BGProfile.getOwned()).forEach(o=>{
+  let x=pickFor(d,o),m=!!x;
+  if(!x){if(!want)return;x=o.c.trav?{name:'Traveler',trav:true,elem:(o.c.elems||[])[0]||''}:{...o.c,elem:elemOf(o.c)};}
+  const e=x.elem||'';
+  const pref=want?(m?4+3*(want.length-want.indexOf(e))/want.length:-6):5;
+  out.push({x,o,m,e,pref,roles:rolesOf(x),goal:o.idxs.some(i=>goals.includes(i))});});
+ return out;}
+
+// Kan 'n stel van n volledige spanne uit hierdie poel gevorm word? (bipartiete passing / Kuhn)
+function matchTeams(pool,n){
+ const slots=[];for(let t=0;t<n;t++)ROLE_SLOTS.forEach((s,k)=>slots.push({t,k,r:s.r}));
+ const owner=new Array(pool.length).fill(-1);
+ const adj=slots.map(s=>pool.map((c,i)=>elig(c,s.r)?i:-1).filter(i=>i>=0).sort((a,b)=>sc(pool[b],s.r)-sc(pool[a],s.r)));
+ const tryS=(s,seen)=>{for(const ci of adj[s]){if(seen[ci])continue;seen[ci]=1;if(owner[ci]<0||tryS(owner[ci],seen)){owner[ci]=s;return true;}}return false;};
+ for(let s=0;s<slots.length;s++)if(!tryS(s,new Array(pool.length).fill(0)))return null;
+ const teams=Array.from({length:n},()=>[]);
+ owner.forEach((s,ci)=>{if(s>=0)teams[slots[s].t][slots[s].k]=pool[ci];});
+ return teams;}
+
+// Kies EEN span (D,S,P,H) wat gebalanseerd is: max `cap` van dieselfde element, en wat nog genoeg karakters
+// los vir die oorblywende spanne.
+function pickTeam(rest,cap,need){
+ const lists=ROLE_SLOTS.map(s=>rest.filter(c=>elig(c,s.r)));
+ const chosen=[],cnt={};let budget=3000;
+ const dfs=k=>{
+  if(--budget<0)return false;
+  if(k===4)return need===0||!!matchTeams(rest.filter(c=>!chosen.includes(c)),need);
+  const r=ROLE_SLOTS[k].r;
+  const cand=lists[k].filter(c=>!chosen.includes(c)&&(cnt[c.e]||0)<cap)
+   .sort((a,b)=>(sc(b,r)-3*(cnt[b.e]||0))-(sc(a,r)-3*(cnt[a.e]||0))).slice(0,10);
+  for(const c of cand){chosen[k]=c;cnt[c.e]=(cnt[c.e]||0)+1;if(dfs(k+1))return true;cnt[c.e]--;chosen[k]=undefined;}
+  return false;};
+ return dfs(0)?chosen.slice(0,4):null;}
+
+function buildTeams(pool){
+ let T=3;while(T>0&&!matchTeams(pool,T))T--;
+ const teams=[];let rest=pool.slice();
+ for(let t=0;t<T;t++){
+  const need=T-t-1;let team=null;
+  for(const cap of [2,3,4]){team=pickTeam(rest,cap,need);if(team)break;}
+  if(!team){const m=matchTeams(rest,T-t);team=m&&m[0];}      // veiligheidsnet
+  team.forEach(m=>{const i=rest.indexOf(m);if(i>=0)rest.splice(i,1);});
+  teams.push(team);}
+ // Span 1 en 2 word altyd gewys (gedeeltelik met "+" waar 'n rol ontbreek); Span 3 net as dit VOLLEDIG is.
+ while(teams.length<2){
+  const team=[],used=new Set();
+  ROLE_SLOTS.forEach((s,k)=>{
+   const c=rest.filter(x=>!used.has(x)&&elig(x,s.r)).sort((a,b)=>sc(b,s.r)-sc(a,s.r))[0];
+   if(c){team[k]=c;used.add(c);}});
+  rest=rest.filter(x=>!used.has(x));teams.push(team);}
+ return teams;}
+
+// ═══════════════════ WEERGAWE ═══════════════════
+function cardShell(d,col,i){
+ const chips=(d.elems||[]).map(e=>`<span title="${e}">${EMO[e]}</span>`).join(' ');
+ return `<div class="dt-row2"><div class="dt-pic2">${img(domCands(d),d.icon||'🏛','d:'+d.name)}<div class="nm2">${esc(d.name)}${d.location?`<small>${esc(d.location)}</small>`:''}${chips?`<small>Teen: ${chips}</small>`:''}</div></div><div class="dt-teams" id="dt-t-${col.k}-${i}"></div></div>`;}
+function teamsHtml(d,col){
+ const pool=poolFor(d,col);
+ if(!pool.length)return `<div class="dt-empty">Geen geskikte Owned-karakters vir hierdie domain nie.</div>`;
+ return buildTeams(pool).map((t,ti)=>`<div class="dt-team"><div class="dt-tl">Team ${ti+1}</div><div class="dt-trow">${
+  ROLE_SLOTS.map((s,k)=>t[k]?slot(t[k].x,'',false,'',s.s,s.n):`<div class="dt-slot dim" title="${s.n} ontbreek" style="cursor:default"><span class="rl">${s.s}</span><span class="pl">+</span></div>`).join('')}</div></div>`).join('');}
+
+let built=false;const sigs={};
+function buildOnce(){
+ const el=document.getElementById('dt-grid');if(!el||built)return;built=true;
+ const tabs=`<div class="dt-tabs">${COLS.map(c=>`<button class="dt-tab" data-k="${c.k}" onclick="dtTab('${c.k}')">${c.t}</button>`).join('')}</div>`;
+ const panels=COLS.map(col=>{
+  const ds=col.db();let body;
+  if(col.days)body=GROUPS.map(g=>{const l=ds.map((d,i)=>({d,i})).filter(x=>(x.d.days||'').split('/').map(s=>s.trim()).join(' / ')===g[1]);
+   return l.length?`<div class="dt-grp"><div class="dt-dayh" style="font-size:14px">📅 ${g[0]}</div><div class="dt-list">${l.map(x=>cardShell(x.d,col,x.i)).join('')}</div></div>`:'';}).join('');
+  else body=`<div class="dt-list">${ds.map((d,i)=>cardShell(d,col,i)).join('')}</div>`;
+  return `<div class="dt-panel" id="dt-panel-${col.k}">${body}</div>`;}).join('');
+ el.innerHTML=`<div class="bg-prof" id="dt-prof"></div>${tabs}<div id="dt-goalbar" class="dt-goalbar"></div>${panels}`;}
+function renderGoalbar(){
+ const col=COLS.find(c=>c.k===curTab),goals=st.goals[col.k]||[],bar=document.getElementById('dt-goalbar');if(!bar)return;
+ const gs=[...Array(col.max)].map((_,n)=>{const i=goals[n],c=i!=null&&myChars[i]?dispC(myChars[i]):null;
+  return c?slot(c,`<span class="x" onclick="dtRemove('${col.k}',${i})">×</span>`):`<div class="dt-slot" onclick="dtPick('${col.k}')"><span class="pl">+</span></div>`;}).join('');
+ bar.innerHTML=`<div class="dt-sub" style="margin:0">Goal Characters</div>${gs}${goals.length<col.max?`<button class="dt-add" onclick="dtPick('${col.k}')">Add +</button>`:''}${col.boss?`<span style="color:var(--muted);font-weight:700">${goals.length}/${col.max}</span>`:''}`;}
+// Werk net die SPAN-boksies by (nooit die domain-prentjies of paneel-DOM nie) en net as data verander het.
+function refreshPanel(col){
+ const sig=JSON.stringify([uid(),BGProfile.getOwned(),BGProfile.getTG(),st.goals[col.k]||[],myChars.length]);
+ if(sigs[col.k]===sig)return;sigs[col.k]=sig;
+ col.db().forEach((d,i)=>{const t=document.getElementById('dt-t-'+col.k+'-'+i);if(t)t.innerHTML=teamsHtml(d,col);});}
+function showTab(){
+ COLS.forEach(c=>{const p=document.getElementById('dt-panel-'+c.k);if(p)p.classList.toggle('on',c.k===curTab);});
+ document.querySelectorAll('.dt-tab').forEach(b=>b.classList.toggle('on',b.dataset.k===curTab));
+ renderGoalbar();refreshPanel(COLS.find(c=>c.k===curTab));}
+function refreshAll(){if(!built)return;BGProfile.renderChips();showTab();
+ // ander tabs se spanne word rustig bygewerk sodat tab-wissel onmiddellik is
+ setTimeout(()=>COLS.forEach(c=>{if(c.k!==curTab)refreshPanel(c);}),30);}
+function domainActive(){const v=document.getElementById('view-domain');return !!(v&&v.classList.contains('active'));}
+
+window.dtTab=function(k){curTab=k;showTab();};
 window.dtSearch=function(v){q=v.toLowerCase();dtFillPick();};
 function dispC(c){return c&&isTrav(c.name)?{...c,name:'Traveler',trav:true,elem:travElem(c)}:c;}
 function dtFillPick(){const used=st.goals[window._dtc]||[];let tvDone=false;
@@ -4079,30 +4307,20 @@ window.dtPick=function(k){window._dtc=k;q='';
  if(!document.getElementById('dt-q'))box.insertAdjacentHTML('beforebegin','<input id="dt-q" class="mfi" placeholder="Soek..." oninput="dtSearch(this.value)" style="margin-bottom:10px">');
  document.getElementById('dt-q').value='';dtFillPick();document.getElementById('dt-picker').style.display='flex';};
 window.dtClosePick=function(){document.getElementById('dt-picker').style.display='none';};
-window.dtChoose=function(i){const g=st.goals[_dtc],col=COLS.find(c=>c.k===_dtc);if(g.length<col.max)g.push(i);save();dtClosePick();render();};
-window.dtRemove=function(k,i){st.goals[k]=st.goals[k].filter(x=>x!==i);save();render();};
-const GROUPS=[['Mon / Thu / Sun','Mon / Thu'],['Tue / Fri / Sun','Tue / Fri'],['Wed / Sat / Sun','Wed / Sat']];
-function render(){
- const el=document.getElementById('dt-grid');if(!el)return;
- const owned=getOwned(),col=COLS.find(c=>c.k===curTab),goals=st.goals[col.k]||[];
- const tabs=`<div class="dt-tabs">${COLS.map(c=>`<button class="dt-tab${c.k===curTab?' on':''}" onclick="dtTab('${c.k}')">${c.t}</button>`).join('')}</div>`;
- const gs=[...Array(col.max)].map((_,n)=>{const i=goals[n],c=i!=null?dispC(myChars[i]):null;
-  return c?slot(c,`<span class="x" onclick="dtRemove('${col.k}',${i})">×</span>`):`<div class="dt-slot" onclick="dtPick('${col.k}')"><span class="pl">+</span></div>`;}).join('');
- const goalbar=`<div class="dt-goalbar"><div class="dt-sub" style="margin:0">Goal Characters</div>${gs}${goals.length<col.max?`<button class="dt-add" onclick="dtPick('${col.k}')">Add +</button>`:''}${col.boss?`<span style="color:var(--muted);font-weight:700">${goals.length}/${col.max}</span>`:''}</div>`;
- const ds=col.db();
- let body;
- if(col.days)body=GROUPS.map(g=>{const l=ds.filter(d=>(d.days||'').split('/').map(x=>x.trim()).join(' / ')===g[1]);
-  return l.length?`<div class="dt-grp"><div class="dt-dayh" style="font-size:14px">📅 ${g[0]}</div><div class="dt-list">${l.map(d=>card(d,col,owned)).join('')}</div></div>`:'';}).join('');
- else body=`<div class="dt-list">${ds.map(d=>card(d,col,owned)).join('')}</div>`;
- el.innerHTML=tabs+goalbar+body;}
-window.renderDomainView=function(){load();readTG();render();pullTG();};
-// re-draw the boxes whenever "Owned" changes (Build-Guide toggle, Training Guide toggle in another tab, tab regains focus)
+window.dtChoose=function(i){const g=st.goals[window._dtc],col=COLS.find(c=>c.k===window._dtc);if(g.length<col.max)g.push(i);save();dtClosePick();showTab();};
+window.dtRemove=function(k,i){st.goals[k]=st.goals[k].filter(x=>x!==i);save();showTab();};
+
+window.renderDomainView=function(){buildOnce();BGProfile.renderChips();showTab();setTimeout(()=>COLS.forEach(c=>{if(c.k!==curTab)refreshPanel(c);}),30);};
+// Profiel gewissel → laai daardie profiel se doelkarakters; Owned kom uit BGProfile (streng per uid)
+document.addEventListener('bg-profile-changed',()=>{load();Object.keys(sigs).forEach(k=>delete sigs[k]);if(domainActive())refreshAll();});
+// Owned verander (toggle, Firebase-sync) → net spanne herbereken, net as die handtekening verskil
 const _ra=window.refreshAllOwned;
-window.refreshAllOwned=function(){if(typeof _ra==='function')_ra.apply(this,arguments);if(domainActive()){readTG();render();}};
-window.addEventListener('storage',e=>{if(!e.key||e.key==='ownedCharacters'||e.key.indexOf('bg_owned')===0){readTG();if(domainActive())render();}});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&domainActive()){readTG();render();pullTG();}});
-const _sv=window.showView;
-window.showView=function(v){_sv(v);if(v==='domain')renderDomainView();};
+window.refreshAllOwned=function(){if(typeof _ra==='function')_ra.apply(this,arguments);BGProfile.renderChips();if(domainActive())refreshAll();};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&domainActive())refreshAll();});
+// Ander oortjie het trinity_uid verander (poll in die lock-skrip sien dit ook)
+let _lastUid=uid();setInterval(()=>{if(uid()!==_lastUid){_lastUid=uid();BGProfile.switchTo(_lastUid);}},1000);
+const _sw=window.showView;
+window.showView=function(v){_sw(v);if(v==='domain')renderDomainView();};
 })();
 </script>
 </body>
