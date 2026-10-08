@@ -3906,7 +3906,7 @@ const COLS=[
  {k:'talents',t:'📜 Talent Domains',max:4,db:()=>TALENT_DOMAIN_DB,days:true},
  {k:'boss',t:'🐉 Weekly Boss',max:3,db:()=>BOSS_DB,boss:true}];
 const DAYS=[['Mon','Monday'],['Tue','Tuesday'],['Wed','Wednesday'],['Thu','Thursday'],['Fri','Friday'],['Sat','Saturday'],['Sun','Sunday']];
-const ALT={'Azhdaha':['Beneath the Dragon-Queller'],'Magatsu Mitake Narukami':['End of the Oneiric Euthymia','Plane of Euthymia'],'Stormterror Dvalin':['Confront Stormterror'],"Guardian of Apep's Oasis":['Apep'],'Andrius — Wolf of the North':['Wolvendom'],'La Signora':['Tenshukaku'],'Shouki no Kami':['Joururi Workshop']};
+const ALT={'Hidden Palace of Lianshan':['Hidden Palace of Lianshan Formula'],'Andrius — Wolf of the North':['Lupus Boreas'],'Azhdaha':['Beneath the Dragon-Queller'],'Magatsu Mitake Narukami':['The Raiden Shogun','End of the Oneiric Euthymia','Plane of Euthymia'],'Stormterror Dvalin':['Confront Stormterror'],"Guardian of Apep's Oasis":['Apep'],'La Signora':['Tenshukaku'],'Shouki no Kami':['Joururi Workshop']};
 const uid=()=>localStorage.getItem('trinity_uid')||'Admin';
 const KEY=()=>'bg_domtrk_'+uid();
 let st={goals:{weapons:[],artifacts:[],talents:[],boss:[]}};
@@ -3922,7 +3922,14 @@ window.dtImgFail=function(m){const l=JSON.parse(decodeURIComponent(m.dataset.c))
  if(i<l.length){m.dataset.i=i;m.src=l[i];}else{const s=document.createElement('span');s.className='fb';s.textContent=m.dataset.fb;m.replaceWith(s);}};
 function domCands(d){const n=[d.name,...(ALT[d.name]||[])];
  if(d.location&&d.location.includes('— '))n.push(d.location.split('— ')[1]);
- const out=[];n.forEach(x=>{const b=x.replace(/['’]/g,'');[b.replace(/ /g,'_'),b].forEach(v=>['jpg','webp','png','jpeg'].forEach(e=>out.push('Domains/'+v+'.'+e)));});return out;}
+ const out=[];
+ n.forEach(x=>{
+  // Files are .jpg only, in the same folder as the page: spaces -> "_" (also try the raw name, and without apostrophes)
+  [x, x.replace(/['’]/g,'')].forEach(b=>{
+   [b.replace(/ /g,'_'), b].forEach(v=>{const f=v+'.jpg'; if(!out.includes(f))out.push(f);});
+  });
+ });
+ return out;}
 function charCands(c){return [c.charImg,c.name+'1.jpg',c.name.replace(/ /g,'_')+'1.jpg'];}
 function slot(c,x,dim,click){
  const ec=(typeof EL_COLORS!=='undefined'&&EL_COLORS[c.elem])||'#c8a84b';
@@ -3967,6 +3974,62 @@ function render(){
 window.renderDomainView=function(){load();render();};
 const _sv=window.showView;
 window.showView=function(v){_sv(v);if(v==='domain')renderDomainView();};
+})();
+</script>
+<script>
+/* ── Recommended Team: always show 4 boxes filled with the selected character's image (Owned or not) ── */
+(function(){
+  const SLOTS = 4;
+  function curName(){ const el=document.getElementById('ch-name'); return el?el.textContent.trim():''; }
+  function cands(name){
+    const l=[name+'1.jpg', name.replace(/ /g,'_')+'1.jpg'];
+    try{ const m=(typeof myChars!=='undefined'?myChars:[]).find(c=>c.name===name); if(m&&m.charImg)l.push(m.charImg); }catch(e){}
+    return l;
+  }
+  function boxHtml(name){
+    const l=cands(name);
+    return `<img src="${encodeURI(l[0])}" alt="${name.replace(/"/g,'&quot;')}" data-c="${encodeURIComponent(JSON.stringify(l))}" data-i="0" onerror="rtImgFail(this)" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
+  }
+  window.rtImgFail=function(m){
+    const l=JSON.parse(decodeURIComponent(m.dataset.c)), i=+m.dataset.i+1;
+    if(i<l.length){ m.dataset.i=i; m.src=encodeURI(l[i]); }
+    else { const s=document.createElement('span'); s.className='team-icon-txt'; s.textContent=m.alt; m.replaceWith(s); }
+  };
+  function hasPicture(box){ return !!box.querySelector('img'); }
+  let busy=false, obs=null;
+  function fill(){
+    const tb=document.getElementById('team-blocks'), name=curName();
+    if(!tb||!name||busy) return;
+    busy=true; if(obs) obs.disconnect();
+    try{
+      // No team data at all -> show one placeholder block so the boxes are never missing
+      if(!tb.querySelector('.team-icons')){
+        tb.innerHTML='<div class="team-block"><div class="team-label">Recommended Team</div><div class="team-icons"></div></div>';
+      }
+      tb.querySelectorAll('.team-icons').forEach(row=>{
+        // exactly 4 boxes per team row
+        while(row.querySelectorAll('.team-icon').length<SLOTS){ const d=document.createElement('div'); d.className='team-icon'; row.appendChild(d); }
+        row.querySelectorAll('.team-icon').forEach((box,i)=>{
+          if(i>=SLOTS){ box.remove(); return; }
+          if(!hasPicture(box)){            // keep real member pictures, replace empty/emoji/text boxes
+            box.style.padding='0'; box.style.overflow='hidden';
+            box.innerHTML=boxHtml(name);
+          }
+        });
+      });
+    } finally {
+      busy=false;
+      if(obs){ obs.observe(tb,{childList:true,subtree:true}); const h=document.getElementById('ch-name'); if(h) obs.observe(h,{childList:true,characterData:true,subtree:true}); }
+    }
+  }
+  function init(){
+    const tb=document.getElementById('team-blocks'); if(!tb) return;
+    obs=new MutationObserver(()=>{ requestAnimationFrame(fill); });
+    obs.observe(tb,{childList:true,subtree:true});
+    const h=document.getElementById('ch-name'); if(h) obs.observe(h,{childList:true,characterData:true,subtree:true});
+    fill();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 </body>
