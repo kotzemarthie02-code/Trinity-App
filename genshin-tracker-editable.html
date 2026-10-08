@@ -75,6 +75,14 @@
      ============================================================ */
   #characterPage{ display:none; }
   #characterPage.visible{ display:block; position:relative; }
+  /* Empty state: nothing selected yet -> hide the whole tracker, show a clean message */
+  #characterPage.no-char > *:not(#emptyState){ display:none !important; }
+  #emptyState{ display:none; }
+  #characterPage.no-char #emptyState{
+    display:block; text-align:center; margin-top:60px; padding:48px 20px;
+    color:rgba(242,242,250,0.55); font-size:17px;
+  }
+  #emptyState .empty-icon{ font-size:44px; margin-bottom:12px; opacity:.7; }
 
   /* ---- Pinned notes: click-anywhere markers ---- */
   body.pin-mode-active{ cursor:crosshair; }
@@ -488,7 +496,13 @@
   <!-- ============================================================
        CHARACTER TRACKER VIEW (single, combined view)
        ============================================================ -->
-  <div id="characterPage" class="visible">
+  <div id="characterPage" class="visible no-char">
+
+    <div id="emptyState">
+      <div class="empty-icon">💜</div>
+      <div>Nog nie 'n character gekies nie</div>
+      <div style="font-size:13px;margin-top:6px;opacity:.7;">Kies 'n character hierbo om te begin</div>
+    </div>
 
     <div id="pinMarkersLayer"></div>
     <div id="pinPopup" class="pin-popup" style="display:none;">
@@ -1049,7 +1063,7 @@ function syncWithTrainingGuide(){
   return ownedNames;
 }
 
-let activeIndex = 0; // which character is currently shown in the tracker view
+let activeIndex = -1; // which character is currently shown (-1 = none selected yet)
 
 /* ---------------------------------------------------------------
    3) RENDER: thin top summary strip + character select dropdown
@@ -1079,6 +1093,10 @@ function renderSummaryStrip(){
 function renderCharacterSelect(){
   const sel = document.getElementById("characterSelect");
   sel.innerHTML = "";
+  const ph = document.createElement("option");
+  ph.value = "-1";
+  ph.textContent = "— Kies 'n character —";
+  sel.appendChild(ph);
   ownedCharacterEntries().forEach(({c, i})=>{
     const opt = document.createElement("option");
     opt.value = i;
@@ -1086,6 +1104,17 @@ function renderCharacterSelect(){
     sel.appendChild(opt);
   });
   sel.value = activeIndex;
+}
+
+const TALENT_ORDER = ["normal","skill","burst"];
+function talentEntries(c){
+  // Firebase returns object keys alphabetically (burst, normal, skill) — force the right order
+  const keys = Object.keys(c.talents);
+  keys.sort((a,b)=>{
+    const ia = TALENT_ORDER.indexOf(a), ib = TALENT_ORDER.indexOf(b);
+    return (ia<0?99:ia) - (ib<0?99:ib);
+  });
+  return keys.map(k=>[k, c.talents[k]]);
 }
 
 function renderTop(){
@@ -1099,13 +1128,16 @@ function renderTop(){
    --------------------------------------------------------------- */
 function openCharacter(index){
   activeIndex = index;
-  document.getElementById("characterPage").classList.add("visible");
+  const page = document.getElementById("characterPage");
+  page.classList.add("visible");
+  page.classList.toggle("no-char", !characters[activeIndex]);
   renderTop();
-  renderCharacterPage();
+  if (characters[activeIndex]) renderCharacterPage();
 }
 
 function renderCharacterPage(){
   const c = characters[activeIndex];
+  if (!c) return; // nothing selected yet
 
   updateAvatar(c);
   document.getElementById("cName").value = c.name;
@@ -1132,7 +1164,7 @@ function renderCharacterPage(){
   // ---- talents table ----
   const talentBody = document.getElementById("talentBody");
   talentBody.innerHTML = "";
-  Object.entries(c.talents).forEach(([key, t])=>{
+  talentEntries(c).forEach(([key, t])=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${t.label}</td>
@@ -1427,10 +1459,11 @@ function applyDiffAndStatus(kind, dataObj){
    the user types a new number. */
 function updateAllDiffsAndProgress(){
   const c = characters[activeIndex];
+  if (!c) return;
 
   applyDiffAndStatus("stat", c.stats);
 
-  Object.entries(c.talents).forEach(([key, t])=>{
+  talentEntries(c).forEach(([key, t])=>{
     const untouched = t.target === 0 && t.current === 0;
     const diff = calcDiff(t.target, t.current);
     const cell = document.getElementById("diff-talent-" + key);
@@ -1462,7 +1495,7 @@ function updateAllDiffsAndProgress(){
     const diff = calcDiff(s.target, s.current);
     if (diff < 0) missing.push({ label: s.label, val: `${Math.abs(diff)}${s.unit}` });
   });
-  Object.values(c.talents).forEach(t=>{
+  talentEntries(c).forEach(([, t])=>{
     const diff = calcDiff(t.target, t.current);
     if (diff < 0) missing.push({ label: t.label, val: `+${Math.abs(diff)}` });
   });
@@ -2036,8 +2069,7 @@ window.onFirebaseTrackerReady = function(uid){
 (function initApp(){
   loadCharacterData();
   const ownedNames = syncWithTrainingGuide();
-  const firstOwnedIndex = characters.findIndex(c => ownedNames.includes(c.name));
-  openCharacter(firstOwnedIndex >= 0 ? firstOwnedIndex : 0);
+  openCharacter(-1); // start empty — wait until a character is clicked
 })();
 </script>
 </body>
