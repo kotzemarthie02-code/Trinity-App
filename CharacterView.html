@@ -775,7 +775,7 @@ const elementMap = {
     "Alhaitham":"dendro","Baizhu":"dendro","Collei":"dendro","Emilie":"dendro","Kaveh":"dendro","Kinich":"dendro","Kirara":"dendro","Nahida":"dendro","Tighnari":"dendro","Yaoyao":"dendro","Traveler Dendro":"dendro",
     "Ayato":"hydro","Barbara":"hydro","Candace":"hydro","Charlotte":"hydro","Furina":"hydro","Kokomi":"hydro","Mualani":"hydro","Neuvillette":"hydro","Nilou":"hydro","Sigewinne":"hydro","Tartaglia":"hydro","Xingqiu":"hydro","Yelan":"hydro","Traveler Hydro":"hydro",
     "Amber":"pyro","Arlecchino":"pyro","Bennett":"pyro","Chevreuse":"pyro","Columbina":"pyro","Dehya":"pyro","Diluc":"pyro","Gaming":"pyro","Hu Tao":"pyro","Klee":"pyro","Lyney":"pyro","Mavuika":"pyro","Murata":"pyro","Thoma":"pyro","Xiangling":"pyro","Xinyan":"pyro","Yoimiya":"pyro",
-    "Aloy":"cryo","Chongyun":"cryo","Diona":"cryo","Eula":"cryo","Freminet":"cryo","Ganyu":"cryo","Kaeya":"cryo","Layla":"cryo","Mika":"cryo","Qiqi":"cryo","Rosaria":"cryo","Shenhe":"cryo","Wriothesley":"cryo","Ayaka":"cryo"
+    "Aloy":"cryo","Chongyun":"cryo","Diona":"cryo","Eula":"cryo","Freminet":"cryo","Ganyu":"cryo","Kaeya":"cryo","Layla":"cryo","Mika":"cryo","Qiqi":"cryo","Rosaria":"cryo","Shenhe":"cryo","Wriothesley":"cryo","Ayaka":"cryo","Prune":"anemo","Vesna":"anemo","Alyosha":"electro","Vodyanitsa":"hydro","Nicole":"pyro","Lohen":"cryo","Odette":"cryo","Sandrone":"cryo","Traveler Cryo":"cryo"
 };
 
 function updateElemTheme(name) {
@@ -827,6 +827,8 @@ function getActiveCharName() {
 
 const charDatabase = {
     // --- ANEMO ---
+    "Prune": { bday: "11/20", title: "Childlike Dreams Cherished", const: "Turris Venefica", stars: 4, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
+    "Vesna": { bday: "02/04", title: "Snowy Banquet's Sharp Blade", const: "Amentum Vernum", stars: 5, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
     "Chasca": { bday: "10/12", title: "Skyborne Arbiter", const: "Vultur Gryphus", stars: 5, talents: { normalAttack: "Phantom Feather Flurry", elementalSkill: "Spirit Reins, Shadow Hunt", elementalBurst: "Soul Reaper's Fatal Round" } },
     "Faruzan": { bday: "08/20", title: "Enigmatic Machinist", const: "Flosculi Implexi", stars: 4, talents: { normalAttack: "Parthian Shot", elementalSkill: "Wind Realm of Nasamjnin", elementalBurst: "The Wind's Secret Ways" } },
     "Ifa": { bday: "03/23", title: "In the Wake of Wandering Winds", const: "Catena Opele", stars: 4, talents: { normalAttack: "Rite of Dispelling Winds", elementalSkill: "Airborne Disease Prevention", elementalBurst: "Compound Sedation Field" } },
@@ -864,6 +866,7 @@ const charDatabase = {
     "Traveler Geo": { bday: "Own choice", title: "Hero of Liyue, Traveler", const: "Viator/Viatrix", stars: 5, talents: { normalAttack: "Foreign Rockblade", elementalSkill: "Starfell Sword", elementalBurst: "Wake of Earth" } },
 
     // --- ELECTRO ---
+    "Alyosha": { bday: "02/09", title: "Swift-Striding Hound", const: "Canis Borzoides", stars: 4, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
     "Beidou": { bday: "02/14", title: "Uncrowned Lord of the Ocean", const: "Victor Mare", stars: 4, talents: { normalAttack: "Oceanborne", elementalSkill: "Stormbreaker", elementalBurst: "Stormbreaker Tidecaller" } },
     "Clorinde": { bday: "09/20", title: "Candlebearer, Shadowhunter", const: "Rapperia", stars: 5, talents: { normalAttack: "Oath of Hunting Shadows", elementalSkill: "Swift Hunt", elementalBurst: "Last Light, Shadow Hunter's Blade" } },
     "Cyno": { bday: "06/23", title: "Judicator of Secrets", const: "Lupus Aureus", stars: 5, talents: { normalAttack: "Invoker's Spear", elementalSkill: "Mystic Rite: Chasmic Soulfarer", elementalBurst: "Sacred Rite: Wolf's Swiftness" } },
@@ -900,6 +903,7 @@ const charDatabase = {
     "Traveler Dendro": { bday: "Own choice", title: "First Sage of Buer", const: "Viator/Viatrix", stars: 5, talents: { normalAttack: "Foreign Fieldcleaver", elementalSkill: "Lea Lotus Lamp", elementalBurst: "Surgent Manifestation" } },
 
     // --- HYDRO ---
+    "Vodyanitsa": { bday: "03/29", title: "Lingering Siren-Song", const: "Piscicula Aurea", stars: 5, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
     "Aino": { bday: "09/21", title: "Clinky-Clank Gadgets-A-Gogo", const: "Cistellula Mira", stars: 4, talents: { normalAttack: "Clinky-Clank Gadgets-A-Gogo", elementalSkill: "Musecatcher", elementalBurst: "Precision Hydronic Cooler" } },
     "Barbara": { bday: "07/05", title: "Shining Idol", const: "Crater", stars: 4, talents: { normalAttack: "Whisper of Water", elementalSkill: "Let the Show Begin♪", elementalBurst: "Shining Miracle♪" } },
     "Candace": { bday: "05/03", title: "Golden Vow", const: "Sagitta Scutum", stars: 4, talents: { normalAttack: "Gleaming Spear - Guardian Stance", elementalSkill: "Sacred Rite: Heron's Sanctum", elementalBurst: "Shield of Sworn Protection" } },
@@ -919,6 +923,7 @@ const charDatabase = {
     "Traveler Hydro": { bday: "Own choice", title: "Honorary Senior Researcher", const: "Viator/Viatrix", stars: 5, talents: { normalAttack: "Foreign Stream", elementalSkill: "Spiritblade: Water's Echo", elementalBurst: "Surgent Manifestation" } },
 
     // --- PYRO ---
+    "Nicole": { bday: "09/29", title: "Clamor Within", const: "Reliquiarium", stars: 5, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
     "Amber": { bday: "08/10", title: "Gliding Champion", const: "Lepus", stars: 4, talents: { normalAttack: "Sharpshooter", elementalSkill: "Explosive Puppet", elementalBurst: "Fiery Rain" } },
     "Arlecchino": { bday: "08/22", title: "Dire Balemoon", const: "Ignis Purgatorius", stars: 5, talents: { normalAttack: "Unknown", elementalSkill: "Balemoon Bloodfire", elementalBurst: "Crimson Masquerade" } },
     "Bennett": { bday: "02/29", title: "Trial by Fire", const: "Rota Calamitas", stars: 4, talents: { normalAttack: "Favonius Bladework - Brave", elementalSkill: "Missionary Blade: Blast Formation", elementalBurst: "Fantastic Voyage" } },
@@ -939,6 +944,10 @@ const charDatabase = {
     "Traveler Pyro": { bday: "Own choice", title: "Tumaini (Hope)", const: "Viator/Viatrix", stars: 5, talents: { normalAttack: "Foreign Blaze", elementalSkill: "Fireblade Burst", elementalBurst: "Searing Onslaught" } },
 
     // --- CRYO ---
+    "Lohen": { bday: "04/03", title: "Sharpened Arrowhead", const: "Lepus Miles", stars: 5, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
+    "Odette": { bday: "02/20", title: "Swirling Snow", const: "Crygnus Olor", stars: 5, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
+    "Sandrone": { bday: "01/13", title: "Mirrored Analysis", const: "Narcissorolegium", stars: 5, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
+    "Traveler Cryo": { bday: "Own choice", title: "", const: "Viator/Viatrix", stars: 5, talents: { normalAttack: "", elementalSkill: "", elementalBurst: "" } },
     "Aloy": { bday: "04/04", title: "Savior From Another World", const: "Nora Fortis", stars: 5, talents: { normalAttack: "Normal Attack: Rapid Fire", elementalSkill: "Freeze Bomb", elementalBurst: "Prophecies of Dawn" } },
     "Charlotte": { bday: "04/10", title: "Lens of Verity", const: "Hualina Veritas", stars: 4, talents: { normalAttack: "Focal Length: Pressurized Shots", elementalSkill: "Snappy Silhouette", elementalBurst: "Still Photo: Comprehensive Confirmation" } },
     "Chongyun": { bday: "09/07", title: "Frozen Ardor", const: "Nubis Caesor", stars: 4, talents: { normalAttack: "Demonbane", elementalSkill: "Spirit Blade: Chonghua's Layered Frost", elementalBurst: "Spirit Blade: Cloud-Parting Star" } },
