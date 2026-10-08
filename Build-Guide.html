@@ -1182,8 +1182,7 @@ const ELEM_COLOR = { Pyro:'#e8734a', Hydro:'#4a9fe8', Cryo:'#8fd4f5', Electro:'#
 const ELEM_EMOJI = { Pyro:'🔥', Hydro:'💧', Cryo:'❄️', Electro:'⚡', Anemo:'🌪️', Geo:'🪨', Dendro:'🌿' };
 
 // ── CHARACTERS PER REGION (ids = c.id, or the name in lowercase with '-' for spaces) ──
-// Characters that are in NONE of these lists (e.g. Aino) automatically show up in every
-// domain box once they are Owned. To restrict a character, add the id here, or use CHAR_DOMAINS.
+// Region lists are only the FALLBACK for domains that have no entry in DOMAIN_ELEMS below.
 const RC = {
   mond:      ['amber','barbara','bennett','diluc','diona','fischl','jean','kaeya','klee','lisa','mika','mona','noelle','razor','rosaria','sucrose','venti','albedo','eula'],
   liyue:     ['baizhu','beidou','chongyun','ganyu','gaming','hu-tao','keqing','lan-yan','ningguang','qiqi','shenhe','xiangling','xianyun','xiao','xingqiu','xinyan','yanfei','yelan','yun-jin','zhongli'],
@@ -1191,13 +1190,11 @@ const RC = {
   sumeru:    ['alhaitham','candace','collei','cyno','dori','faruzan','kaveh','kirara','layla','nahida','nilou','tighnari','wanderer','yaoyao'],
   fontaine:  ['arlecchino','charlotte','chevreuse','chiori','clorinde','emilie','freminet','furina','lynette','lyney','navia','neuvillette','sigewinne','wriothesley'],
   natlan:    ['chasca','citlali','iansan','kachina','kinich','mavuika','mualani','ororon','varesa','xilonen','ifa'],
-  nodkrai:   ['alice','durin','flins','illuga','ineffa','jahoda','lauma','nicole','varka'],
+  nodkrai:   ['aino','alice','durin','flins','illuga','ineffa','jahoda','lauma','nicole','varka'],
   snezhnaya: ['vesna','mitya']
 };
 RC.all = [].concat(RC.mond, RC.liyue, RC.inazuma, RC.sumeru, RC.fontaine, RC.natlan, RC.nodkrai, RC.snezhnaya);
 
-// Optional per-character override: { 'character-id': ['Domain name', ...] }
-const CHAR_DOMAINS = {};
 
 // ── WEAPON DOMAINS (8) ──
 const WEAPON_DOMAIN_DB = [
@@ -1266,6 +1263,36 @@ const BOSS_DB = [
   { icon:'🔥', name:'Lord of Eroded Primal Fire',         location:'Natlan',    chars:RC.natlan },
   { icon:'🌑', name:'Exalted Master of the Heretical Path', location:'Nod-Krai', chars:RC.nodkrai }
 ];
+
+
+// ── RECOMMENDED ELEMENTS PER DOMAIN ──
+// A domain listed here shows ONLY owned characters whose element is in its list (all regions).
+// Domains NOT listed fall back to the region lists above. Add/edit entries freely.
+const DOMAIN_ELEMS = {
+  // Weapon
+  'Cecilia Garden':                    ['Cryo','Electro','Pyro'],
+  'Tower of Abject Pride':             ['Dendro','Electro'],
+  'Lost Mooncourt':                    ['Dendro','Hydro','Electro','Pyro'],
+  'Court of Flowing Sand':             ['Geo','Cryo'],
+  'Echoes of the Deep Tides':          ['Hydro','Pyro','Cryo','Anemo'],
+  'Hidden Palace of Lianshan Formula': ['Cryo','Pyro'],
+  'Ancient Watchtower':                ['Hydro','Electro','Pyro','Cryo'],
+  'Scars of Cursed Obsession':         ['Anemo','Cryo'],
+  // Talent
+  'Forsaken Rift':                     ['Pyro','Electro'],
+  'Steeple of Ignorance':              ['Dendro','Electro','Pyro','Hydro'],
+  'Lightless Capital':                 ['Hydro','Electro'],
+  'Taishan Mansion':                   ['Hydro','Cryo','Electro'],
+  'Pale Forgotten Glory':              ['Geo','Hydro','Pyro','Cryo','Electro'],
+  'Relics of the Fallen Grace':        ['Cryo','Electro'],
+  'Violet Court':                      ['Electro'],
+  'Blazing Ruins':                     ['Dendro','Electro','Anemo','Hydro'],
+  // Artifact (only the ones confirmed so far)
+  'Hidden Palace of Zhou Formula':     ['Hydro'],
+  'Frostladen Machinery':              ['Dendro','Electro','Hydro'],
+  "Moonchild's Treasures":             ['Hydro','Geo','Electro','Dendro']
+};
+[WEAPON_DOMAIN_DB, ARTIFACT_DOMAIN_DB, TALENT_DOMAIN_DB, BOSS_DB].forEach(db => db.forEach(d => { if (DOMAIN_ELEMS[d.name]) d.elems = DOMAIN_ELEMS[d.name]; }));
 
 let _currentDomainTab = 'weapons';
 
@@ -3966,15 +3993,23 @@ function esc(t){return String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','
 function img(c,fb){const l=c.filter(Boolean);if(!l.length)return fb;
  return `<img src="${esc(l[0])}" data-c="${encodeURIComponent(JSON.stringify(l))}" data-i="0" data-fb="${esc(fb)}" onerror="dtImgFail(this)">`;}
 window.dtImgFail=function(m){const l=JSON.parse(decodeURIComponent(m.dataset.c)),i=+m.dataset.i+1;
- if(i<l.length){m.dataset.i=i;m.src=l[i];}else{const s=document.createElement('span');s.className='fb';s.textContent=m.dataset.fb;m.replaceWith(s);}};
+ if(i<l.length){m.dataset.i=i;m.src=l[i];}
+ else{console.warn('[Domain tracker] no image found for "'+m.dataset.fb+'". Tried e.g.:',l.slice(0,6).join(' | '));
+  const s=document.createElement('span');s.className='fb';s.textContent=m.dataset.fb;m.replaceWith(s);}};
+// Spaces -> underscores first (Cecilia_Garden.jpg), then other spellings / folders / extension cases
 function domCands(d){const n=[d.name,...(ALT[d.name]||[])];
  if(d.location&&d.location.includes('— '))n.push(d.location.split('— ')[1]);
- const out=[];n.forEach(x=>{[x,x.replace(/['’]/g,'')].filter((b,i,a)=>a.indexOf(b)===i).forEach(b=>[b.replace(/ /g,'_'),b].forEach(v=>['jpg','webp','png','jpeg'].forEach(e=>out.push('Domains/'+v+'.'+e))));});return out;}
-function charCands(c){const m=/^Traveler\s+(\w+)/i.exec(c.name),b=m?m[1]:c.name;
- return [c.charImg,b+'1.jpg',b.replace(/ /g,'_')+'1.jpg'];}
+ const DIRS=['Domains/',''],EXT=['jpg','png','jpeg','webp','JPG','PNG','JPEG','WEBP'],out=[],seen=new Set();
+ n.forEach(x=>{const vs=[];
+  [x,x.replace(/['’]/g,'')].forEach(b=>{b=b.trim();const u=b.replace(/\s+/g,'_');vs.push(u,b,u.toLowerCase(),u.replace(/_/g,'-').toLowerCase());});
+  [...new Set(vs)].forEach(v=>DIRS.forEach(dir=>EXT.forEach(e=>{const u=dir+v+'.'+e;if(!seen.has(u)){seen.add(u);out.push(u);}})));});
+ return out;}
+function charCands(c){
+ if(c.trav){const e=c.elem||'';return [e?e+'1.jpg':'', 'Traveler1.jpg', e?'Traveler_'+e+'1.jpg':''];}
+ return [c.charImg,c.name+'1.jpg',c.name.replace(/ /g,'_')+'1.jpg'];}
 function slot(c,x,dim,click){
  const ec=(typeof EL_COLORS!=='undefined'&&EL_COLORS[c.elem])||'#c8a84b';
- return `<div class="dt-slot set${dim?' dim':''}" style="border-color:${ec}" ${click||''}>${img(charCands(c),EMO[c.elem]||'⭐')}${x||''}<div class="nm">${esc(c.name)}</div></div>`;}
+ return `<div class="dt-slot set${dim?' dim':''}" style="border-color:${ec}" title="${esc(c.name)}${c.trav&&c.elem?' ('+esc(c.elem)+')':''}" ${click||''}>${img(charCands(c),EMO[c.elem]||'⭐')}${x||''}<div class="nm">${esc(c.name)}</div></div>`;}
 const TEAMS=3,SZ=4;
 // ── OWNED: Build-Guide ('my-<index>') + Training Guide (character names in 'ownedCharacters') ──
 let tgOwned=[];
@@ -3994,16 +4029,39 @@ function ownedChars(owned){
  myChars.forEach((c,i)=>{const k=norm(c.name);if(owned.includes('my-'+i)||tg.has(k)){out.push({c,i});seen.add(k);}});
  tgOwned.forEach(n=>{const k=norm(n);if(!seen.has(k)){seen.add(k);out.push({c:{name:n},i:-1});}});
  return out;}
-let _mapped=null;
-function mappedIds(){if(_mapped)return _mapped;_mapped=new Set();
- [WEAPON_DOMAIN_DB,ARTIFACT_DOMAIN_DB,TALENT_DOMAIN_DB,BOSS_DB].forEach(db=>db.forEach(d=>(d.chars||[]).forEach(x=>_mapped.add(x))));
- return _mapped;}
-function fits(d,c){const k=ck(c);
- return (d.chars||[]).includes(k)||(CHAR_DOMAINS[k]||[]).includes(d.name)||(!mappedIds().has(k)&&!CHAR_DOMAINS[k]);}
+const CHAR_ELEM = {"aino":"Hydro","albedo":"Geo","alhaitham":"Dendro","aloy":"Cryo","alyosha":"Electro","amber":"Pyro","aratakiitto":"Geo","arlecchino":"Pyro","baizhu":"Dendro","barbara":"Hydro","beidou":"Electro","bennett":"Pyro","candace":"Hydro","charlotte":"Cryo","chasca":"Anemo","chevreuse":"Pyro","chiori":"Geo","chongyun":"Cryo","citlali":"Cryo","clorinde":"Electro","collei":"Dendro","columbina":"Hydro","cyno":"Electro","dahlia":"Hydro","dehya":"Pyro","diluc":"Pyro","diona":"Cryo","dori":"Electro","durin":"Pyro","emilie":"Dendro","escoffier":"Cryo","eula":"Cryo","faruzan":"Anemo","fischl":"Electro","flins":"Electro","freminet":"Cryo","furina":"Hydro","gaming":"Pyro","ganyu":"Cryo","gorou":"Geo","hutao":"Pyro","iansan":"Electro","ifa":"Anemo","illuga":"Geo","ineffa":"Electro","jahoda":"Anemo","jean":"Anemo","kachina":"Geo","kaedeharakazuha":"Anemo","kaeya":"Cryo","kamisatoayaka":"Cryo","kamisatoayato":"Hydro","kaveh":"Dendro","keqing":"Electro","kinich":"Dendro","kirara":"Dendro","klee":"Pyro","kujousara":"Electro","kukishinobu":"Electro","lanyan":"Anemo","lauma":"Dendro","layla":"Cryo","lisa":"Electro","lohen":"Cryo","lynette":"Anemo","lyney":"Pyro","mavuika":"Pyro","mika":"Cryo","mona":"Hydro","mualani":"Hydro","nahida":"Dendro","navia":"Geo","nefer":"Dendro","neuvillette":"Hydro","nicole":"Pyro","nilou":"Hydro","ningguang":"Geo","noelle":"Geo","odette":"Cryo","ororon":"Electro","prune":"Anemo","qiqi":"Cryo","raidenshogun":"Electro","razor":"Electro","rosaria":"Cryo","sandrone":"Cryo","sangonomiyakokomi":"Hydro","sayu":"Anemo","sethos":"Electro","shenhe":"Cryo","shikanoinheizou":"Anemo","sigewinne":"Hydro","skirk":"Cryo","sucrose":"Anemo","tartaglia":"Hydro","thoma":"Pyro","tighnari":"Dendro","varesa":"Electro","varka":"Anemo","venti":"Anemo","vesna":"Anemo","vodyanitsa":"Hydro","wanderer":"Anemo","wriothesley":"Cryo","xiangling":"Pyro","xianyun":"Anemo","xiao":"Anemo","xilonen":"Geo","xingqiu":"Hydro","xinyan":"Pyro","yaemiko":"Electro","yanfei":"Pyro","yaoyao":"Dendro","yelan":"Hydro","yoimiya":"Pyro","yumemizukimizuki":"Anemo","yunjin":"Geo","zhongli":"Geo","zibai":"Geo","linnea":"Geo"};
+const ELEMS=['Pyro','Hydro','Electro','Cryo','Anemo','Geo','Dendro'];
+const capEl=e=>{e=String(e||'');return ELEMS.find(x=>x.toLowerCase()===e.toLowerCase())||'';};
+const isTrav=n=>/^traveler/i.test(String(n));
+function travElem(c){const m=/^traveler\W*(\w+)?/i.exec(c.name);return capEl(m&&m[1])||capEl(c.elem);}
+function elemOf(c){return capEl(c.elem)||CHAR_ELEM[norm(c.name)]||'';}
+// Owned characters from both systems. ALL "Traveler <Element>" entries become ONE Traveler with the elements owned.
+function ownedChars(owned){
+ const tg=new Set(tgOwned.map(norm)),out=[],seen=new Set();let tv=null;
+ const add=(c,i)=>{
+  if(isTrav(c.name)){
+   if(!tv){tv={c:{name:'Traveler',trav:true,elems:[],any:false},i:-1,idxs:[]};out.push(tv);}
+   const e=travElem(c);if(e){if(!tv.c.elems.includes(e))tv.c.elems.push(e);}else tv.c.any=true;
+   if(i>=0)tv.idxs.push(i);return;}
+  const k=norm(c.name);if(seen.has(k))return;seen.add(k);out.push({c,i,idxs:i>=0?[i]:[]});};
+ myChars.forEach((c,i)=>{if(owned.includes('my-'+i)||tg.has(norm(c.name)))add(c,i);});
+ tgOwned.forEach(n=>add({name:n},-1));
+ if(tv&&(tv.c.any||!tv.c.elems.length))tv.c.elems=ELEMS.slice(); // plain "Traveler" = supports all 7 elements
+ return out;}
+// Returns the character to display in this domain's boxes, or null if it is not recommended here.
+function pickFor(d,o){
+ const c=o.c,want=d.elems;
+ if(want&&want.length){
+  if(c.trav){const e=want.find(x=>c.elems.includes(x));return e?{name:'Traveler',trav:true,elem:e}:null;}
+  const e=elemOf(c);return want.includes(e)?(c.elem?c:{...c,elem:e}):null;}
+ // no element data for this domain -> region list fallback (Traveler can always join)
+ if(c.trav)return {name:'Traveler',trav:true,elem:c.elems[0]};
+ return (d.chars||[]).includes(ck(c))?(c.elem?c:{...c,elem:elemOf(c)}):null;}
 function team(d,col,owned){
  const goals=st.goals[col.k]||[];
- const fit=ownedChars(owned).filter(o=>fits(d,o.c));
- return [...fit.filter(o=>goals.includes(o.i)),...fit.filter(o=>!goals.includes(o.i))].slice(0,TEAMS*SZ).map(o=>o.c);}
+ const fit=ownedChars(owned).map(o=>({o,x:pickFor(d,o)})).filter(f=>f.x);
+ const isG=f=>f.o.idxs.some(i=>goals.includes(i));
+ return [...fit.filter(isG),...fit.filter(f=>!isG(f))].slice(0,TEAMS*SZ).map(f=>f.x);}
 function card(d,col,owned){
  const t=team(d,col,owned);
  const slots=[...Array(TEAMS*SZ)].map((_,n)=>t[n]?slot(t[n]):`<div class="dt-slot" style="cursor:default;opacity:.35"><span class="pl">+</span></div>`).join('');
@@ -4011,8 +4069,9 @@ function card(d,col,owned){
 window.dtTab=function(k){curTab=k;render();};
 
 window.dtSearch=function(v){q=v.toLowerCase();dtFillPick();};
-function dtFillPick(){const used=st.goals[window._dtc]||[];
- const l=myChars.map((c,i)=>({c,i})).filter(o=>o.c.name.toLowerCase().includes(q)).sort((a,b)=>a.c.name.localeCompare(b.c.name));
+function dispC(c){return c&&isTrav(c.name)?{...c,name:'Traveler',trav:true,elem:travElem(c)}:c;}
+function dtFillPick(){const used=st.goals[window._dtc]||[];let tvDone=false;
+ const l=myChars.map((c,i)=>({c:dispC(c),i})).filter(o=>{if(o.c.trav){if(tvDone)return false;tvDone=true;}return o.c.name.toLowerCase().includes(q);}).sort((a,b)=>a.c.name.localeCompare(b.c.name));
  document.getElementById('dt-pick-list').innerHTML=l.map(o=>{const u=used.includes(o.i);
   return `<div style="text-align:center">${slot(o.c,'',u,u?'':`onclick="dtChoose(${o.i})" style="cursor:pointer"`)}</div>`;}).join('')||'<div style="color:var(--muted)">Geen karakters nie.</div>';}
 window.dtPick=function(k){window._dtc=k;q='';
@@ -4024,11 +4083,10 @@ window.dtChoose=function(i){const g=st.goals[_dtc],col=COLS.find(c=>c.k===_dtc);
 window.dtRemove=function(k,i){st.goals[k]=st.goals[k].filter(x=>x!==i);save();render();};
 const GROUPS=[['Mon / Thu / Sun','Mon / Thu'],['Tue / Fri / Sun','Tue / Fri'],['Wed / Sat / Sun','Wed / Sat']];
 function render(){
- _mapped=null;
  const el=document.getElementById('dt-grid');if(!el)return;
  const owned=getOwned(),col=COLS.find(c=>c.k===curTab),goals=st.goals[col.k]||[];
  const tabs=`<div class="dt-tabs">${COLS.map(c=>`<button class="dt-tab${c.k===curTab?' on':''}" onclick="dtTab('${c.k}')">${c.t}</button>`).join('')}</div>`;
- const gs=[...Array(col.max)].map((_,n)=>{const i=goals[n],c=i!=null?myChars[i]:null;
+ const gs=[...Array(col.max)].map((_,n)=>{const i=goals[n],c=i!=null?dispC(myChars[i]):null;
   return c?slot(c,`<span class="x" onclick="dtRemove('${col.k}',${i})">×</span>`):`<div class="dt-slot" onclick="dtPick('${col.k}')"><span class="pl">+</span></div>`;}).join('');
  const goalbar=`<div class="dt-goalbar"><div class="dt-sub" style="margin:0">Goal Characters</div>${gs}${goals.length<col.max?`<button class="dt-add" onclick="dtPick('${col.k}')">Add +</button>`:''}${col.boss?`<span style="color:var(--muted);font-weight:700">${goals.length}/${col.max}</span>`:''}</div>`;
  const ds=col.db();
