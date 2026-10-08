@@ -480,6 +480,29 @@ body::after {
   .ac-item img { width:34px; height:34px; border-radius:5px; object-fit:cover; flex-shrink:0; background:#111; }
   .ac-sub { font-size:10px; color:var(--muted); font-weight:400; }
 </style>
+<style>
+.dt-head{display:flex;align-items:center;gap:12px;margin:18px 24px;padding:12px 18px;border:1px solid var(--border);border-radius:14px;background:var(--panel);}
+.dt-title{font-family:'Cinzel',serif;font-size:24px;font-weight:700;color:var(--gold);}
+.dt-grid{display:grid;grid-template-columns:repeat(4,minmax(250px,1fr));gap:14px;padding:0 24px 28px;overflow-x:auto;align-items:start;}
+.dt-col{border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:12px;min-width:250px;}
+.dt-col>h3{margin:0 0 10px;font-family:'Cinzel',serif;font-size:16px;color:var(--text);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);padding-bottom:8px;}
+.dt-sub{font-size:12px;font-weight:700;color:var(--muted);margin:8px 0 6px;letter-spacing:.5px;}
+.dt-row{display:grid;gap:6px;}
+.dt-slot{aspect-ratio:1;border:1.5px dashed rgba(200,168,75,.35);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--muted);cursor:pointer;position:relative;overflow:hidden;background:rgba(255,255,255,.02);}
+.dt-slot.set{border-style:solid;cursor:default;}
+.dt-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.dt-slot .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);font-size:9px;text-align:center;color:#fff;padding:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dt-slot .x{position:absolute;top:1px;right:3px;font-size:13px;color:#fff;cursor:pointer;z-index:2;text-shadow:0 0 3px #000;}
+.dt-slot .pl{font-size:20px;line-height:1;color:var(--gold);}
+.dt-day{margin-top:12px;border:1px solid var(--border);border-radius:12px;padding:8px;}
+.dt-dayh{font-size:12px;font-weight:700;color:var(--purple);margin-bottom:6px;}
+.dt-dom{display:flex;align-items:center;gap:10px;margin:6px 0;}
+.dt-pic{width:54px;height:54px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;background:rgba(255,255,255,.04);flex-shrink:0;}
+.dt-dn{font-size:13px;font-weight:700;color:var(--text);}
+.dt-boxes{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);}
+.dt-boxes input{width:16px;height:16px;accent-color:#c8a84b;}
+@media(max-width:900px){.dt-grid{grid-template-columns:repeat(4,270px);}}
+</style>
 </head>
 <body>
 <div id="app">
@@ -531,28 +554,28 @@ body::after {
 
     <!-- DASHBOARD -->
     <div id="view-dashboard" class="view active">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap;">
-        <div>
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;flex-wrap:nowrap;">
+        <div style="flex-shrink:0;">
           <div class="dash-title">My Roster</div>
           <div class="dash-sub">Select a character to view their build.</div>
         </div>
-        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:stretch;flex-wrap:nowrap;min-width:0;">
           <button onclick="openBackupModal()" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;color:#ffe14b;font-family:'Rajdhani',sans-serif;font-weight:700;white-space:nowrap;">💾 Backup & Herstel</button>
           <button id="bg-lock-btn" onclick="bgToggleLock()" title="Settings" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;color:var(--muted);font-family:'Rajdhani',sans-serif;font-weight:700;white-space:nowrap;">⚙️ <span id="bg-lock-lbl">Settings</span></button>
-          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--muted);">
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:5px;">
             <span style="font-weight:700;" id="owned-count">0</span> <span id="owned-label">Owned</span>
           </div>
-          <div id="stat-strip" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;">
-            <span><b id="st-5" style="color:#b9a4ff;font-size:15px;">0</b> 5★</span><span style="opacity:.35;">·</span>
-            <span><b id="st-4" style="color:#b9a4ff;font-size:15px;">0</b> 4★</span><span style="opacity:.35;">·</span>
-            <span class="st-el" data-el="Anemo" style="cursor:pointer;"><b id="st-Anemo" style="font-size:15px;">0</b> Anemo</span><span style="opacity:.35;">·</span>
-            <span class="st-el" data-el="Geo" style="cursor:pointer;"><b id="st-Geo" style="font-size:15px;">0</b> Geo</span><span style="opacity:.35;">·</span>
-            <span class="st-el" data-el="Electro" style="cursor:pointer;"><b id="st-Electro" style="font-size:15px;">0</b> Electro</span><span style="opacity:.35;">·</span>
-            <span class="st-el" data-el="Dendro" style="cursor:pointer;"><b id="st-Dendro" style="font-size:15px;">0</b> Dendro</span><span style="opacity:.35;">·</span>
-            <span class="st-el" data-el="Hydro" style="cursor:pointer;"><b id="st-Hydro" style="font-size:15px;">0</b> Hydro</span><span style="opacity:.35;">·</span>
-            <span class="st-el" data-el="Pyro" style="cursor:pointer;"><b id="st-Pyro" style="font-size:15px;">0</b> Pyro</span><span style="opacity:.35;">·</span>
-            <span class="st-el" data-el="Cryo" style="cursor:pointer;"><b id="st-Cryo" style="font-size:15px;">0</b> Cryo</span><span style="opacity:.35;">·</span>
-            <span><span style="color:var(--gold);font-weight:700;font-size:15px;" id="total-count">0</span> Total</span>
+          <div id="stat-strip" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:clamp(10.5px,0.82vw,13px);color:var(--muted);display:flex;flex-wrap:nowrap;white-space:nowrap;align-items:center;gap:0 clamp(4px,0.45vw,8px);min-width:0;">
+            <span><b id="st-5" style="color:#b9a4ff;font-size:1.15em;">0</b> 5★</span><span style="opacity:.35;">·</span>
+            <span><b id="st-4" style="color:#b9a4ff;font-size:1.15em;">0</b> 4★</span><span style="opacity:.35;">·</span>
+            <span class="st-el" data-el="Anemo" style="cursor:pointer;"><b id="st-Anemo" style="font-size:1.15em;">0</b> Anemo</span><span style="opacity:.35;">·</span>
+            <span class="st-el" data-el="Geo" style="cursor:pointer;"><b id="st-Geo" style="font-size:1.15em;">0</b> Geo</span><span style="opacity:.35;">·</span>
+            <span class="st-el" data-el="Electro" style="cursor:pointer;"><b id="st-Electro" style="font-size:1.15em;">0</b> Electro</span><span style="opacity:.35;">·</span>
+            <span class="st-el" data-el="Dendro" style="cursor:pointer;"><b id="st-Dendro" style="font-size:1.15em;">0</b> Dendro</span><span style="opacity:.35;">·</span>
+            <span class="st-el" data-el="Hydro" style="cursor:pointer;"><b id="st-Hydro" style="font-size:1.15em;">0</b> Hydro</span><span style="opacity:.35;">·</span>
+            <span class="st-el" data-el="Pyro" style="cursor:pointer;"><b id="st-Pyro" style="font-size:1.15em;">0</b> Pyro</span><span style="opacity:.35;">·</span>
+            <span class="st-el" data-el="Cryo" style="cursor:pointer;"><b id="st-Cryo" style="font-size:1.15em;">0</b> Cryo</span><span style="opacity:.35;">·</span>
+            <span><span style="color:var(--gold);font-weight:700;font-size:1.15em;" id="total-count">0</span> Total</span>
           </div>
         </div>
       </div>
@@ -630,20 +653,14 @@ body::after {
 
     <!-- DOMAIN VIEW -->
     <div id="view-domain" class="view">
-      <div class="domain-header">
-        <div class="dash-title">🏛 Domains & Bosses</div>
-        <div class="dash-sub">Filtered by your owned characters — farm smarter!</div>
+      <div class="dt-head"><span style="font-size:30px;">🧭</span><span class="dt-title">Genshin Impact Domain Tracker</span></div>
+      <div id="dt-grid" class="dt-grid"></div>
+    </div>
+    <div id="dt-picker" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);align-items:center;justify-content:center;" onclick="if(event.target===this)dtClosePick()">
+      <div style="background:#12141a;border:1px solid var(--border);border-radius:14px;padding:16px;width:min(560px,92vw);max-height:80vh;overflow:auto;">
+        <div style="font-weight:700;color:var(--gold);margin-bottom:10px;">Kies karakter</div>
+        <div id="dt-pick-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;"></div>
       </div>
-
-      <!-- 4 DOMAIN TABS -->
-      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--panel);padding:0 24px;margin-bottom:18px;">
-        <div class="dom-tab active" onclick="switchDomainTab('weapons',this)" style="padding:10px 20px;font-size:12px;font-weight:700;color:var(--gold);border-bottom:2px solid var(--gold);cursor:pointer;letter-spacing:1px;font-family:'Rajdhani',sans-serif;">⚔️ Weapon Domains</div>
-        <div class="dom-tab" onclick="switchDomainTab('artifacts',this)" style="padding:10px 20px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;letter-spacing:1px;font-family:'Rajdhani',sans-serif;">🏺 Artifact Domains</div>
-        <div class="dom-tab" onclick="switchDomainTab('talents',this)" style="padding:10px 20px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;letter-spacing:1px;font-family:'Rajdhani',sans-serif;">⚡ Talent Domains</div>
-        <div class="dom-tab" onclick="switchDomainTab('boss',this)" style="padding:10px 20px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;letter-spacing:1px;font-family:'Rajdhani',sans-serif;">👾 Weekly Boss</div>
-      </div>
-
-      <div id="domain-content" style="padding: 0 24px 24px;"></div>
     </div>
 
   </div>
@@ -3851,6 +3868,106 @@ setInterval(() => {
 bgApplyLockState();
 bgRefreshAllOwned();
 
+</script>
+<style>
+.dt-head{margin:12px 24px 8px!important;padding:8px 14px!important}
+.dt-head>span:first-child{font-size:20px!important}
+.dt-title{font-size:16px!important;letter-spacing:.5px}
+.dt-grid{display:block!important;padding:0 24px 28px!important;overflow:visible!important}
+.dt-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.dt-tab{padding:8px 16px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--muted);font:700 14px 'Rajdhani',sans-serif;cursor:pointer}
+.dt-tab.on{color:var(--gold);border-color:var(--gold);background:rgba(200,168,75,.12)}
+.dt-days{display:flex;gap:5px;margin:10px 0;flex-wrap:wrap}
+.dt-d{padding:5px 11px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);color:var(--muted);font:700 13px 'Rajdhani',sans-serif;cursor:pointer}
+.dt-d.on{color:#fff;background:rgba(155,114,207,.35);border-color:var(--purple)}
+.dt-goalbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--panel)}
+.dt-goalbar .dt-slot{width:64px;aspect-ratio:1}
+.dt-add{padding:8px 14px;border:1.5px dashed var(--gold);border-radius:10px;background:transparent;color:var(--gold);font:700 14px 'Rajdhani',sans-serif;cursor:pointer}
+.dt-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:10px}
+.dt-card{border:1px solid var(--border);border-radius:12px;background:var(--panel);overflow:hidden}
+.dt-banner{width:100%;height:110px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:40px;overflow:hidden}
+.dt-banner img{width:100%;height:100%;object-fit:cover}
+.dt-card .bd{padding:10px}
+.dt-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dt-slot .fb{font-size:22px}
+.dt-grp{margin-top:14px}.dt-list{grid-template-columns:repeat(auto-fill,minmax(500px,1fr))!important}
+.dt-row2{display:flex;gap:12px;flex-wrap:wrap;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--panel)}
+.dt-pic2{position:relative;width:200px;height:192px;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:48px}
+.dt-pic2 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nm2{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);color:#fff;font:700 13px 'Rajdhani',sans-serif;padding:4px 8px}.nm2 small{display:block;font-weight:400;color:#cbb;font-size:11px}
+.dt-teams{display:grid;grid-template-columns:repeat(4,60px);gap:6px;align-content:start}
+.dt-slot.dim{opacity:.35;cursor:default}
+</style>
+<script>
+(function(){
+const COLS=[
+ {k:'weapons',t:'⚔️ Weapon Domains',max:4,db:()=>WEAPON_DOMAIN_DB,days:true},
+ {k:'artifacts',t:'🏺 Artifact Domains',max:4,db:()=>ARTIFACT_DOMAIN_DB},
+ {k:'talents',t:'📜 Talent Domains',max:4,db:()=>TALENT_DOMAIN_DB,days:true},
+ {k:'boss',t:'🐉 Weekly Boss',max:3,db:()=>BOSS_DB,boss:true}];
+const DAYS=[['Mon','Monday'],['Tue','Tuesday'],['Wed','Wednesday'],['Thu','Thursday'],['Fri','Friday'],['Sat','Saturday'],['Sun','Sunday']];
+const ALT={'Azhdaha':['Beneath the Dragon-Queller'],'Magatsu Mitake Narukami':['End of the Oneiric Euthymia','Plane of Euthymia'],'Stormterror Dvalin':['Confront Stormterror'],"Guardian of Apep's Oasis":['Apep'],'Andrius — Wolf of the North':['Wolvendom'],'La Signora':['Tenshukaku'],'Shouki no Kami':['Joururi Workshop']};
+const uid=()=>localStorage.getItem('trinity_uid')||'Admin';
+const KEY=()=>'bg_domtrk_'+uid();
+let st={goals:{weapons:[],artifacts:[],talents:[],boss:[]}};
+let curTab='weapons',curDay=DAYS[(new Date().getDay()+6)%7][0],q='';
+function load(){try{const r=JSON.parse(localStorage.getItem(KEY())||'null');if(r)st=Object.assign(st,r);}catch(e){}}
+function save(){try{localStorage.setItem(KEY(),JSON.stringify(st));}catch(e){}}
+const ck=c=>c.id||c.name.toLowerCase().replace(/\s/g,'-');
+const EMO={Pyro:'🔥',Hydro:'💧',Cryo:'❄️',Anemo:'🌀',Electro:'⚡',Geo:'🪨',Dendro:'🌿'};
+function esc(t){return String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function img(c,fb){const l=c.filter(Boolean);if(!l.length)return fb;
+ return `<img src="${esc(l[0])}" data-c="${encodeURIComponent(JSON.stringify(l))}" data-i="0" data-fb="${esc(fb)}" onerror="dtImgFail(this)">`;}
+window.dtImgFail=function(m){const l=JSON.parse(decodeURIComponent(m.dataset.c)),i=+m.dataset.i+1;
+ if(i<l.length){m.dataset.i=i;m.src=l[i];}else{const s=document.createElement('span');s.className='fb';s.textContent=m.dataset.fb;m.replaceWith(s);}};
+function domCands(d){const n=[d.name,...(ALT[d.name]||[])];
+ if(d.location&&d.location.includes('— '))n.push(d.location.split('— ')[1]);
+ const out=[];n.forEach(x=>{const b=x.replace(/['’]/g,'');[b.replace(/ /g,'_'),b].forEach(v=>['jpg','webp','png','jpeg'].forEach(e=>out.push('Domains/'+v+'.'+e)));});return out;}
+function charCands(c){return [c.charImg,c.name+'1.jpg',c.name.replace(/ /g,'_')+'1.jpg'];}
+function slot(c,x,dim,click){
+ const ec=(typeof EL_COLORS!=='undefined'&&EL_COLORS[c.elem])||'#c8a84b';
+ return `<div class="dt-slot set${dim?' dim':''}" style="border-color:${ec}" ${click||''}>${img(charCands(c),EMO[c.elem]||'⭐')}${x||''}<div class="nm">${esc(c.name)}</div></div>`;}
+const TEAMS=3,SZ=4;
+function team(d,col,owned){
+ const goals=st.goals[col.k]||[];
+ const fit=myChars.map((c,i)=>({c,i})).filter(o=>owned.includes('my-'+o.i)&&(d.chars||[]).includes(ck(o.c)));
+ return [...fit.filter(o=>goals.includes(o.i)),...fit.filter(o=>!goals.includes(o.i))].slice(0,TEAMS*SZ).map(o=>o.c);}
+function card(d,col,owned){
+ const t=team(d,col,owned);
+ const slots=[...Array(TEAMS*SZ)].map((_,n)=>t[n]?slot(t[n]):`<div class="dt-slot" style="cursor:default;opacity:.35"><span class="pl">+</span></div>`).join('');
+ return `<div class="dt-row2"><div class="dt-pic2">${img(domCands(d),d.icon||'🏛')}<div class="nm2">${esc(d.name)}${d.location?`<small>${esc(d.location)}</small>`:''}</div></div><div class="dt-teams">${slots}</div></div>`;}
+window.dtTab=function(k){curTab=k;render();};
+
+window.dtSearch=function(v){q=v.toLowerCase();dtFillPick();};
+function dtFillPick(){const used=st.goals[window._dtc]||[];
+ const l=myChars.map((c,i)=>({c,i})).filter(o=>o.c.name.toLowerCase().includes(q)).sort((a,b)=>a.c.name.localeCompare(b.c.name));
+ document.getElementById('dt-pick-list').innerHTML=l.map(o=>{const u=used.includes(o.i);
+  return `<div style="text-align:center">${slot(o.c,'',u,u?'':`onclick="dtChoose(${o.i})" style="cursor:pointer"`)}</div>`;}).join('')||'<div style="color:var(--muted)">Geen karakters nie.</div>';}
+window.dtPick=function(k){window._dtc=k;q='';
+ const box=document.getElementById('dt-pick-list');
+ if(!document.getElementById('dt-q'))box.insertAdjacentHTML('beforebegin','<input id="dt-q" class="mfi" placeholder="Soek..." oninput="dtSearch(this.value)" style="margin-bottom:10px">');
+ document.getElementById('dt-q').value='';dtFillPick();document.getElementById('dt-picker').style.display='flex';};
+window.dtClosePick=function(){document.getElementById('dt-picker').style.display='none';};
+window.dtChoose=function(i){const g=st.goals[_dtc],col=COLS.find(c=>c.k===_dtc);if(g.length<col.max)g.push(i);save();dtClosePick();render();};
+window.dtRemove=function(k,i){st.goals[k]=st.goals[k].filter(x=>x!==i);save();render();};
+const GROUPS=[['Mon / Thu / Sun','Mon / Thu'],['Tue / Fri / Sun','Tue / Fri'],['Wed / Sat / Sun','Wed / Sat']];
+function render(){
+ const el=document.getElementById('dt-grid');if(!el)return;
+ const owned=getOwned(),col=COLS.find(c=>c.k===curTab),goals=st.goals[col.k]||[];
+ const tabs=`<div class="dt-tabs">${COLS.map(c=>`<button class="dt-tab${c.k===curTab?' on':''}" onclick="dtTab('${c.k}')">${c.t}</button>`).join('')}</div>`;
+ const gs=[...Array(col.max)].map((_,n)=>{const i=goals[n],c=i!=null?myChars[i]:null;
+  return c?slot(c,`<span class="x" onclick="dtRemove('${col.k}',${i})">×</span>`):`<div class="dt-slot" onclick="dtPick('${col.k}')"><span class="pl">+</span></div>`;}).join('');
+ const goalbar=`<div class="dt-goalbar"><div class="dt-sub" style="margin:0">Goal Characters</div>${gs}${goals.length<col.max?`<button class="dt-add" onclick="dtPick('${col.k}')">Add +</button>`:''}${col.boss?`<span style="color:var(--muted);font-weight:700">${goals.length}/${col.max}</span>`:''}</div>`;
+ const ds=col.db();
+ let body;
+ if(col.days)body=GROUPS.map(g=>{const l=ds.filter(d=>(d.days||'').split('/').map(x=>x.trim()).join(' / ')===g[1]);
+  return l.length?`<div class="dt-grp"><div class="dt-dayh" style="font-size:14px">📅 ${g[0]}</div><div class="dt-list">${l.map(d=>card(d,col,owned)).join('')}</div></div>`:'';}).join('');
+ else body=`<div class="dt-list">${ds.map(d=>card(d,col,owned)).join('')}</div>`;
+ el.innerHTML=tabs+goalbar+body;}
+window.renderDomainView=function(){load();render();};
+const _sv=window.showView;
+window.showView=function(v){_sv(v);if(v==='domain')renderDomainView();};
+})();
 </script>
 </body>
 </html>
