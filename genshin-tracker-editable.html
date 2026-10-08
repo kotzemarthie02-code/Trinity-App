@@ -501,7 +501,7 @@
     <div id="emptyState">
       <div class="empty-icon">💜</div>
       <div>Nog nie 'n character gekies nie</div>
-      <div style="font-size:13px;margin-top:6px;opacity:.7;">Kies 'n character hierbo om te begin</div>
+      <div style="font-size:13px;margin-top:6px;opacity:.7;">Select Character</div>
     </div>
 
     <div id="pinMarkersLayer"></div>
@@ -1095,7 +1095,7 @@ function renderCharacterSelect(){
   sel.innerHTML = "";
   const ph = document.createElement("option");
   ph.value = "-1";
-  ph.textContent = "— Kies 'n character —";
+  ph.textContent = "— Select Character —";
   sel.appendChild(ph);
   ownedCharacterEntries().forEach(({c, i})=>{
     const opt = document.createElement("option");
