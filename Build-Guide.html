@@ -1181,43 +1181,90 @@ const ELEM_WEAKNESS = {
 const ELEM_COLOR = { Pyro:'#e8734a', Hydro:'#4a9fe8', Cryo:'#8fd4f5', Electro:'#c080e0', Anemo:'#80d4b0', Geo:'#e8c84a', Dendro:'#80c840' };
 const ELEM_EMOJI = { Pyro:'🔥', Hydro:'💧', Cryo:'❄️', Electro:'⚡', Anemo:'🌪️', Geo:'🪨', Dendro:'🌿' };
 
-// ── WEAPON DOMAINS ──
+// ── CHARACTERS PER REGION (ids = c.id, or the name in lowercase with '-' for spaces) ──
+// Characters that are in NONE of these lists (e.g. Aino) automatically show up in every
+// domain box once they are Owned. To restrict a character, add the id here, or use CHAR_DOMAINS.
+const RC = {
+  mond:      ['amber','barbara','bennett','diluc','diona','fischl','jean','kaeya','klee','lisa','mika','mona','noelle','razor','rosaria','sucrose','venti','albedo','eula'],
+  liyue:     ['baizhu','beidou','chongyun','ganyu','gaming','hu-tao','keqing','lan-yan','ningguang','qiqi','shenhe','xiangling','xianyun','xiao','xingqiu','xinyan','yanfei','yelan','yun-jin','zhongli'],
+  inazuma:   ['ayaka','ayato','gorou','heizou','itto','kazuha','kokomi','kuki-shinobu','raiden','sara','sayu','thoma','yae','yoimiya'],
+  sumeru:    ['alhaitham','candace','collei','cyno','dori','faruzan','kaveh','kirara','layla','nahida','nilou','tighnari','wanderer','yaoyao'],
+  fontaine:  ['arlecchino','charlotte','chevreuse','chiori','clorinde','emilie','freminet','furina','lynette','lyney','navia','neuvillette','sigewinne','wriothesley'],
+  natlan:    ['chasca','citlali','iansan','kachina','kinich','mavuika','mualani','ororon','varesa','xilonen','ifa'],
+  nodkrai:   ['alice','durin','flins','illuga','ineffa','jahoda','lauma','nicole','varka'],
+  snezhnaya: ['vesna','mitya']
+};
+RC.all = [].concat(RC.mond, RC.liyue, RC.inazuma, RC.sumeru, RC.fontaine, RC.natlan, RC.nodkrai, RC.snezhnaya);
+
+// Optional per-character override: { 'character-id': ['Domain name', ...] }
+const CHAR_DOMAINS = {};
+
+// ── WEAPON DOMAINS (8) ──
 const WEAPON_DOMAIN_DB = [
-  { icon:'⚔️', name:'Forsaken Rift', days:'Mon / Thu', drops:'Decarabian / Guyun / Aerosiderite', enemyElem:'Hydro', enemies:['Hydro Slimes','Hydro Samachurls'], chars:['diluc','klee','fischl','lisa','mona','sucrose'] },
-  { icon:'🗡️', name:'Sword Cemetery', days:'Tue / Fri', drops:'Dandelion Gladiator / Boreal Wolf', enemyElem:'Cryo', enemies:['Cryo Slimes','Cryo Hilichurls'], chars:['xiao','xingqiu','bennett','noelle','razor','jean'] },
-  { icon:'🔱', name:'Hidden Palace of Lianshan', days:'Wed / Sat', drops:'Guyun / Mist Veiled / Elixir', enemyElem:'Electro', enemies:['Electro Slimes','Fatui'], chars:['hu-tao','zhongli','xiangling','ganyu','ayaka','shenhe'] },
-  { icon:'🏹', name:'Court of Flowing Sand', days:'Tue / Fri', drops:'Copper Talisman / Narukami\'s', enemyElem:'Anemo', enemies:['Anemo Slimes','Samachurls'], chars:['raiden','yae','kazuha','kokomi','ayato','yelan'] },
-  { icon:'🌿', name:'Tower of Abject Pride', days:'Mon / Thu', drops:'Oasis Garden / Scorching Might', enemyElem:'Dendro', enemies:['Fungi','Dendro Slimes'], chars:['nahida','tighnari','alhaitham','collei'] }
+  { icon:'⚔️', name:'Cecilia Garden',                    days:'Mon / Thu', location:'Mondstadt', chars:RC.mond },
+  { icon:'🏛️', name:'Tower of Abject Pride',             days:'Mon / Thu', location:'Sumeru',    chars:RC.sumeru },
+  { icon:'🌙', name:'Lost Mooncourt',                    days:'Mon / Thu', location:'Nod-Krai',  chars:RC.nodkrai },
+  { icon:'🏹', name:'Court of Flowing Sand',             days:'Tue / Fri', location:'Inazuma',   chars:RC.inazuma },
+  { icon:'🌊', name:'Echoes of the Deep Tides',          days:'Tue / Fri', location:'Fontaine',  chars:RC.fontaine },
+  { icon:'🔱', name:'Hidden Palace of Lianshan Formula', days:'Wed / Sat', location:'Liyue',     chars:RC.liyue },
+  { icon:'🔥', name:'Ancient Watchtower',                days:'Wed / Sat', location:'Natlan',    chars:RC.natlan },
+  { icon:'❄️', name:'Scars of Cursed Obsession',         days:'Wed / Sat', location:'Snezhnaya', chars:RC.snezhnaya }
 ];
 
-// ── ARTIFACT DOMAINS ──
+// ── ARTIFACT DOMAINS (22) ──
 const ARTIFACT_DOMAIN_DB = [
-  { icon:'🏯', name:'Ridge Watch', days:'Mon / Thu', artifact:'Viridescent Venerer / Archaic Petra', enemyElem:'Cryo', enemies:['Cryo Slimes','Cryo Hilichurls','Cryo Mages'], chars:['kazuha','xiao','jean','sucrose'] },
-  { icon:'🌸', name:'Momiji-Dyed Court', days:'Tue / Fri', artifact:'Shimenawa\'s Reminiscence / Emblem of Severed Fate', enemyElem:'Electro', enemies:['Electro Cicins','Fatui Electrohammer'], chars:['raiden','yoimiya','kokomi','ayato'] },
-  { icon:'💧', name:'Palace in a Pool', days:'Wed / Sat', artifact:'Heart of Depth / Blizzard Strayer', enemyElem:'Hydro', enemies:['Hydro Slimes','Hydro Samachurls'], chars:['eula','ayaka','ganyu','shenhe','qiqi'] },
-  { icon:'🌊', name:'Court of Flowing Sand', days:'Tue / Fri', artifact:'Tenacity of Millelith / Pale Flame', enemyElem:'Geo', enemies:['Geo Slimes','Stonehide Lawachurl'], chars:['yelan','xingqiu','beidou','fischl'] },
-  { icon:'🌿', name:'Spire of Solitary Enlightenment', days:'Mon / Thu', artifact:'Deepwood Memories / Gilded Dreams', enemyElem:'Dendro', enemies:['Dendro Slimes','Fungi'], chars:['nahida','tighnari','collei','alhaitham'] },
-  { icon:'🔥', name:'Hidden Palace of Zhou Formula', days:'Wed / Sat', artifact:'Crimson Witch / Lavawalker', enemyElem:'Pyro', enemies:['Pyro Slimes','Blazing Axe Mitachurl'], chars:['hu-tao','diluc','xiangling','bennett','yoimiya'] },
-  { icon:'🌑', name:'Clear Pool and Mountain Cavern', days:'Mon / Thu', artifact:'Noblesse Oblige / Bloodstained Chivalry', enemyElem:'Hydro', enemies:['Hydro Abyss Mage','Mirror Maiden'], chars:['zhongli','noelle','albedo','itto'] }
+  { icon:'🌻', name:'Midsummer Courtyard',               location:'Mondstadt', chars:RC.mond },
+  { icon:'🍃', name:'Valley of Remembrance',             location:'Mondstadt', chars:RC.mond },
+  { icon:'🏔️', name:'Peak of Vindagnyr',                 location:'Mondstadt', chars:RC.mond },
+  { icon:'🌹', name:'Thorny Crown of the Mountain Wind', chars:RC.all },
+  { icon:'🗿', name:'Guyun',                             location:'Liyue',     chars:RC.liyue },
+  { icon:'🔥', name:'Hidden Palace of Zhou Formula',     location:'Liyue',     chars:RC.liyue },
+  { icon:'🏯', name:'Ridge Watch',                       location:'Liyue',     chars:RC.liyue },
+  { icon:'💧', name:'Clear Pool and Mountain Cavern',    location:'Liyue',     chars:RC.liyue },
+  { icon:'🕳️', name:'The Lost Valley',                   chars:RC.all },
+  { icon:'🌊', name:'Waterfall Wen',                     chars:RC.all },
+  { icon:'🌸', name:'Momiji-Dyed Court',                 location:'Inazuma',   chars:RC.inazuma },
+  { icon:'😴', name:'Slumbering Court',                  location:'Inazuma',   chars:RC.inazuma },
+  { icon:'🌿', name:'Spire of Solitary Enlightenment',   location:'Sumeru',    chars:RC.sumeru },
+  { icon:'🏜️', name:'City of Gold',                      location:'Sumeru',    chars:RC.sumeru },
+  { icon:'⚓', name:'Derelict Masonry Dock',             location:'Fontaine',  chars:RC.fontaine },
+  { icon:'⚖️', name:'Denouement of Sin',                 location:'Fontaine',  chars:RC.fontaine },
+  { icon:'🎭', name:'Faded Theater',                     location:'Fontaine',  chars:RC.fontaine },
+  { icon:'🌋', name:'Molten Iron Fortress',              location:'Natlan',    chars:RC.natlan },
+  { icon:'🌈', name:'Sanctum of Rainbow Spirits',        location:'Natlan',    chars:RC.natlan },
+  { icon:'⚙️', name:'Frostladen Machinery',              location:'Nod-Krai',  chars:RC.nodkrai },
+  { icon:'🌙', name:"Moonchild's Treasures",             location:'Nod-Krai',  chars:RC.nodkrai },
+  { icon:'🧊', name:'Inverted Glacier',                  location:'Snezhnaya', chars:RC.snezhnaya }
 ];
 
-// ── TALENT DOMAINS ──
+// ── TALENT DOMAINS (8) ──
 const TALENT_DOMAIN_DB = [
-  { icon:'📖', name:'Forsaken Rift', days:'Mon / Thu', drops:'Freedom / Resistance / Ballad', enemyElem:'Hydro', enemies:['Hydro Slimes','Hydro Samachurls'], chars:['diluc','klee','jean','razor','bennett','fischl','mona','sucrose','venti','noelle'] },
-  { icon:'📜', name:'Taishan Mansion', days:'Tue / Fri', drops:'Prosperity / Diligence / Gold', enemyElem:'Pyro', enemies:['Pyro Slimes','Pyro Hilichurls'], chars:['hu-tao','zhongli','xiangling','ningguang','ganyu','xiao','shenhe','yelan','xingqiu'] },
-  { icon:'⚡', name:'Violet Court', days:'Wed / Sat', drops:'Transience / Elegance / Light', enemyElem:'Electro', enemies:['Electro Slimes','Fatui'], chars:['raiden','kokomi','yae','ayato','ayaka','kazuha','itto','gorou'] },
-  { icon:'🌿', name:'Steeple of Ignorance', days:'Mon / Thu', drops:'Admonition / Ingenuity / Praxis', enemyElem:'Dendro', enemies:['Fungi','Dendro Slimes'], chars:['nahida','tighnari','alhaitham','collei','cyno','nilou','candace'] }
+  { icon:'📖', name:'Forsaken Rift',            days:'Mon / Thu', location:'Mondstadt', chars:RC.mond },
+  { icon:'🌿', name:'Steeple of Ignorance',     days:'Mon / Thu', location:'Sumeru',    chars:RC.sumeru },
+  { icon:'🌙', name:'Lightless Capital',        days:'Mon / Thu', location:'Nod-Krai',  chars:RC.nodkrai },
+  { icon:'📜', name:'Taishan Mansion',          days:'Tue / Fri', location:'Liyue',     chars:RC.liyue },
+  { icon:'🎭', name:'Pale Forgotten Glory',     days:'Tue / Fri', location:'Fontaine',  chars:RC.fontaine },
+  { icon:'❄️', name:'Relics of the Fallen Grace', days:'Tue / Fri', location:'Snezhnaya', chars:RC.snezhnaya },
+  { icon:'⚡', name:'Violet Court',             days:'Wed / Sat', location:'Inazuma',   chars:RC.inazuma },
+  { icon:'🔥', name:'Blazing Ruins',            days:'Wed / Sat', location:'Natlan',    chars:RC.natlan }
 ];
 
-// ── WEEKLY BOSS DATABASE ──
+// ── WEEKLY BOSS DOMAINS (14) ──
 const BOSS_DB = [
-  { icon:'🐉', name:'Azhdaha', location:'Liyue — Beneath the Dragon-Queller', enemyElem:'Geo', drops:'Dragon Lord\'s Crown / Bloodjade Branch', chars:['zhongli','xiao','ganyu','hu-tao'], bring:['Hydro','Cryo'] },
-  { icon:'👾', name:'Magatsu Mitake Narukami', location:'Inazuma — Plane of Euthymia', enemyElem:'Electro', drops:'Mudra of the Malefic General / Tears of the Calamitous God', chars:['raiden','yae','kokomi','ayato'], bring:['Pyro','Cryo'] },
-  { icon:'🌊', name:'La Signora', location:'Inazuma — Tenshukaku', enemyElem:'Cryo', drops:'Molten Moment / Hellfire Butterfly / Ashen Heart', chars:['hu-tao','diluc','yoimiya','xiangling','bennett'], bring:['Pyro'] },
-  { icon:'🌳', name:'Guardian of Apep\'s Oasis', location:'Sumeru', enemyElem:'Dendro', drops:'Quelled Creeper / Everamber', chars:['nahida','tighnari','alhaitham'], bring:['Pyro','Electro'] },
-  { icon:'🦅', name:'Stormterror Dvalin', location:'Mondstadt — Stormterror\'s Lair', enemyElem:'Anemo', drops:'Dvalin\'s Plume / Claw / Sigh', chars:['xiao','jean','kazuha','sucrose','venti'], bring:['Electro','Cryo'] },
-  { icon:'🐺', name:'Andrius — Wolf of the North', location:'Mondstadt — Wolvendom', enemyElem:'Cryo', drops:'Tail of Boreas / Ring / Spirit Locket', chars:['diluc','bennett','klee'], bring:['Pyro'] },
-  { icon:'🕷️', name:'Shouki no Kami', location:'Inazuma — Joururi Workshop', enemyElem:'Electro', drops:'Puppet Strings / Mirror of Mushin', chars:['raiden','yae','fischl','beidou'], bring:['Pyro','Cryo'] }
+  { icon:'🐺', name:'Lupus Boreas',                       location:'Mondstadt', chars:RC.mond },
+  { icon:'🦅', name:'Stormterror Dvalin',                 location:'Mondstadt', chars:RC.mond },
+  { icon:'🌊', name:'Childe',                             location:'Mondstadt', chars:RC.mond },
+  { icon:'🐉', name:'Azhdaha',                            location:'Liyue',     chars:RC.liyue },
+  { icon:'🦋', name:'La Signora',                         location:'Inazuma',   chars:RC.inazuma },
+  { icon:'⚡', name:'The Raiden Shogun',                  location:'Inazuma',   chars:RC.inazuma },
+  { icon:'👾', name:'Scaramouche Boss',                   location:'Inazuma',   chars:RC.inazuma },
+  { icon:'🌳', name:"Guardian of Apep's Oasis",           location:'Sumeru',    chars:RC.sumeru },
+  { icon:'🧪', name:'The Doctor - Dottore',               location:'Sumeru',    chars:RC.sumeru },
+  { icon:'🚪', name:'The Game Before the Gate',           location:'Sumeru',    chars:RC.sumeru },
+  { icon:'🐋', name:'All-Devouring Narwhal',              location:'Fontaine',  chars:RC.fontaine },
+  { icon:'🃏', name:'The Knave',                          location:'Fontaine',  chars:RC.fontaine },
+  { icon:'🔥', name:'Lord of Eroded Primal Fire',         location:'Natlan',    chars:RC.natlan },
+  { icon:'🌑', name:'Exalted Master of the Heretical Path', location:'Nod-Krai', chars:RC.nodkrai }
 ];
 
 let _currentDomainTab = 'weapons';
@@ -3906,7 +3953,7 @@ const COLS=[
  {k:'talents',t:'📜 Talent Domains',max:4,db:()=>TALENT_DOMAIN_DB,days:true},
  {k:'boss',t:'🐉 Weekly Boss',max:3,db:()=>BOSS_DB,boss:true}];
 const DAYS=[['Mon','Monday'],['Tue','Tuesday'],['Wed','Wednesday'],['Thu','Thursday'],['Fri','Friday'],['Sat','Saturday'],['Sun','Sunday']];
-const ALT={'Hidden Palace of Lianshan':['Hidden Palace of Lianshan Formula'],'Andrius — Wolf of the North':['Lupus Boreas'],'Azhdaha':['Beneath the Dragon-Queller'],'Magatsu Mitake Narukami':['The Raiden Shogun','End of the Oneiric Euthymia','Plane of Euthymia'],'Stormterror Dvalin':['Confront Stormterror'],"Guardian of Apep's Oasis":['Apep'],'La Signora':['Tenshukaku'],'Shouki no Kami':['Joururi Workshop']};
+const ALT={'Azhdaha':['Beneath the Dragon-Queller'],'Magatsu Mitake Narukami':['End of the Oneiric Euthymia','Plane of Euthymia'],'Stormterror Dvalin':['Confront Stormterror'],"Guardian of Apep's Oasis":['Apep'],'Andrius — Wolf of the North':['Wolvendom'],'La Signora':['Tenshukaku'],'Shouki no Kami':['Joururi Workshop']};
 const uid=()=>localStorage.getItem('trinity_uid')||'Admin';
 const KEY=()=>'bg_domtrk_'+uid();
 let st={goals:{weapons:[],artifacts:[],talents:[],boss:[]}};
@@ -3922,22 +3969,40 @@ window.dtImgFail=function(m){const l=JSON.parse(decodeURIComponent(m.dataset.c))
  if(i<l.length){m.dataset.i=i;m.src=l[i];}else{const s=document.createElement('span');s.className='fb';s.textContent=m.dataset.fb;m.replaceWith(s);}};
 function domCands(d){const n=[d.name,...(ALT[d.name]||[])];
  if(d.location&&d.location.includes('— '))n.push(d.location.split('— ')[1]);
- const out=[];
- n.forEach(x=>{
-  // Files are .jpg only, in the same folder as the page: spaces -> "_" (also try the raw name, and without apostrophes)
-  [x, x.replace(/['’]/g,'')].forEach(b=>{
-   [b.replace(/ /g,'_'), b].forEach(v=>{const f=v+'.jpg'; if(!out.includes(f))out.push(f);});
-  });
- });
- return out;}
-function charCands(c){return [c.charImg,c.name+'1.jpg',c.name.replace(/ /g,'_')+'1.jpg'];}
+ const out=[];n.forEach(x=>{[x,x.replace(/['’]/g,'')].filter((b,i,a)=>a.indexOf(b)===i).forEach(b=>[b.replace(/ /g,'_'),b].forEach(v=>['jpg','webp','png','jpeg'].forEach(e=>out.push('Domains/'+v+'.'+e))));});return out;}
+function charCands(c){const m=/^Traveler\s+(\w+)/i.exec(c.name),b=m?m[1]:c.name;
+ return [c.charImg,b+'1.jpg',b.replace(/ /g,'_')+'1.jpg'];}
 function slot(c,x,dim,click){
  const ec=(typeof EL_COLORS!=='undefined'&&EL_COLORS[c.elem])||'#c8a84b';
  return `<div class="dt-slot set${dim?' dim':''}" style="border-color:${ec}" ${click||''}>${img(charCands(c),EMO[c.elem]||'⭐')}${x||''}<div class="nm">${esc(c.name)}</div></div>`;}
 const TEAMS=3,SZ=4;
+// ── OWNED: Build-Guide ('my-<index>') + Training Guide (character names in 'ownedCharacters') ──
+let tgOwned=[];
+const norm=n=>String(n).toLowerCase().replace(/[^a-z0-9]/g,'');
+function readTG(){try{tgOwned=JSON.parse(localStorage.getItem('ownedCharacters')||'[]');}catch(e){tgOwned=[];}}
+function domainActive(){const v=document.getElementById('view-domain');return !!(v&&v.classList.contains('active'));}
+async function pullTG(){try{ // same Firebase path the Training Guide writes to
+ if(!window._fbget||!window._fbdb)return;
+ const s=await window._fbget(window._fbref(window._fbdb,'users/'+uid()+'/ownedCharacters'));
+ if(!s.exists())return;const v=s.val(),arr=Array.isArray(v)?v:Object.values(v);
+ if(JSON.stringify(arr)!==JSON.stringify(tgOwned)){tgOwned=arr;
+  try{localStorage.setItem('ownedCharacters',JSON.stringify(arr));}catch(e){}
+  if(domainActive())render();}
+}catch(e){}}
+function ownedChars(owned){
+ const tg=new Set(tgOwned.map(norm)),out=[],seen=new Set();
+ myChars.forEach((c,i)=>{const k=norm(c.name);if(owned.includes('my-'+i)||tg.has(k)){out.push({c,i});seen.add(k);}});
+ tgOwned.forEach(n=>{const k=norm(n);if(!seen.has(k)){seen.add(k);out.push({c:{name:n},i:-1});}});
+ return out;}
+let _mapped=null;
+function mappedIds(){if(_mapped)return _mapped;_mapped=new Set();
+ [WEAPON_DOMAIN_DB,ARTIFACT_DOMAIN_DB,TALENT_DOMAIN_DB,BOSS_DB].forEach(db=>db.forEach(d=>(d.chars||[]).forEach(x=>_mapped.add(x))));
+ return _mapped;}
+function fits(d,c){const k=ck(c);
+ return (d.chars||[]).includes(k)||(CHAR_DOMAINS[k]||[]).includes(d.name)||(!mappedIds().has(k)&&!CHAR_DOMAINS[k]);}
 function team(d,col,owned){
  const goals=st.goals[col.k]||[];
- const fit=myChars.map((c,i)=>({c,i})).filter(o=>owned.includes('my-'+o.i)&&(d.chars||[]).includes(ck(o.c)));
+ const fit=ownedChars(owned).filter(o=>fits(d,o.c));
  return [...fit.filter(o=>goals.includes(o.i)),...fit.filter(o=>!goals.includes(o.i))].slice(0,TEAMS*SZ).map(o=>o.c);}
 function card(d,col,owned){
  const t=team(d,col,owned);
@@ -3959,6 +4024,7 @@ window.dtChoose=function(i){const g=st.goals[_dtc],col=COLS.find(c=>c.k===_dtc);
 window.dtRemove=function(k,i){st.goals[k]=st.goals[k].filter(x=>x!==i);save();render();};
 const GROUPS=[['Mon / Thu / Sun','Mon / Thu'],['Tue / Fri / Sun','Tue / Fri'],['Wed / Sat / Sun','Wed / Sat']];
 function render(){
+ _mapped=null;
  const el=document.getElementById('dt-grid');if(!el)return;
  const owned=getOwned(),col=COLS.find(c=>c.k===curTab),goals=st.goals[col.k]||[];
  const tabs=`<div class="dt-tabs">${COLS.map(c=>`<button class="dt-tab${c.k===curTab?' on':''}" onclick="dtTab('${c.k}')">${c.t}</button>`).join('')}</div>`;
@@ -3971,65 +4037,14 @@ function render(){
   return l.length?`<div class="dt-grp"><div class="dt-dayh" style="font-size:14px">📅 ${g[0]}</div><div class="dt-list">${l.map(d=>card(d,col,owned)).join('')}</div></div>`:'';}).join('');
  else body=`<div class="dt-list">${ds.map(d=>card(d,col,owned)).join('')}</div>`;
  el.innerHTML=tabs+goalbar+body;}
-window.renderDomainView=function(){load();render();};
+window.renderDomainView=function(){load();readTG();render();pullTG();};
+// re-draw the boxes whenever "Owned" changes (Build-Guide toggle, Training Guide toggle in another tab, tab regains focus)
+const _ra=window.refreshAllOwned;
+window.refreshAllOwned=function(){if(typeof _ra==='function')_ra.apply(this,arguments);if(domainActive()){readTG();render();}};
+window.addEventListener('storage',e=>{if(!e.key||e.key==='ownedCharacters'||e.key.indexOf('bg_owned')===0){readTG();if(domainActive())render();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&domainActive()){readTG();render();pullTG();}});
 const _sv=window.showView;
 window.showView=function(v){_sv(v);if(v==='domain')renderDomainView();};
-})();
-</script>
-<script>
-/* ── Recommended Team: always show 4 boxes filled with the selected character's image (Owned or not) ── */
-(function(){
-  const SLOTS = 4;
-  function curName(){ const el=document.getElementById('ch-name'); return el?el.textContent.trim():''; }
-  function cands(name){
-    const l=[name+'1.jpg', name.replace(/ /g,'_')+'1.jpg'];
-    try{ const m=(typeof myChars!=='undefined'?myChars:[]).find(c=>c.name===name); if(m&&m.charImg)l.push(m.charImg); }catch(e){}
-    return l;
-  }
-  function boxHtml(name){
-    const l=cands(name);
-    return `<img src="${encodeURI(l[0])}" alt="${name.replace(/"/g,'&quot;')}" data-c="${encodeURIComponent(JSON.stringify(l))}" data-i="0" onerror="rtImgFail(this)" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
-  }
-  window.rtImgFail=function(m){
-    const l=JSON.parse(decodeURIComponent(m.dataset.c)), i=+m.dataset.i+1;
-    if(i<l.length){ m.dataset.i=i; m.src=encodeURI(l[i]); }
-    else { const s=document.createElement('span'); s.className='team-icon-txt'; s.textContent=m.alt; m.replaceWith(s); }
-  };
-  function hasPicture(box){ return !!box.querySelector('img'); }
-  let busy=false, obs=null;
-  function fill(){
-    const tb=document.getElementById('team-blocks'), name=curName();
-    if(!tb||!name||busy) return;
-    busy=true; if(obs) obs.disconnect();
-    try{
-      // No team data at all -> show one placeholder block so the boxes are never missing
-      if(!tb.querySelector('.team-icons')){
-        tb.innerHTML='<div class="team-block"><div class="team-label">Recommended Team</div><div class="team-icons"></div></div>';
-      }
-      tb.querySelectorAll('.team-icons').forEach(row=>{
-        // exactly 4 boxes per team row
-        while(row.querySelectorAll('.team-icon').length<SLOTS){ const d=document.createElement('div'); d.className='team-icon'; row.appendChild(d); }
-        row.querySelectorAll('.team-icon').forEach((box,i)=>{
-          if(i>=SLOTS){ box.remove(); return; }
-          if(!hasPicture(box)){            // keep real member pictures, replace empty/emoji/text boxes
-            box.style.padding='0'; box.style.overflow='hidden';
-            box.innerHTML=boxHtml(name);
-          }
-        });
-      });
-    } finally {
-      busy=false;
-      if(obs){ obs.observe(tb,{childList:true,subtree:true}); const h=document.getElementById('ch-name'); if(h) obs.observe(h,{childList:true,characterData:true,subtree:true}); }
-    }
-  }
-  function init(){
-    const tb=document.getElementById('team-blocks'); if(!tb) return;
-    obs=new MutationObserver(()=>{ requestAnimationFrame(fill); });
-    obs.observe(tb,{childList:true,subtree:true});
-    const h=document.getElementById('ch-name'); if(h) obs.observe(h,{childList:true,characterData:true,subtree:true});
-    fill();
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 </body>
