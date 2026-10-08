@@ -530,7 +530,6 @@ body::after {
       <!-- JS injects char entries here -->
     </div>
 
-    <div id="bg-prof-side"><div class="bg-prof"></div></div>
     <button class="domain-btn" onclick="showView('domain')">
       <span>🏛</span> Domains
     </button>
@@ -555,18 +554,18 @@ body::after {
 
     <!-- DASHBOARD -->
     <div id="view-dashboard" class="view active">
-      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;flex-wrap:nowrap;">
+      <div style="display:flex;align-items:flex-start;gap:10px 14px;margin-bottom:22px;flex-wrap:wrap;">
         <div style="flex-shrink:0;">
           <div class="dash-title">My Roster</div>
           <div class="dash-sub">Select a character to view their build.</div>
         </div>
-        <div style="margin-left:auto;display:flex;gap:6px;align-items:stretch;flex-wrap:nowrap;min-width:0;">
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:stretch;flex-wrap:wrap;justify-content:flex-end;min-width:0;max-width:100%;flex:1 1 auto;">
           <button onclick="openBackupModal()" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;color:#ffe14b;font-family:'Rajdhani',sans-serif;font-weight:700;white-space:nowrap;">💾 Backup & Herstel</button>
           <button id="bg-lock-btn" onclick="bgToggleLock()" title="Settings" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;color:var(--muted);font-family:'Rajdhani',sans-serif;font-weight:700;white-space:nowrap;">⚙️ <span id="bg-lock-lbl">Settings</span></button>
-          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:5px;">
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0;">
             <span style="font-weight:700;" id="owned-count">0</span> <span id="owned-label">Owned</span>
           </div>
-          <div id="stat-strip" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:clamp(10.5px,0.82vw,13px);color:var(--muted);display:flex;flex-wrap:nowrap;white-space:nowrap;align-items:center;gap:0 clamp(4px,0.45vw,8px);min-width:0;">
+          <div id="stat-strip" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:clamp(10.5px,0.82vw,13px);color:var(--muted);display:flex;flex-wrap:wrap;white-space:nowrap;align-items:center;gap:2px clamp(4px,0.45vw,8px);min-width:0;max-width:100%;flex:0 1 auto;">
             <span><b id="st-5" style="color:#b9a4ff;font-size:1.15em;">0</b> 5★</span><span style="opacity:.35;">·</span>
             <span><b id="st-4" style="color:#b9a4ff;font-size:1.15em;">0</b> 4★</span><span style="opacity:.35;">·</span>
             <span class="st-el" data-el="Anemo" style="cursor:pointer;"><b id="st-Anemo" style="font-size:1.15em;">0</b> Anemo</span><span style="opacity:.35;">·</span>
@@ -4199,7 +4198,8 @@ const ROLES={aino:'PH',albedo:'SP',alhaitham:'D',aloy:'P',alyosha:'P',amber:'S',
 function rolesOf(x){if(x.trav)return x.elem==='Geo'?'PH':'SP';return ROLES[norm(x.name)]||'S';}
 const sc=(c,r)=>{const p=c.roles.indexOf(r);return p<0?-99:([10,6,3][p]||2)+c.pref+(c.goal?5:0);};
 // D en S moet die domain se teëstander-elemente hê; P en H (Support/Healer) mag as terugval enige element wees.
-const elig=(c,r)=>c.roles.includes(r)&&(c.m||r==='P'||r==='H');
+// STRENG: slegs die primêre rol (eerste letter) tel, so 'n Healer kan nooit in die DPS/Support-gleuf beland nie
+const elig=(c,r)=>c.roles[0]===r&&(c.m||r==='P'||r==='H');
 
 function poolFor(d,col){
  const goals=st.goals[col.k]||[],want=(d.elems&&d.elems.length)?d.elems:null,out=[];
@@ -4275,7 +4275,7 @@ function buildOnce(){
    return l.length?`<div class="dt-grp"><div class="dt-dayh" style="font-size:14px">📅 ${g[0]}</div><div class="dt-list">${l.map(x=>cardShell(x.d,col,x.i)).join('')}</div></div>`:'';}).join('');
   else body=`<div class="dt-list">${ds.map((d,i)=>cardShell(d,col,i)).join('')}</div>`;
   return `<div class="dt-panel" id="dt-panel-${col.k}">${body}</div>`;}).join('');
- el.innerHTML=`<div class="bg-prof" id="dt-prof"></div>${tabs}<div id="dt-goalbar" class="dt-goalbar"></div>${panels}`;}
+ el.innerHTML=`${tabs}<div id="dt-goalbar" class="dt-goalbar"></div>${panels}`;}
 function renderGoalbar(){
  const col=COLS.find(c=>c.k===curTab),goals=st.goals[col.k]||[],bar=document.getElementById('dt-goalbar');if(!bar)return;
  const gs=[...Array(col.max)].map((_,n)=>{const i=goals[n],c=i!=null&&myChars[i]?dispC(myChars[i]):null;
