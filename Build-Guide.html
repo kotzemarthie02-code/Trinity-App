@@ -530,9 +530,6 @@ body::after {
       <!-- JS injects char entries here -->
     </div>
 
-    <button class="domain-btn" onclick="showView('domain')">
-      <span>🏛</span> Domains
-    </button>
   </div>
 
   <!-- BACKUP MODAL -->
@@ -3767,7 +3764,8 @@ function showMyChar(idx) {
         </div>`).join('');
     }
 
-    const navHtml = groupOrder.length > 1
+    const showNav = groupOrder.length > 1 || groupOrder.some(l => !/^Team \d+$/.test(l));
+    const navHtml = showNav
       ? `<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
           ${groupOrder.map((lbl, i) =>
             `<button id="myviewteambtn-${lbl.replace(/\s+/g,'_')}" onclick="window._renderMyTeamFn('${lbl.replace(/'/g,"\\'")}')" style="padding:4px 14px;border-radius:6px;border:1px solid ${i===0?'var(--gold)':'rgba(200,168,75,0.22)'};background:${i===0?'rgba(200,168,75,0.15)':'var(--panel2)'};color:${i===0?'var(--gold)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:Rajdhani,sans-serif;letter-spacing:.5px;transition:all .15s;">${lbl}</button>`
