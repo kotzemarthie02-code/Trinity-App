@@ -576,6 +576,15 @@ body::after {
           </div>
         </div>
       </div>
+      <div id="owned-strip-wrap" style="display:flex;justify-content:flex-end;margin:-10px 0 18px;">
+        <div id="owned-strip" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:clamp(10.5px,0.82vw,13px);color:var(--muted);display:flex;flex-wrap:wrap;white-space:nowrap;align-items:center;gap:2px clamp(4px,0.45vw,8px);min-width:0;max-width:100%;">
+          <span style="font-weight:700;color:#4fc382;letter-spacing:.5px;">OWNED</span><span style="opacity:.35;">·</span>
+          <span><b id="os-5" style="color:#b9a4ff;font-size:1.15em;">0</b> 5★</span><span style="opacity:.35;">·</span>
+          <span><b id="os-4" style="color:#b9a4ff;font-size:1.15em;">0</b> 4★</span><span style="opacity:.35;">·</span>
+          <span class="os-el"><b id="os-Anemo" style="font-size:1.15em;">0</b> Anemo</span><span style="opacity:.35;">·</span><span class="os-el"><b id="os-Geo" style="font-size:1.15em;">0</b> Geo</span><span style="opacity:.35;">·</span><span class="os-el"><b id="os-Electro" style="font-size:1.15em;">0</b> Electro</span><span style="opacity:.35;">·</span><span class="os-el"><b id="os-Dendro" style="font-size:1.15em;">0</b> Dendro</span><span style="opacity:.35;">·</span><span class="os-el"><b id="os-Hydro" style="font-size:1.15em;">0</b> Hydro</span><span style="opacity:.35;">·</span><span class="os-el"><b id="os-Pyro" style="font-size:1.15em;">0</b> Pyro</span><span style="opacity:.35;">·</span><span class="os-el"><b id="os-Cryo" style="font-size:1.15em;">0</b> Cryo</span><span style="opacity:.35;">·</span>
+          <span><span style="color:var(--gold);font-weight:700;font-size:1.15em;" id="os-total">0</span> Total</span>
+        </div>
+      </div>
       <div class="dash-grid" id="dash-grid">
         <!-- JS injects cards here -->
         <div class="dash-card add-char-card" id="add-char-dash-btn" onclick="openAddModal()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed rgba(200,168,75,0.3);background:transparent;color:rgba(200,168,75,0.5);cursor:pointer;min-height:140px;">
@@ -686,6 +695,19 @@ body::after {
   window._fbset = set;
   window._fbget = get;
   window._fbonValue = onValue;
+  // Tombstones: lys van verwyderde karakter-name (Firebase is die gesag)
+  window.fbSaveDeleted = async function(arr) {
+    try { await set(ref(db, 'buildguide/deleted'), { names: JSON.stringify(arr) }); }
+    catch(e) { console.error('fbSaveDeleted:', e); }
+  };
+  async function fbGetDeleted() {
+    try {
+      const sn = await get(ref(db, 'buildguide/deleted'));
+      if (sn.exists()) { const a = JSON.parse(sn.val().names || '[]'); if (Array.isArray(a)) return a; }
+      return null;
+    } catch(e) { return null; }
+  }
+  function lsDeleted() { try { const v = JSON.parse(localStorage.getItem('bg_deleted_v1') || '[]'); return Array.isArray(v) ? v : []; } catch(e) { return []; } }
   window.fbSaveChars = async function(arr) {
     // GEEN try/catch om die HELE funksie nie — as Firebase regtig faal (bv. reëls/
     // toestemming/internet), moet die fout na bo "gooi" sodat saveChars() dit optel
@@ -697,8 +719,11 @@ body::after {
     if (snap.exists()) {
       try { existing = JSON.parse(snap.val().chars || '[]'); } catch(e) {}
     }
-    const merged = [...existing];
+    const _fbDel = await fbGetDeleted();
+    const _del = _fbDel || lsDeleted();
+    const merged = existing.filter(e => !_del.includes(e.name));
     arr.forEach(newChar => {
+      if (_del.includes(newChar.name)) return; // verwyder — bly weg
       const idx = merged.findIndex(e => e.name === newChar.name);
       if (idx >= 0) merged[idx] = newChar;
       else merged.push(newChar);
@@ -744,9 +769,11 @@ body::after {
         const chars = JSON.parse(cSnap.val().chars || '[]');
         if (chars.length > 0) {
           // Merge met localStorage data sodat geen karakters verlore gaan
+          const _d0 = (await fbGetDeleted()) || lsDeleted();
           let local = [];
           try { local = JSON.parse(localStorage.getItem('bg_chars_v3') || '[]'); } catch(e) {}
-          const merged = [...chars];
+          local = local.filter(c => !_d0.includes(c.name));
+          const merged = chars.filter(c => !_d0.includes(c.name));
           local.forEach(lc => { if (!merged.find(f => f.name === lc.name)) merged.push(lc); });
           try { localStorage.setItem('bg_chars_v3', JSON.stringify(merged)); } catch(e) {}
         }
@@ -755,7 +782,12 @@ body::after {
       onValue(ref(db, 'buildguide/characters'), (snap) => {
         if (!snap.exists()) return;
         try {
-          const fbChars = JSON.parse(snap.val().chars || '[]');
+          let fbChars = JSON.parse(snap.val().chars || '[]');
+          const _dl = lsDeleted();
+          if (fbChars.some(c => _dl.includes(c.name))) {
+            fbChars = fbChars.filter(c => !_dl.includes(c.name));
+            if (typeof window.fbSaveCharsRaw === 'function') window.fbSaveCharsRaw(fbChars); // maak Firebase self skoon
+          }
           if (typeof myChars !== 'undefined' && typeof rebuildRoster === 'function') {
             window._waitingForFirebase = false;
             const msg = document.getElementById('fb-loading-msg');
@@ -764,6 +796,7 @@ body::after {
             // MERGE: grootste lys wen altyd
             const merged = [...fbChars];
             myChars.forEach(local => {
+              if (_dl.includes(local.name)) return;
               if (!merged.find(f => f.name === local.name)) merged.push(local);
             });
 
@@ -781,6 +814,22 @@ body::after {
       });
     } catch(e) { console.error('Firebase init:', e); }
   })();
+
+  // Hou tombstones sinkroon oor toestelle/oop tabs
+  onValue(ref(db, 'buildguide/deleted'), (snap) => {
+    if (!snap.exists()) return;
+    try {
+      const a = JSON.parse(snap.val().names || '[]');
+      if (!Array.isArray(a)) return;
+      try { localStorage.setItem('bg_deleted_v1', JSON.stringify(a)); } catch(e) {}
+      if (typeof myChars !== 'undefined' && myChars.some(c => a.includes(c.name))) {
+        const keep = myChars.filter(c => !a.includes(c.name));
+        myChars.length = 0; keep.forEach(c => myChars.push(c));
+        try { localStorage.setItem('bg_chars_v3', JSON.stringify(keep)); } catch(e) {}
+        if (typeof rebuildRoster === 'function') rebuildRoster();
+      }
+    } catch(e) {}
+  });
 
   window.fbLoadBackups = async function() {
     try {
@@ -1425,6 +1474,7 @@ window.fbRestoreBackup = async function(key) {
     const snap = await window._fbget(window._fbref(window._fbdb, 'buildguide_backups/' + key));
     if (!snap.exists()) { alert('Backup nie gevind nie.'); return; }
     const chars = JSON.parse(snap.val().chars || '[]');
+    if (typeof bgDelClear === 'function') await bgDelClear(chars.map(c => c.name));
     const merged = [...chars];
     if (typeof myChars !== 'undefined') {
       myChars.forEach(c => { if (!merged.find(f => f.name === c.name)) merged.push(c); });
@@ -2366,10 +2416,25 @@ const SLOT_ICONS = {
 const SLOT_LABELS = { flower:'Flower', plume:'Plume', sands:'Sands', goblet:'Goblet', circlet:'Circlet' };
 const STAR_COLORS = { 5:'#c8a84b', 4:'#9b7fd4' };
 
+// ── Verwyderde karakters (tombstones) — keer dat deletes terugkom ──
+function bgDelGet() { try { const v = JSON.parse(localStorage.getItem('bg_deleted_v1') || '[]'); return Array.isArray(v) ? v : []; } catch(e) { return []; } }
+function bgDelSetLocal(a) { try { localStorage.setItem('bg_deleted_v1', JSON.stringify(a)); } catch(e) {} }
+async function bgDelAdd(name) {
+  const a = bgDelGet(); if (!a.includes(name)) a.push(name);
+  bgDelSetLocal(a);
+  if (typeof window.fbSaveDeleted === 'function') await window.fbSaveDeleted(a);
+}
+async function bgDelClear(names) {
+  const a = bgDelGet().filter(n => !names.includes(n));
+  bgDelSetLocal(a);
+  if (typeof window.fbSaveDeleted === 'function') await window.fbSaveDeleted(a);
+}
+function bgNotDeleted(c) { return !bgDelGet().includes(c.name); }
+
 function loadChars() {
   try {
     const raw = localStorage.getItem('bg_chars_v3');
-    if (raw) return JSON.parse(raw);
+    if (raw) return JSON.parse(raw).filter(bgNotDeleted);
   } catch(e) {}
   return []; // Firebase listener sal data laai
 }
@@ -3362,6 +3427,7 @@ async function saveChar() {
 
     // BELANGRIK: ons WAG nou regtig vir bevestiging dat dit op Firebase
     // gestoor is voordat ons enige "gestoor!" boodskap wys of die modal toemaak.
+    await bgDelClear([data.name]);
     await saveChars(myChars);
 
     savingToast.remove();
@@ -3383,10 +3449,12 @@ async function saveChar() {
   }
 }
 
-function deleteChar(idx) {
+async function deleteChar(idx) {
   if(!confirm('Delete '+myChars[idx]?.name+'?')) return;
+  const _delName = myChars[idx]?.name;
+  if (_delName) await bgDelAdd(_delName); // onthou die delete, sodat geen merge dit terugbring nie
   myChars.splice(idx,1);
-  saveCharsRawSync(myChars); // direkte oorskryf — geen merge nie, sodat delete regtig vasklou
+  await saveCharsRawSync(myChars); // direkte oorskryf — geen merge nie, sodat delete regtig vasklou
   closeModal();
   rebuildRoster();
   showView('dashboard');
@@ -3535,6 +3603,7 @@ function bgUpdateStrip() {
     b.style.color = col;
     b.parentElement.style.color = col;
   });
+  bgUpdateOwnedStrip();
   const sel = document.getElementById('elem-filter');
   if (sel) {
     sel.innerHTML = '<option value="all">Elements (' + myChars.length + ')</option>' +
@@ -3562,6 +3631,25 @@ document.addEventListener('click', e => {
   const t = e.target.closest && e.target.closest('.st-el');
   if (t) bgSetElemFilter(_bgElemFilter === t.dataset.el ? 'all' : t.dataset.el);
 });
+
+function bgUpdateOwnedStrip() {
+  try {
+    const own = getOwned();
+    const oc = myChars.filter((_, i) => own.includes('my-' + i));
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    set('os-5', oc.filter(c => c.stars === 5).length);
+    set('os-4', oc.filter(c => c.stars === 4).length);
+    set('os-total', oc.length);
+    BG_ELEMS.forEach(el => {
+      const b = document.getElementById('os-' + el);
+      if (!b) return;
+      b.textContent = oc.filter(c => c.elem === el).length;
+      const col = EL_COLORS[el] || '#fff';
+      b.style.color = col;
+      b.parentElement.style.color = col;
+    });
+  } catch (e) {}
+}
 
 function refreshAllOwned() {
   const oc=document.getElementById('owned-count');
@@ -3943,6 +4031,7 @@ function bgRefreshAllOwned() {
   if(elOwned) { elOwned.textContent = bgGetOwnedCount(); elOwned.style.color = info.color; }
   if(elLabel) elLabel.textContent = 'Owned';
   if(elTotal) elTotal.textContent = myChars.length; // altyd dieselfde vir almal
+  bgUpdateOwnedStrip();
 }
 
 // Override the original refreshAllOwned
