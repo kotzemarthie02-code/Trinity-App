@@ -113,7 +113,7 @@
             border: 2px solid rgba(51,255,119,0.5);
             overflow: hidden;
             margin-bottom: 0;
-            height: calc(100vh - 90px);
+            height: calc(100vh - 135px);
             display: flex;
             flex-direction: column;
         }
@@ -267,6 +267,20 @@
         }
         .tl-bar:hover { filter: brightness(1.18); transform: scaleY(1.06); z-index: 10; }
 
+        /* Ending soon / ended / filters */
+        .tl-bar.ending-soon { animation: pulseEnd 1.4s ease-in-out infinite; outline: 2px solid var(--red); }
+        @keyframes pulseEnd { 0%,100% { box-shadow: 0 0 4px var(--red); } 50% { box-shadow: 0 0 16px var(--red); } }
+        .tl-bar.ended { opacity: 0.4; }
+        .cd-tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); white-space: nowrap; flex-shrink: 0; }
+        .cd-tag.soon { background: rgba(255,77,77,0.25); color: #ff8080; }
+        .cd-tag.live { background: rgba(51,255,119,0.18); color: #33ff77; }
+        .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+        .search-input { padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border); background: rgba(0,0,0,0.55); color: white; font-size: 12px; width: 200px; backdrop-filter: blur(8px); }
+        .search-input:focus { outline: none; border-color: var(--gold); }
+        .chip { padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid transparent; background: rgba(0,0,0,0.55); transition: 0.15s; opacity: 0.5; }
+        .chip.on { opacity: 1; border-color: currentColor; }
+        .chip:hover { opacity: 0.9; }
+
         /* Today line */
         .today-vline {
             position: absolute; top: 0; bottom: 0; width: 2px;
@@ -362,6 +376,10 @@
     </button>
 </div>
 
+<div class="filter-bar">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search events..." oninput="_q=this.value.toLowerCase();renderTimeline()">
+    <div id="chipRow" style="display:contents;"></div>
+</div>
 <div class="timeline-outer">
     <div class="timeline-scroll" id="timelineScroll">
         <div id="tlRoot" style="min-width:max-content;"></div>
@@ -525,8 +543,32 @@ function setZoom(z) {
 }
 
 // ── Render ──
+let _q = '';
+const _catOff = new Set();
+function buildChips() {
+    const row = document.getElementById('chipRow'); row.innerHTML = '';
+    CATEGORIES.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'chip' + (_catOff.has(c.id) ? '' : ' on');
+        el.style.color = c.color; el.textContent = c.icon + ' ' + c.label;
+        el.onclick = () => { _catOff.has(c.id) ? _catOff.delete(c.id) : _catOff.add(c.id); buildChips(); renderTimeline(); };
+        row.appendChild(el);
+    });
+}
+function eventStatus(ev) {
+    const t = new Date(); t.setHours(0,0,0,0);
+    const s = new Date(ev.start+'T00:00:00'), e = new Date(ev.end+'T00:00:00');
+    const D = 86400000;
+    if (t < s) return { state:'upcoming', text:'Starts in ' + Math.round((s-t)/D) + 'd' };
+    if (t > e) return { state:'ended', text:'Ended' };
+    const left = Math.round((e-t)/D);
+    if (left === 0) return { state:'soon', text:'Ends today!' };
+    if (left <= 3) return { state:'soon', text:'Ends in ' + left + 'd' };
+    return { state:'live', text:left + 'd left' };
+}
 function renderTimeline() {
-    const events = getEvents();
+    const events = getEvents().filter(ev =>
+        !_catOff.has(ev.category || 'other') && (!_q || (ev.text||'').toLowerCase().includes(_q)));
     const pxDay = ZOOM_PX[_zoom];
     const today = new Date(); today.setHours(0,0,0,0);
 
@@ -610,7 +652,7 @@ function renderTimeline() {
     if (!hasAny) {
         const empty = document.createElement('div');
         empty.className = 'tl-empty-row';
-        empty.innerHTML = isLocked ? '🔒 Unlock to add events' : '✨ Click "+ Add Event" to get started';
+        empty.innerHTML = (_q || _catOff.size) ? '🔍 No events match your filter' : (isLocked ? '🔒 Unlock to add events' : '✨ Click "+ Add Event" to get started');
         root.appendChild(empty);
         return;
     }
@@ -658,6 +700,11 @@ function renderTimeline() {
             const nameSpan = document.createElement('span');
             nameSpan.textContent = ev.text;
             lblCell.appendChild(nameSpan);
+            const st = eventStatus(ev);
+            const tag = document.createElement('span');
+            tag.className = 'cd-tag ' + (st.state==='soon' ? 'soon' : st.state==='live' ? 'live' : '');
+            tag.textContent = (st.state==='soon' ? '⚠️ ' : '') + st.text;
+            lblCell.appendChild(tag);
             if (!isLocked) {
                 const del = document.createElement('span');
                 del.className = 'row-del'; del.textContent = '✕'; del.title = 'Delete';
@@ -700,8 +747,10 @@ function renderTimeline() {
                 const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
                 const lum = (0.299*r+0.587*g+0.114*b)/255;
                 bar.style.color = lum > 0.55 ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)';
-                bar.textContent = ev.text;
-                bar.title = ev.text + (ev.start!==ev.end ? `  (${ev.start} → ${ev.end})` : `  (${ev.start})`);
+                bar.textContent = ev.text + ((barR - barL) > 170 ? '  ·  ' + st.text : '');
+                if (st.state === 'soon') bar.classList.add('ending-soon');
+                if (st.state === 'ended') bar.classList.add('ended');
+                bar.title = ev.text + '  [' + st.text + ']' + (ev.start!==ev.end ? `  (${ev.start} → ${ev.end})` : `  (${ev.start})`);
                 if (!isLocked) {
                     bar.ondblclick = () => openEditModal(ev);
                     bar.title += '  — dbl-click to edit';
@@ -736,6 +785,7 @@ function renderTimeline() {
 }
 
 // ── Scroll to today ──
+buildChips();
 function scrollToToday() {
     const scroller = document.getElementById('timelineScroll');
     const pxDay = ZOOM_PX[_zoom];
