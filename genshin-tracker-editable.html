@@ -154,7 +154,10 @@
     object-fit:cover; border-radius:inherit;
   }
   .char-header-avatar #cAvatarFallback{ position:relative; z-index:0; }
-  .char-header-fields{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; flex:1; }
+  .char-header-fields{ display:flex; flex-direction:column; gap:10px; flex:1; min-width:0; }
+  .char-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  .char-row .grow{ flex:1; min-width:110px; }
+  .char-row .grow input{ width:100%; }
   input, select, textarea{
     background: rgba(255,255,255,0.07);
     border:1px solid rgba(255,255,255,0.15);
@@ -538,33 +541,41 @@
         </div>
 
         <div class="char-header-fields">
-          <div class="field-group">
-            <span class="field-label">Naam</span>
-            <input class="name-input" id="cName" type="text">
+          <div class="char-row">
+            <div class="field-group grow">
+              <span class="field-label">Naam</span>
+              <input class="name-input" id="cName" type="text">
+            </div>
+            <div class="field-group">
+              <span class="field-label">Element</span>
+              <select id="cElement">
+                <option>Cryo</option><option>Pyro</option><option>Hydro</option>
+                <option>Electro</option><option>Anemo</option><option>Geo</option><option>Dendro</option>
+              </select>
+            </div>
           </div>
-          <div class="field-group">
-            <span class="field-label">Element</span>
-            <select id="cElement">
-              <option>Cryo</option><option>Pyro</option><option>Hydro</option>
-              <option>Electro</option><option>Anemo</option><option>Geo</option><option>Dendro</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <span class="field-label">Stars</span>
-            <select id="cStars" class="lvl-input">
-              <option value="4">4★</option><option value="5">5★</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <span class="field-label">Level</span>
-            <input class="lvl-input" id="cLevel" type="number" min="1" max="90">
-          </div>
-          <div class="field-group">
-            <span class="field-label">Constellation</span>
-            <select id="cConst" class="const-select">
-              <option>C0</option><option>C1</option><option>C2</option><option>C3</option>
-              <option>C4</option><option>C5</option><option>C6</option>
-            </select>
+          <div class="char-row">
+            <div class="field-group">
+              <span class="field-label">Stars</span>
+              <select id="cStars" class="lvl-input">
+                <option value="4">4★</option><option value="5">5★</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <span class="field-label">Level</span>
+              <input class="lvl-input" id="cLevel" type="number" min="1" max="90">
+            </div>
+            <div class="field-group">
+              <span class="field-label">Constellation</span>
+              <select id="cConst" class="const-select">
+                <option>C0</option><option>C1</option><option>C2</option><option>C3</option>
+                <option>C4</option><option>C5</option><option>C6</option>
+              </select>
+            </div>
+            <div class="field-group grow">
+              <span class="field-label">Role</span>
+              <input class="role-input" id="cRole" type="text" placeholder="Tik rol… (bv. Main DPS)" autocomplete="off">
+            </div>
           </div>
         </div>
 
@@ -736,6 +747,27 @@
 /* ---------------------------------------------------------------
    2) helpers
    --------------------------------------------------------------- */
+
+// Reads what you typed in a Target/Current box. Accepts a plain number
+// ("46.6", "50%", "1,5") OR a range ("30-50", "20 – 80%"). A range is
+// counted by its MIDDLE value (30-50 -> 40), and the text you typed is kept
+// so the box still shows "30-50".
+function parseStatInput(raw){
+  const str = String(raw ?? "").replace(/,/g, ".").replace(/[%\s]/g, "").replace(/[–—−]/g, "-");
+  if (str === "") return { num: 0, text: undefined };
+  const m = str.match(/^(-?\d*\.?\d+)-(\d*\.?\d+)$/);
+  if (m) {
+    const lo = parseFloat(m[1]), hi = parseFloat(m[2]);
+    return { num: Math.round(((lo + hi) / 2) * 10) / 10, text: String(raw).trim() };
+  }
+  const n = parseFloat(str);
+  return { num: isNaN(n) ? 0 : n, text: undefined };
+}
+// what to show inside the box (the typed range if there is one)
+function statBoxValue(s, field){
+  const t = s[field + "Text"];
+  return (t !== undefined && t !== "") ? t : s[field];
+}
 
 // Difference = Current - Target. Negative means "still missing".
 function calcDiff(target, current){
@@ -1022,7 +1054,7 @@ function getOwnedNames(){
 function makeDefaultCharacter(name){
   const info = ROSTER[name] || { r: 5, e: "Cryo" };
   return {
-    name: name, element: info.e, stars: info.r, level: 1, constellation: "C0",
+    name: name, element: info.e, stars: info.r, level: 1, constellation: "C0", role: "",
     weapon: {
       name: "", level: 1, refine: "R1",
       baseAtk: 0, baseAtkLocked: true,
@@ -1145,6 +1177,7 @@ function renderCharacterPage(){
   document.getElementById("cStars").value = c.stars;
   document.getElementById("cLevel").value = c.level;
   document.getElementById("cConst").value = c.constellation;
+  document.getElementById("cRole").value = c.role || "";
 
   renderPinNotes();
 
@@ -1192,10 +1225,10 @@ function renderStatTable(tbodyId, dataObj, kind){
     tr.innerHTML = `
       <td><input class="stat-input label-input" type="text"
             data-kind="${kind}" data-key="${key}" data-field="label" value="${s.label}"></td>
-      <td class="num"><input class="stat-input" type="number" step="0.1"
-            data-kind="${kind}" data-key="${key}" data-field="target" value="${s.target}"></td>
-      <td class="num"><input class="stat-input" type="number" step="0.1"
-            data-kind="${kind}" data-key="${key}" data-field="current" value="${s.current}"></td>
+      <td class="num"><input class="stat-input" type="text" autocomplete="off" placeholder="0"
+            data-kind="${kind}" data-key="${key}" data-field="target" value="${statBoxValue(s,"target")}"></td>
+      <td class="num"><input class="stat-input" type="text" autocomplete="off" placeholder="0"
+            data-kind="${kind}" data-key="${key}" data-field="current" value="${statBoxValue(s,"current")}"></td>
       <td class="num" id="diff-${kind}-${key}"></td>
       <td class="num"><span class="status-dot" id="status-${kind}-${key}"></span></td>
       <td><button class="row-del-btn" type="button" data-kind="${kind}" data-key="${key}" title="Delete row">✕</button></td>
@@ -1441,7 +1474,9 @@ function applyDiffAndStatus(kind, dataObj){
         diffCell.textContent = "";
         diffCell.className = "num";
       } else {
-        diffCell.textContent = diff >= 0 ? "✅" : `${diff}${s.unit||""}`;
+        const isRange = !!(s.targetText || s.currentText);
+        diffCell.textContent = diff >= 0 ? "✅" : `${isRange ? "~" : ""}${diff}${s.unit||""}`;
+        diffCell.title = isRange ? "Reeks: die middelwaarde word gebruik" : "";
         diffCell.className = "num " + (diff >= 0 ? "diff-ok" : "diff-bad");
       }
     }
@@ -1523,7 +1558,7 @@ document.getElementById("characterSelect").addEventListener("change", (e)=>{
 });
 
 // header field edits (name, element, stars, level, constellation, notes)
-["cName","cElement","cStars","cLevel","cConst"].forEach(id=>{
+["cName","cElement","cStars","cLevel","cConst","cRole"].forEach(id=>{
   document.getElementById(id).addEventListener("input", ()=>{
     const c = characters[activeIndex];
     c.name = document.getElementById("cName").value;
@@ -1531,6 +1566,7 @@ document.getElementById("characterSelect").addEventListener("change", (e)=>{
     c.stars = Number(document.getElementById("cStars").value);
     c.level = Number(document.getElementById("cLevel").value);
     c.constellation = document.getElementById("cConst").value;
+    c.role = document.getElementById("cRole").value;
 
     // update avatar picture/letters/color live if name or element changed
     updateAvatar(c);
@@ -1561,9 +1597,16 @@ function handleStatInput(e){
   const bucket = bucketForKind(input.dataset.kind, c);
   if (!bucket) return;
   const field = input.dataset.field;
-  bucket[input.dataset.key][field] = (field === "label" || field === "note")
-    ? input.value
-    : Number(input.value);
+  const row = bucket[input.dataset.key];
+  if (field === "label" || field === "note") {
+    row[field] = input.value;
+  } else if (input.dataset.kind === "stat") {
+    const pr = parseStatInput(input.value);       // handles 30-50 style ranges
+    row[field] = pr.num;
+    if (pr.text !== undefined) row[field + "Text"] = pr.text; else delete row[field + "Text"];
+  } else {
+    row[field] = Number(input.value);
+  }
   updateAllDiffsAndProgress();
 }
 
@@ -1967,7 +2010,8 @@ function ensureArtifactSetShape(artSet){
   return artSet;
 }
 function repairCharacterData(list){
-  (list || []).forEach(c => { if (c) c.artifacts = ensureArtifactSetShape(c.artifacts); });
+  (list || []).forEach(c => { if (c) { c.artifacts = ensureArtifactSetShape(c.artifacts);
+    if (c.role === undefined) c.role = ""; } });
   return list;
 }
 
