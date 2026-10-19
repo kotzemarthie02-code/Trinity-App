@@ -232,6 +232,9 @@
             font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85);
             gap: 6px;
         }
+        .tl-event-row.tl-ended-row { height: 34px; cursor: pointer; }
+        .tl-ended-row .tl-row-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: .03em; }
+        .tl-ended-row:hover .tl-row-label { color: #fff; background: rgba(255,255,255,0.05); }
         .tl-row-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
         .row-del {
             opacity: 0; font-size: 13px; color: var(--red); cursor: pointer;
@@ -545,6 +548,9 @@ function setZoom(z) {
 // ── Render ──
 let _q = '';
 const _catOff = new Set();
+// Watter "Ended"-groepe is oop (onthou per kategorie)
+const _endedOpen = new Set((() => { try { return JSON.parse(localStorage.getItem('cal_ended_open') || '[]'); } catch(e) { return []; } })());
+function saveEndedOpen() { try { localStorage.setItem('cal_ended_open', JSON.stringify([..._endedOpen])); } catch(e) {} }
 function buildChips() {
     const row = document.getElementById('chipRow'); row.innerHTML = '';
     CATEGORIES.forEach(c => {
@@ -678,8 +684,43 @@ function renderTimeline() {
         grpRow.appendChild(grpBg);
         root.appendChild(grpRow);
 
+        // Ended van VORIGE maande gaan in 'n opvou-ry ("Ended (N)").
+        // Ended van hierdie maand bly sigbaar tot die maand verby is; dan vou hulle outomaties in.
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const past = evList.filter(ev => new Date(ev.end + 'T00:00:00') < monthStart);
+        const rest = evList.filter(ev => !(new Date(ev.end + 'T00:00:00') < monthStart));
+        const endedOpen = !!_q || _endedOpen.has(cat.id);   // soek wys altyd ook die ended
+        if (past.length) {
+            const tRow = document.createElement('div');
+            tRow.className = 'tl-event-row tl-ended-row';
+            const tLbl = document.createElement('div');
+            tLbl.className = 'tl-row-label';
+            const tTxt = document.createElement('span');
+            tTxt.textContent = (endedOpen ? '▾ ' : '▸ ') + 'Ended (' + past.length + ')';
+            tLbl.appendChild(tTxt);
+            tRow.appendChild(tLbl);
+            const tCells = document.createElement('div');
+            tCells.className = 'tl-row-cells';
+            tCells.style.width = totalW + 'px';
+            days.forEach((day, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'tl-cell' + (day.getDay()===0||day.getDay()===6 ? ' weekend':'') + (i===todayIdx ? ' today-cell':'') + (day.getDay()===1 ? ' week-start':'');
+                cell.style.width = pxDay + 'px';
+                tCells.appendChild(cell);
+            });
+            tRow.appendChild(tCells);
+            tRow.title = endedOpen ? 'Klik om toe te maak' : 'Klik om die ended events te wys';
+            tRow.onclick = () => {
+                if (_endedOpen.has(cat.id)) _endedOpen.delete(cat.id); else _endedOpen.add(cat.id);
+                saveEndedOpen();
+                renderTimeline();
+            };
+            root.appendChild(tRow);
+        }
+        const shownList = endedOpen ? [...past, ...rest] : rest;
+
         // Event rows
-        evList.forEach(ev => {
+        shownList.forEach(ev => {
             const row = document.createElement('div');
             row.className = 'tl-event-row';
 

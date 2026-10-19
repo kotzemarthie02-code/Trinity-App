@@ -107,7 +107,7 @@
             <button class="back-btn" onclick="window.location.href='Dashboard.html'">🏠 Dashboard View</button>
             <select id="f-rarity" onchange="filter()"><option value="all">Rarity</option><option value="5">5 Ster</option><option value="4">4 Ster</option></select>
             <select id="f-element" onchange="filter()"><option value="all">Element</option><option value="Anemo">Anemo</option><option value="Geo">Geo</option><option value="Electro">Electro</option><option value="Dendro">Dendro</option><option value="Hydro">Hydro</option><option value="Pyro">Pyro</option><option value="Cryo">Cryo</option></select>
-            <select id="f-owned" onchange="filter()"><option value="all">Own</option><option value="owned">Owned</option><option value="unowned">Unowned</option></select>
+            <select id="f-owned" onchange="filter()"><option value="all">Own</option><option value="owned" selected>Owned</option><option value="unowned">Unowned</option></select>
         </div>
         <div class="character-grid" id="grid"></div>
     </div>
@@ -154,15 +154,13 @@ let currentUsername = localStorage.getItem('trinity_uid') || "Admin";
 // Luister vir data vanaf Firebase
 onValue(ref(db, 'users/' + currentUsername + '/ownedCharacters'), (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-        const arr = Array.isArray(data) ? data : Object.values(data);
-        localStorage.setItem('ownedCharacters', JSON.stringify(arr));
-        window.ownedFromStorage = arr;
-        Object.keys(window.characters).forEach(name => {
-            window.characters[name].o = window.ownedFromStorage.includes(name);
-        });
-        if (typeof window.filter === "function") window.filter();
-    }
+    const arr = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+    localStorage.setItem('ownedCharacters', JSON.stringify(arr));
+    window.ownedFromStorage = arr;
+    Object.keys(window.characters).forEach(name => {
+        window.characters[name].o = window.ownedFromStorage.includes(name);
+    });
+    if (typeof window.filter === "function") window.filter();
 });
 
 onValue(ref(db, 'users/' + currentUsername + '/characterDetails'), (snapshot) => {
@@ -174,13 +172,11 @@ onValue(ref(db, 'users/' + currentUsername + '/characterDetails'), (snapshot) =>
 });
 
 onValue(ref(db, 'users/' + currentUsername + '/guideProgress'), (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-        localStorage.setItem('guideProgress', JSON.stringify(data));
-        window.guideProgress = data;
-        if (typeof window.filter === "function") window.filter();
-        if (window.refreshCurrentCircles) window.refreshCurrentCircles();
-    }
+    const data = snapshot.val() || {};
+    localStorage.setItem('guideProgress', JSON.stringify(data));
+    window.guideProgress = data;
+    if (typeof window.filter === "function") window.filter();
+    if (window.refreshCurrentCircles) window.refreshCurrentCircles();
 });
 
 // Sync na Firebase
@@ -202,12 +198,23 @@ window.syncFirebase = function() {
 
     let current = null;
 
+    // Status-kodes (dieselfde as CharacterView): 0=grys, 1=groen, 2=rooi, 3=oranje
+    const GUIDE_COLORS = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(244, 67, 54)', 'rgb(255, 152, 0)'];
+    const TASK_LIST = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension", "Weapon [Future] ★★★★", "Weapon [Future] ★★★★★"];
+    // Firebase sleutels mag nie [ ] bevat nie: "Weapons [Now]" -> "Weapons (Now)"
+    function taskKey(t) { return t.replace(/\[/g, '(').replace(/\]/g, ')'); }
+    function taskStatus(charProg, t) {
+        const v = charProg[taskKey(t)];
+        return v !== undefined ? v : charProg[t];
+    }
+
     function getCharLV(name) {
         const charDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
         const data = charDetails[name];
         if (!data) return null;
-        const lvFrom = data['sel_1'] || '';
-        const lvTo = data['sel_2'] || '';
+        // CharacterView stoor lvFrom/lvTo direk; ou data: sel_0 = van, sel_1 = tot
+        const lvFrom = (data.lvFrom !== undefined ? data.lvFrom : data['sel_0']) || '';
+        const lvTo = (data.lvTo !== undefined ? data.lvTo : data['sel_1']) || '';
         if (lvFrom || lvTo) return { from: lvFrom, to: lvTo };
         return null;
     }
@@ -226,6 +233,15 @@ window.syncFirebase = function() {
         }
     }
 
+    // As jy in die "Unowned"-aansig 'n karakter owned maak, gaan terug na die normale Owned-aansig
+    function backToOwnedViewIfNeeded(name) {
+        const sel = document.getElementById('f-owned');
+        if (sel && sel.value === 'unowned' && window.characters[name] && window.characters[name].o) {
+            sel.value = 'owned';
+            window.filter();
+        }
+    }
+
     // Vinnige owned toggle van prentjie klik
     window.quickToggleOwned = function(name) {
         let owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
@@ -239,6 +255,7 @@ window.syncFirebase = function() {
         if (btn) { if (!isOwned) btn.classList.add('is-owned'); else btn.classList.remove('is-owned'); }
         if (window.syncFirebase) window.syncFirebase();
         if (current === name) updateOwnedUI();
+        backToOwnedViewIfNeeded(name);
     };
 
     window.toggleOwned = function() {
@@ -258,6 +275,7 @@ window.syncFirebase = function() {
         updateCardLV(current);
         updateGuideLV(current);
         filter();
+        backToOwnedViewIfNeeded(current);
     }
 
     function updateOwnedUI() {
@@ -290,15 +308,13 @@ window.syncFirebase = function() {
     // Expose current character for Firebase listener refresh
     window.refreshCurrentCircles = function() {
         if (!current) return;
-        const guideColors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
         const charProg = window.guideProgress[current] || {};
-        const taskList = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension", "Weapon [Future] ★★★★", "Weapon [Future] ★★★★★"];
-        taskList.forEach(t => {
+        TASK_LIST.forEach(t => {
             const circleId = 'tg-circle-' + t.replace(/\s+/g,'-').replace(/[★]/g,'s');
             const circleEl = document.getElementById(circleId);
             if (circleEl) {
-                const colorIdx = charProg[t];
-                const color = (colorIdx !== undefined) ? guideColors[colorIdx] : 'rgb(85, 85, 85)';
+                const colorIdx = taskStatus(charProg, t);
+                const color = (colorIdx !== undefined && GUIDE_COLORS[colorIdx]) ? GUIDE_COLORS[colorIdx] : GUIDE_COLORS[0];
                 circleEl.style.backgroundColor = color;
                 circleEl.style.borderColor = color;
             }
@@ -346,7 +362,7 @@ window.syncFirebase = function() {
             updateOwnedUI();
 
             const tBox = document.getElementById('tasks'); tBox.innerHTML = '';
-            const taskList = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension", "Weapon [Future] ★★★★", "Weapon [Future] ★★★★★"];
+            const taskList = TASK_LIST;
             
             taskList.forEach(t => {
                 const row = document.createElement('div'); 
@@ -361,14 +377,13 @@ window.syncFirebase = function() {
             updateGuideLV(name);
             
             // Read colors from guideProgress (synced from CharacterView via Firebase)
-            const guideColors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
             const charProg = window.guideProgress[name] || {};
             taskList.forEach(t => {
                 const circleId = 'tg-circle-' + t.replace(/\s+/g,'-').replace(/[★]/g,'s');
                 const circleEl = document.getElementById(circleId);
                 if (circleEl) {
-                    const colorIdx = charProg[t];
-                    const color = (colorIdx !== undefined) ? guideColors[colorIdx] : 'rgb(85, 85, 85)';
+                    const colorIdx = taskStatus(charProg, t);
+                    const color = (colorIdx !== undefined && GUIDE_COLORS[colorIdx]) ? GUIDE_COLORS[colorIdx] : GUIDE_COLORS[0];
                     circleEl.style.backgroundColor = color;
                     circleEl.style.borderColor = color;
                 }
@@ -384,7 +399,7 @@ window.syncFirebase = function() {
         if (!card) return;
         const prog = window.guideProgress[charName] || {};
         const coreTasks = ["Character", "Weapons [Now]", "Artifacts", "Talents", "Ascension"];
-        const allGreen = coreTasks.every(t => prog[t] === 1);
+        const allGreen = coreTasks.every(t => taskStatus(prog, t) === 1);
         card.classList.toggle('all-done', allGreen);
     }
     

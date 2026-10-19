@@ -3931,8 +3931,8 @@ function showMyChar(idx) {
 
 // ── Init ──
 rebuildRoster();
-if(myChars.length>0) showMyChar(0);
-else showView('dashboard');
+// Maak altyd oop op die Roster-oorsig (nie op die eerste karakter nie)
+showView('dashboard');
 
 </script>
 

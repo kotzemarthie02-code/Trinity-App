@@ -99,7 +99,7 @@
         .white-text { color: white !important; }
         
         .future-enemy-table th, .future-enemy-table td { padding: 8px; font-size: 13px; }
-        .future-input-small { width: 45px !important; text-align: center; margin: 0 auto; font-size: 13px; padding: 4px; }
+        .future-input-small { width: 64px !important; text-align: center; margin: 0 auto; font-size: 13px; padding: 4px; }
         
         /* ── TAB NAV ── */
         .tab-nav {
@@ -141,6 +141,9 @@
         .star-content { display: none; }
         .star-content.active { display: block; }
 
+        select, input[type="text"], input[type="number"] { text-overflow: ellipsis; min-width: 0; }
+        .art-set2 .repeater-row select:nth-child(1) { flex: 2; }
+        .art-set2 .repeater-row select:nth-child(2), .art-set2 .repeater-row select:nth-child(3) { flex: 1; }
         .domain-row-flex {
             display: flex; gap: 30px; align-items: flex-end; margin-top: 15px;
         }
@@ -475,7 +478,10 @@
         <div class="weapon-grid">
             <div class="weapon-col">
                 <h3>Weapon Info</h3>
-                <div class="field"><label>Weapon Name:</label><select class="weapon-list-drop" onchange="updateWeaponPic(this.value)"></select></div>
+                <div class="field idx-skip"><label>Rarity:</label><select id="nowRarityDrop" onchange="switchNowRarity(this.value)">
+                    <option value="">Select</option><option value="5">★★★★★ 5 Star</option><option value="4">★★★★ 4 Star</option><option value="3">★★★ 3 Star</option><option value="2">★★ 2 Star</option><option value="1">★ 1 Star</option>
+                </select></div>
+                <div class="field"><label>Weapon Name:</label><select id="nowWeaponDrop" class="weapon-list-drop" onchange="updateWeaponPic(this.value)"></select></div>
                 <div class="field"><label>Weapon Type:</label><select class="weapon-type-drop"></select></div>
 
 <div class="field"><label>LV:</label>
@@ -540,10 +546,22 @@
             <div style="flex:1;" class="field"><label>Domain:</label><select class="art-dom-drop"></select></div>
             <div style="flex:1;" class="field"><label>Region:</label><select class="region-drop"></select></div>
         </div>
+        <div style="display:flex; gap:10px; margin-top:-5px;">
+            <label style="flex:2;">Artifact Name:</label>
+            <label style="flex:1;">Domain:</label>
+            <label style="flex:1;">Region:</label>
+        </div>
+        <div class="repeater art-set2" data-group="artSet2" style="margin-bottom:15px;">
+            <div class="repeater-row" style="gap:10px;">
+                <select class="art-list-drop"></select>
+                <select class="art-dom-drop"></select>
+                <select class="region-drop"></select>
+            </div>
+        </div>
         <table>
             <tr><th style="color:#ffe14b;">Piece</th><th style="color:#ffe14b;">Main Affix</th><th style="color:#ffe14b;">Minor Affixes</th></tr>
-            <tr><td>Flower</td><td style="color:#fff;font-size:15px;font-weight:bold;">HP 100%</td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
-            <tr><td>Feather</td><td style="color:#fff;font-size:15px;font-weight:bold;">ATK 100%</td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
+            <tr><td>Flower</td><td style="color:#fff;font-size:15px;font-weight:bold;">HP</td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
+            <tr><td>Feather</td><td style="color:#fff;font-size:15px;font-weight:bold;">ATK</td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
             <tr><td>Sands</td><td><select class="affix-drop"></select></td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
             <tr><td>Goblet</td><td><select class="affix-drop"></select></td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
             <tr><td>Circlet</td><td><select class="affix-drop"></select></td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
@@ -657,9 +675,9 @@
     <div class="status-circle" onclick="cycleColor(this)"></div>
     <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:18px;">
         <h2 style="margin:0;">Weapon (Future Wish Pulls)</h2>
-        <select id="starSelectDrop" onchange="switchStar(parseInt(this.value))" style="width:175px;padding:8px;background:rgba(0,0,0,0.6);border:1px solid #a29bfe;border-radius:6px;color:#a29bfe;font-weight:800;font-size:14px;">
-            <option value="4" style="color:#a29bfe;">★★★★ 4-Star</option>
-            <option value="5" style="color:#fdcb6e;">★★★★★ 5-Star</option>
+        <label>Rarity:</label><select id="starSelectDrop" onchange="switchStar(parseInt(this.value))" style="width:175px;padding:8px;background:rgba(0,0,0,0.6);border:1px solid #a29bfe;border-radius:6px;color:#a29bfe;font-weight:800;font-size:14px;">
+            <option value="4" style="color:#a29bfe;">★★★★ 4 Star</option>
+            <option value="5" style="color:#fdcb6e;">★★★★★ 5 Star</option>
         </select>
         <div style="display:flex;align-items:center;gap:8px;"><label>LV:</label><span style="font-weight:bold;" id="futLvLabel">1 - 90</span></div>
         <div style="display:flex;align-items:center;gap:8px;"><label>Weapon Name:</label><select id="futWeaponDrop" class="weapon-4star-drop" style="width:200px;"></select></div>
@@ -1025,6 +1043,124 @@ async function fbRemove(key) {
     await db.ref('users/' + currentUsername + '/' + key).remove();
 }
 
+// ==================== TEKS PAS (shrink-to-fit) ====================
+// Maak die lettergrootte van elke select/input kleiner sodat die hele gekose teks sigbaar is.
+const _fitCtx = document.createElement('canvas').getContext('2d');
+function fitTextEl(el) {
+    if (!el || el.offsetParent === null) return;           // versteekte tab: later weer
+    const cs = getComputedStyle(el);
+    if (!el.dataset.baseFs) el.dataset.baseFs = parseFloat(cs.fontSize) || 13;
+    const base = parseFloat(el.dataset.baseFs);
+    let text = '';
+    if (el.tagName === 'SELECT') text = el.selectedIndex >= 0 ? (el.options[el.selectedIndex].text || '') : '';
+    else text = el.value || '';
+    el.title = text;                                       // volle teks by hover/hou
+    if (!text || text === 'Select') { el.style.fontSize = ''; return; }
+    const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+    const arrow = el.tagName === 'SELECT' ? 24 : 0;
+    const avail = el.clientWidth - pad - arrow - 2;
+    if (avail <= 0) return;
+    _fitCtx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + base + 'px ' + cs.fontFamily;
+    const w = _fitCtx.measureText(text).width;
+    el.style.fontSize = (w > avail ? Math.max(8, Math.floor(base * avail / w * 10) / 10) : base) + 'px';
+}
+function fitAllText() {
+    document.querySelectorAll('select, input[type="text"], input[type="number"]').forEach(fitTextEl);
+}
+let _fitQueued = false;
+function scheduleFit() {
+    if (_fitQueued) return;
+    _fitQueued = true;
+    requestAnimationFrame(() => { _fitQueued = false; fitAllText(); });
+}
+document.addEventListener('change', (e) => fitTextEl(e.target));
+document.addEventListener('input', (e) => fitTextEl(e.target));
+window.addEventListener('resize', scheduleFit);
+
+// ==================== WEAPONS [NOW] RARITY ====================
+function weaponsByRarity(r) {
+    if (!r) return weaponList;
+    const out = []; let on = false;
+    weaponList.forEach(w => {
+        if (/^--/.test(w)) { on = w.indexOf('-- ' + r + ' ') === 0; return; }
+        if (on) out.push(w);
+    });
+    return out;
+}
+function rarityOfWeapon(name) {
+    let cur = '';
+    for (const w of weaponList) {
+        if (/^--/.test(w)) { const m = w.match(/-- (\d)/); cur = m ? m[1] : ''; }
+        else if (w === name) return cur;
+    }
+    return '';
+}
+function fillNowWeapons(r, keepValue) {
+    const d = document.getElementById('nowWeaponDrop');
+    if (!d) return;
+    d.innerHTML = '<option value="">Select</option>';
+    weaponsByRarity(r).forEach(w => {
+        const o = document.createElement('option'); o.value = w; o.textContent = w;
+        if (/^--/.test(w)) o.disabled = true;
+        d.appendChild(o);
+    });
+    d.value = keepValue || '';
+    scheduleFit();
+}
+window.switchNowRarity = function(r) {
+    const d = document.getElementById('nowWeaponDrop');
+    const cur = d ? d.value : '';
+    // behou die gekose wapen net as dit by die nuwe rarity hoort
+    fillNowWeapons(r, weaponsByRarity(r).includes(cur) ? cur : '');
+};
+// data = gestoorde karakter (of null); legacyName = ou indeks-waarde van wapen naam
+function restoreNowWeapon(data, legacyName) {
+    const name = (data && data.nowWeapon) || legacyName || '';
+    let r = (data && data.nowRarity) || (name ? rarityOfWeapon(name) : '');
+    const rd = document.getElementById('nowRarityDrop');
+    if (rd) rd.value = r;
+    fillNowWeapons(r, name);
+}
+
+// ==================== FUTURE WEAPON (4★/5★) ONTHOU ====================
+// Elke ster-vlak onthou sy eie wapen, sodat wissel tussen 4★/5★ niks uitvee nie.
+let futWeaponMem = { 4: '', 5: '' };
+function currentFutStar() {
+    const d = document.getElementById('starSelectDrop');
+    return (d && parseInt(d.value) === 5) ? 5 : 4;
+}
+function captureFutWeapon() {
+    const w = document.getElementById('futWeaponDrop');
+    if (w) futWeaponMem[currentFutStar()] = w.value || '';
+}
+// data = gestoorde karakter-data (of null vir leeg)
+function restoreFutWeapon(data, legacyWeaponValue) {
+    const sd = document.getElementById('starSelectDrop');
+    const star = data && parseInt(data.futStar) === 5 ? 5 : (data && !data.futStar && sd && parseInt(sd.value) === 5 ? 5 : 4);
+    futWeaponMem = { 4: (data && data.futWeapon4) || '', 5: (data && data.futWeapon5) || '' };
+    // ou data sonder aparte velde: gebruik die ou indeks-waarde vir die gestoorde ster
+    if (data && !data.futWeapon4 && !data.futWeapon5 && legacyWeaponValue) futWeaponMem[star] = legacyWeaponValue;
+    if (sd) sd.value = String(star);
+    window.switchStar(star, true);
+}
+
+// Firebase-sleutels mag nie [ ] bevat nie: "Weapons [Now]" -> "Weapons (Now)" (Training Guide gebruik dieselfde)
+function taskKey(t) { return t.replace(/\[/g, '(').replace(/\]/g, ')'); }
+const CV_COLORS = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];   // grys, groen, oranje, rooi
+const GUIDE_TO_CV = { 0: 0, 1: 1, 2: 3, 3: 2 };   // guide: 2=rooi, 3=oranje
+const CV_TO_GUIDE = [0, 1, 3, 2];
+window.cvGuideProg = {};
+function futureTaskName() { return currentFutStar() === 5 ? 'Weapon [Future] ★★★★★' : 'Weapon [Future] ★★★★'; }
+function circleTaskForIndex(i) {
+    return ['Character', 'Weapons [Now]', 'Artifacts', 'Talents', 'Ascension'][i] || (i === 5 ? futureTaskName() : null);
+}
+function refreshFutureCircle() {
+    const c = document.querySelectorAll('.panel .status-circle')[5];
+    if (!c) return;
+    const st = window.cvGuideProg[futureTaskName()];
+    c.style.backgroundColor = CV_COLORS[st !== undefined ? (GUIDE_TO_CV[st] ?? 0) : 0];
+}
+
 // 1. Die Hoofdatabasis vir stoorplek
 let characterDetails = {};
 
@@ -1132,6 +1268,7 @@ async function setupDropdowns() {
 // ============ REPEATER ("+ Add") ENJIN ============
 // Elke groep se velde: watter select-klas met watter opsielys, en of daar 'n Total-inset is.
 const REPEATER_CONFIG = {
+    artSet2:      [{ type:'select', cls:'art-list-drop', list:()=>artifacts }, { type:'select', cls:'art-dom-drop', list:()=>artifactDomains }, { type:'select', cls:'region-drop', list:()=>regions }],
     wnInfoMat:    [{ type:'select', cls:'mat-drop',               list:()=>enemyMaterials },       { type:'input', cls:'total-input' }],
     wnEnemyMat:   [{ type:'select', cls:'mat-drop',               list:()=>enemyMaterials },       { type:'input', cls:'total-input' }],
     wnEnemyType:  [{ type:'select', cls:'enemy-type-list',        list:()=>enemyList }],
@@ -1198,6 +1335,7 @@ window.repeaterAdd = function(groupKey) {
     if (!container) return;
     container.appendChild(buildRepeaterRow(groupKey));
     refreshRepeaterRemoveButtons(container);
+    scheduleFit();
     autoSave();
 };
 
@@ -1236,19 +1374,17 @@ async function cycleColor(el) {
             else if (heading.includes('Artifacts'))                         guideTask = 'Artifacts';
             else if (heading.includes('Talents'))                           guideTask = 'Talents';
             else if (heading.includes('Ascend'))                            guideTask = 'Ascension';
-            else if (heading.includes('Future Wish') && heading.includes('★★★★★')) guideTask = 'Weapon [Future] ★★★★★';
-            else if (heading.includes('Future Wish') && heading.includes('★★★★'))  guideTask = 'Weapon [Future] ★★★★';
+            else if (heading.includes('Future'))                            guideTask = futureTaskName();   // volgens gekose Rarity (4★/5★)
         } else if (panel.id === 'mainPanel') {
             guideTask = 'Character';
         }
 
         if (guideTask) {
-            let guideProgress = await fbGet('guideProgress') || {};
-            if (!guideProgress[charName]) guideProgress[charName] = {};
-            guideProgress[charName][guideTask] = guideStatus;
-            // Clear legacy "Asension" key
-            if (guideTask === 'Ascension') delete guideProgress[charName]['Asension'];
-            await fbSet('guideProgress', guideProgress);
+            window.cvGuideProg[guideTask] = guideStatus;
+            try {
+                // Net hierdie een taak skryf (nie die hele lys nie) en met Firebase-veilige sleutel
+                await fbSet('guideProgress/' + charName + '/' + taskKey(guideTask), guideStatus);
+            } catch (err) { console.error('guideProgress stoor het misluk', err); }
         }
     }
     await autoSave();
@@ -1268,6 +1404,8 @@ async function resetCurrentChar() {
     document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
     // Reset elke "+ Add" groep terug na 1 leë ry
     Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, 1));
+    restoreFutWeapon(null);
+    restoreNowWeapon(null);
     // Reset circles to grey
     document.querySelectorAll('.panel .status-circle').forEach(c => {
         c.style.backgroundColor = 'rgb(85, 85, 85)';
@@ -1278,14 +1416,11 @@ async function resetCurrentChar() {
         // Keep only bday/title/const/talent data (not sel_ inp_ circle_)
         const keep = {};
         characterDetails[charName] = keep;
-        await fbSet('characterDetails', characterDetails);
+        await fbSet('characterDetails/' + charName, keep);
     }
     // Also reset guide progress circles for this char
-    let guideProgress = await fbGet('guideProgress') || {};
-    if (guideProgress[charName]) {
-        guideProgress[charName] = {};
-        await fbSet('guideProgress', guideProgress);
-    }
+    window.cvGuideProg = {};
+    try { await fbRemove('guideProgress/' + charName); } catch (err) { console.error(err); }
     
     // Re-apply charDatabase info (bday, title, etc stays)
     const data = charDatabase[charName];
@@ -1309,7 +1444,7 @@ async function autoSave() {
     // Statiese (nie-repeater) selects/inputs stoor soos voorheen, via hul index -
     // maar rye binne 'n .repeater-row word HIER uitgesluit sodat "+ Add"
     // nooit die indeks van ander velde laat skuif nie.
-    const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras'));
+    const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras') && !sel.closest('.idx-skip'));
     selects.forEach((sel, index) => {
         characterDetails[charName]["sel_" + index] = sel.value;
     });
@@ -1331,13 +1466,25 @@ async function autoSave() {
     });
     characterDetails[charName].dynGroups = dynGroups;
 
-    // Save status circle colors
-    const circles = document.querySelectorAll('.panel .status-circle');
-    circles.forEach((c, i) => {
-        characterDetails[charName]["circle_" + i] = c.style.backgroundColor || 'rgb(85, 85, 85)';
-    });
+    // Weapons [Now]: rarity + wapen apart
+    const _nr = document.getElementById('nowRarityDrop'), _nw = document.getElementById('nowWeaponDrop');
+    characterDetails[charName].nowRarity = _nr ? _nr.value : '';
+    characterDetails[charName].nowWeapon = _nw ? _nw.value : '';
 
-    await fbSet('characterDetails', characterDetails);
+    // Future weapon: ster-vlak + wapen per ster apart (nie net via indeks nie)
+    captureFutWeapon();
+    characterDetails[charName].futStar = currentFutStar();
+    characterDetails[charName].futWeapon4 = futWeaponMem[4] || '';
+    characterDetails[charName].futWeapon5 = futWeaponMem[5] || '';
+
+    // LV (van → tot) direk stoor sodat die Training Guide nooit die verkeerde veld lees nie
+    const _lvs = document.querySelectorAll('#charContent .lv-drop');
+    characterDetails[charName].lvFrom = _lvs[0] ? _lvs[0].value : '';
+    characterDetails[charName].lvTo = _lvs[1] ? _lvs[1].value : '';
+
+    // Stoor NET hierdie karakter se data (nie die hele lys nie) sodat 'n stadige/leë laai
+    // nooit ander karakters se wapen/artifact-detail kan oorskryf nie.
+    await fbSet('characterDetails/' + charName, characterDetails[charName]);
 }
 
 async function loadCharData(charName, myToken) {
@@ -1356,12 +1503,14 @@ async function loadCharData(charName, myToken) {
     document.querySelectorAll('.panel .status-circle').forEach(c => c.style.backgroundColor = 'rgb(85, 85, 85)');
 
     if (!data) {
-        [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras')).forEach(sel => { sel.value = ""; });
+        [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras') && !sel.closest('.idx-skip')).forEach(sel => { sel.value = ""; });
         [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row') && !inp.closest('#statsTableBody') && !inp.closest('#trackerExtras')).forEach(inp => { inp.value = ""; });
         // Geen data nie (nuwe karakter) -> elke repeater-groep terug na 1 leë ry
         Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, 1));
+        restoreFutWeapon(null);
+        restoreNowWeapon(null);
     } else {
-        const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras'));
+        const selects = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras') && !sel.closest('.idx-skip'));
         selects.forEach((sel, index) => {
             sel.value = data["sel_" + index] || "";
         });
@@ -1382,35 +1531,51 @@ async function loadCharData(charName, myToken) {
                 fields.forEach((el, j) => { el.value = vals[j] || ""; });
             });
         });
+        // Future weapon: herstel ster-vlak, regte wapenlys en gestoorde wapen
+        const _fw = document.getElementById('futWeaponDrop');
+        const _allSel = [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras') && !sel.closest('.idx-skip'));
+        const _legacy = data["sel_" + _allSel.indexOf(_fw)] || '';
+        restoreFutWeapon(data, _legacy);
+        const _nwEl = document.getElementById('nowWeaponDrop');
+        restoreNowWeapon(data, data["sel_" + _allSel.indexOf(_nwEl)] || '');
     }
 
-    // Restore circle colors from guideProgress (Firebase)
-    const guideColors = ['rgb(85, 85, 85)', 'rgb(76, 175, 80)', 'rgb(255, 152, 0)', 'rgb(244, 67, 54)'];
-    const guideStatusToCVColor = { 0: 0, 1: 1, 2: 3, 3: 2 };
-
+    // Sirkels: guideProgress (Firebase) is die enigste bron van waarheid - dieselfde as die Training Guide
     const guideProgressAll = await fbGet('guideProgress') || {};
     if (myToken !== charSwitchToken) return;
-    const prog = guideProgressAll[charName] || {};
+    const rawProg = guideProgressAll[charName] || {};
+    const taskNames = ['Character', 'Weapons [Now]', 'Artifacts', 'Talents', 'Ascension', 'Weapon [Future] ★★★★', 'Weapon [Future] ★★★★★'];
+    const prog = {};
+    taskNames.forEach(t => {
+        const v = rawProg[taskKey(t)] !== undefined ? rawProg[taskKey(t)] : rawProg[t];
+        if (v !== undefined) prog[t] = v;
+    });
 
-    const circleTaskMap = [
-        'Character', 'Weapons [Now]', 'Artifacts', 'Talents', 'Ascension',
-        'Weapon [Future] ★★★★', 'Weapon [Future] ★★★★★'
-    ];
-
-    const circles = document.querySelectorAll('.panel .status-circle');
-    circles.forEach((c, i) => {
-        // Maak altyd eers skoon/grys (soos by die begin) sodat 'n nuwe of leë
-        // karakter nooit die vorige karakter se kleur "erf" nie.
-        c.style.backgroundColor = guideColors[0];
-        const task = circleTaskMap[i];
-        if (task && prog[task] !== undefined) {
-            c.style.backgroundColor = guideColors[guideStatusToCVColor[prog[task]] ?? 0];
-        } else if (data && data["circle_" + i]) {
-            c.style.backgroundColor = data["circle_" + i];
+    // Eenmalige oordrag: ou kleure wat net in characterDetails gestoor was, word na guideProgress gekopieer
+    if (data && !data.statusMigrated) {
+        const legacy = ['Character', 'Weapons [Now]', 'Artifacts', 'Talents', 'Ascension', 'Weapon [Future] ★★★★'];
+        for (let i = 0; i < legacy.length; i++) {
+            const t = legacy[i];
+            const ci = CV_COLORS.indexOf(data['circle_' + i]);
+            if (prog[t] === undefined && ci > 0) {
+                prog[t] = CV_TO_GUIDE[ci];
+                try { await fbSet('guideProgress/' + charName + '/' + taskKey(t), prog[t]); } catch (e) {}
+            }
         }
+        data.statusMigrated = true;
+        try { await fbSet('characterDetails/' + charName + '/statusMigrated', true); } catch (e) {}
+        if (myToken !== charSwitchToken) return;
+    }
+
+    window.cvGuideProg = prog;
+    document.querySelectorAll('.panel .status-circle').forEach((c, i) => {
+        c.style.backgroundColor = CV_COLORS[0];
+        const task = circleTaskForIndex(i);
+        if (task && prog[task] !== undefined) c.style.backgroundColor = CV_COLORS[GUIDE_TO_CV[prog[task]] ?? 0];
     });
     } finally {
         if (myToken === charSwitchToken) isLoadingChar = false;
+        scheduleFit();
     }
 }
 
@@ -1423,6 +1588,7 @@ async function updateChar(name) {
         document.getElementById('talentNA').innerText = '-';
         document.getElementById('talentES').innerText = '-';
         document.getElementById('talentEB').innerText = '-';
+        window.cvGuideProg = {};
         // Reset ALL panel status-circles to grey when "Select" (geen karakter) is gekies
         document.querySelectorAll('.panel .status-circle').forEach(c => {
             c.style.backgroundColor = 'rgb(85, 85, 85)';
@@ -1471,28 +1637,36 @@ window.switchTab = function(tab) {
     if (btn) btn.classList.add('active');
     const panel = document.getElementById('tab-' + tab);
     if (panel) panel.classList.add('active');
+    scheduleFit();
 };
 
 // ── STAR TOGGLE ──
-window.switchStar = function(star) {
+window.switchStar = function(star, skipCapture) {
+    star = (parseInt(star) === 5) ? 5 : 4;
+    const wdrop = document.getElementById('futWeaponDrop');
+    // Onthou eers die wapen van die ster-vlak wat ons nou verlaat
+    if (!skipCapture && wdrop) {
+        const prev = wdrop.className.indexOf('5star') !== -1 ? 5 : 4;
+        futWeaponMem[prev] = wdrop.value || '';
+    }
     document.querySelectorAll('.star-content').forEach(c => c.classList.remove('active'));
     const content = document.getElementById('star' + star + '-content');
     if (content) content.classList.add('active');
-    // Update dropdown color
     const drop = document.getElementById('starSelectDrop');
     if (drop) {
+        drop.value = String(star);
         drop.style.color = star === 4 ? '#a29bfe' : '#fdcb6e';
         drop.style.borderColor = star === 4 ? '#a29bfe' : '#fdcb6e';
     }
-    // Swap weapon name dropdown class
-    const wdrop = document.getElementById('futWeaponDrop');
     if (wdrop) {
         wdrop.className = star === 4 ? 'weapon-4star-drop' : 'weapon-5star-drop';
-        // Re-fill with correct list
         const list = star === 4 ? weapon4StarList : weapon5StarList;
         wdrop.innerHTML = '<option value="">Select</option>';
         list.forEach(w => { const o = document.createElement('option'); o.value=w; o.textContent=w; wdrop.appendChild(o); });
+        wdrop.value = futWeaponMem[star] || '';
     }
+    refreshFutureCircle();
+    scheduleFit();
 };
 
 window.updateChar = updateChar;
@@ -1513,6 +1687,7 @@ window.onload = async () => {
     }
 
     await setupDropdowns();
+    scheduleFit();
 };
 
 </script>
