@@ -116,7 +116,7 @@
     border:1px solid rgba(139,123,247,0.5); border-radius:12px; padding:12px;
     box-shadow:0 10px 30px rgba(0,0,0,0.5); width:280px;
   }
-  .pin-popup-emojis{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+  .pin-popup-emojis{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; max-height:150px; overflow-y:auto; }
   .pin-popup-emojis .note-emoji-btn.selected{ background:rgba(139,123,247,0.4); border-color:#8b7bf7; }
   .pin-popup input{ width:100%; margin-bottom:10px; }
   .pin-popup-actions{ display:flex; gap:8px; }
@@ -224,14 +224,18 @@
      set name (most builds only need one, but 2pc+2pc combos need two). */
   .art-sets-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
   .art-set-chip{
-    display:flex; align-items:center; gap:2px;
+    display:flex; align-items:center; gap:4px;
     background:rgba(139,123,247,0.16); border:1px solid rgba(139,123,247,0.45);
-    border-radius:8px; padding:4px 4px 4px 10px;
+    border-radius:10px; padding:6px 6px 6px 12px;
+    flex:1 1 200px; max-width:290px; min-width:180px;
   }
   .art-set-chip input{
     background:transparent; border:none; color:#ffd77a; font-weight:700;
-    font-size:12px; width:130px; padding:2px 2px;
+    font-size:13px; flex:1; min-width:0; width:100%; padding:3px 2px;
   }
+  .art-side-title{ font-size:13px; font-weight:800; color:#c8bfff; margin:6px 0 8px; letter-spacing:.02em; }
+  .art-side-title span{ font-weight:600; color:#a6a6c2; font-size:11px; }
+  .art-side-title.is-current{ margin-top:18px; }
   .art-set-chip input:focus{ outline:none; }
   .art-set-remove{
     background:none; border:none; color:#f87171; cursor:pointer;
@@ -278,7 +282,9 @@
 
   /* ---- Flower/Feather: main stat is fixed by the game, so it's shown
      greyed-out and cannot be edited. ---- */
-  .art-card.is-locked{ opacity:0.92; }
+  .art-card.is-locked{ opacity:0.85; border-color:rgba(251,191,36,0.35); }
+  .art-card.is-locked .art-input, .art-card.is-locked .art-select{ opacity:.6; cursor:not-allowed; }
+  .art-card.is-locked .art-trash-btn, .art-card.is-locked .art-add-sub-btn{ opacity:.35; pointer-events:none; }
   .art-lock-tag{
     font-size:9.5px; font-weight:800; color:#ffb4b4; background:rgba(248,113,113,0.12);
     border:1px solid rgba(248,113,113,0.35); border-radius:6px; padding:2px 6px; display:inline-block; margin-bottom:5px;
@@ -301,7 +307,8 @@
 
   /* ---- Sub Stats block: same shape on all 5 pieces ---- */
   .art-subs-head{ font-size:10px; font-weight:800; color:#c8bfff; margin:6px 0 4px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:5px; }
-  .art-sub-row-v2{ display:grid; grid-template-columns: 1.15fr 0.65fr auto auto; gap:3px; align-items:center; margin-bottom:4px; }
+  .art-sub-row-v2{ display:grid; grid-template-columns: 1.15fr 0.7fr auto; gap:3px; align-items:center; margin-bottom:4px; }
+  .art-sub-row-v2.is-names{ grid-template-columns: 1fr auto; }
   .art-input-sm{ font-size:10.5px; padding:4px 4px; margin-bottom:0; }
 
   /* ---- % / Flat pill toggle ---- */
@@ -525,6 +532,36 @@
         <button type="button" class="note-emoji-btn" data-emoji="🔧" title="To fix / todo">🔧</button>
         <button type="button" class="note-emoji-btn" data-emoji="👍" title="Good">👍</button>
         <button type="button" class="note-emoji-btn" data-emoji="❓" title="Not sure">❓</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💜" title="💜">💜</button>
+        <button type="button" class="note-emoji-btn" data-emoji="❤️" title="❤️">❤️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🧡" title="🧡">🧡</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💚" title="💚">💚</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💙" title="💙">💙</button>
+        <button type="button" class="note-emoji-btn" data-emoji="⚔️" title="⚔️">⚔️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🛡️" title="🛡️">🛡️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="✨" title="✨">✨</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🌟" title="🌟">🌟</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💎" title="💎">💎</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💰" title="💰">💰</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🎁" title="🎁">🎁</button>
+        <button type="button" class="note-emoji-btn" data-emoji="📌" title="📌">📌</button>
+        <button type="button" class="note-emoji-btn" data-emoji="📝" title="📝">📝</button>
+        <button type="button" class="note-emoji-btn" data-emoji="📈" title="📈">📈</button>
+        <button type="button" class="note-emoji-btn" data-emoji="📉" title="📉">📉</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🔑" title="🔑">🔑</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🔒" title="🔒">🔒</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🚫" title="🚫">🚫</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🙏" title="🙏">🙏</button>
+        <button type="button" class="note-emoji-btn" data-emoji="😀" title="😀">😀</button>
+        <button type="button" class="note-emoji-btn" data-emoji="😡" title="😡">😡</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🤔" title="🤔">🤔</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🎮" title="🎮">🎮</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🌸" title="🌸">🌸</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🪶" title="🪶">🪶</button>
+        <button type="button" class="note-emoji-btn" data-emoji="⏳" title="⏳">⏳</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🏆" title="🏆">🏆</button>
+        <button type="button" class="note-emoji-btn" data-emoji="👑" title="👑">👑</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🔁" title="🔁">🔁</button>
       </div>
       <input type="text" id="pinPopupText" placeholder="Skryf jou nota... (bv. Max HP moet nog op)">
       <div class="pin-popup-actions">
@@ -627,7 +664,7 @@
         <div class="field-group weapon-block">
           <span class="field-label">Base ATK</span>
           <div class="weapon-atk-row">
-            <input id="wBaseAtk" type="number" style="flex:1;">
+            <input id="wBaseAtk" type="number" placeholder="0" style="flex:1;">
             <button type="button" id="wAtkLockBtn" class="art-toggle weapon-lock-toggle is-flat">
               <span class="art-toggle-label-flat">🔒 Flat lock</span>
             </button>
@@ -639,10 +676,7 @@
           <span class="field-label">Sub Stat</span>
           <div class="weapon-substat-row">
             <select id="wSubStatType"></select>
-            <input id="wSubStatValue" type="text" placeholder="0">
-            <button type="button" id="wSubStatToggle" class="art-toggle is-pct">
-              <span class="art-toggle-label-pct">%</span><span class="art-toggle-label-flat">Flat</span>
-            </button>
+            <input id="wSubStatValue" type="text" placeholder="0" autocomplete="off">
           </div>
         </div>
 
@@ -688,6 +722,11 @@
         </div>
       </div>
 
+      <div class="art-side-title">🎯 Target</div>
+      <div class="art-sets-row" id="artifactSetsTarget"></div>
+      <div class="art-grid" id="artifactsTarget"></div>
+
+      <div class="art-side-title is-current">📦 Current</div>
       <div class="art-sets-row" id="artifactSetsCurrent"></div>
       <div class="art-grid" id="artifactsCurrent"></div>
     </div>
@@ -766,8 +805,17 @@ function parseStatInput(raw){
 // what to show inside the box (the typed range if there is one)
 function statBoxValue(s, field){
   const t = s[field + "Text"];
-  return (t !== undefined && t !== "") ? t : s[field];
+  if (t !== undefined && t !== "") return esc(t);
+  const v = s[field];
+  return (v === 0 || v === undefined || v === null) ? "" : v;   // 0 = leeg boksie
 }
+
+// Maak teks veilig om binne value="..." te sit (anders breek ' " ' die boksie).
+function esc(v){
+  return String(v ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+// Tipe word afgelei van wat jy tik: bevat '%' = %, anders flat.
+function valueType(txt){ return /%/.test(String(txt ?? "")) ? "%" : "flat"; }
 
 // Difference = Current - Target. Negative means "still missing".
 function calcDiff(target, current){
@@ -904,11 +952,12 @@ function parseStatValue(raw){
   return { num, type: isPct ? "%" : "flat" };
 }
 
-function emptyArtifactSlot(key, overrides){
+function emptyArtifactSlot(key, overrides, side){
   const meta = ARTIFACT_SLOTS.find(s => s.key === key);
   const o = overrides || {};
-  const mainParsed = parseStatValue(o.mainVal);
+  const mainText = (o.mainVal === undefined || o.mainVal === null) ? "" : String(o.mainVal).trim();
   const subsIn = o.subs || [];
+  const startLocked = false;   // lock = bevries die stuk; almal begin ontsluit
   return {
     set: o.set ?? "",
     level: o.level ?? 20,
@@ -916,17 +965,17 @@ function emptyArtifactSlot(key, overrides){
     // Starts locked/unlocked based on the slot type (Flower & Feather
     // start locked), but this can be toggled per-character with the
     // 🔒/🔓 button — it's stored per slot, not just read from config.
-    locked: o.locked !== undefined ? o.locked : meta.locked,
+    locked: o.locked !== undefined ? o.locked : startLocked,
     // Locked pieces always use the game's fixed main stat; unlocked
     // pieces use whatever was passed in, or the first dropdown option.
-    mainStat: meta.locked ? meta.fixedMain : (o.main || (MAIN_STAT_OPTIONS[key] || [""])[0]),
-    mainValue: mainParsed.num,
-    mainType: meta.locked ? "flat" : mainParsed.type,
+    mainStat: o.main || meta.fixedMain || (MAIN_STAT_OPTIONS[key] || [""])[0],
+    mainValue: mainText,                 // soos getik, bv. "4780" of "46.6%"
+    mainType: valueType(mainText),
     // Sub stats start EMPTY (0/4) unless real data was passed in — you
     // add rows one at a time with "+ Add Sub Stat", up to 4 total.
     subs: subsIn.map(pair => {
-      const v = parseStatValue(pair[1]);
-      return { stat: pair[0] || "", value: v.num, type: v.type };
+      const t = (pair[1] === undefined || pair[1] === null) ? "" : String(pair[1]).trim();
+      return { stat: pair[0] || "", value: t, type: valueType(t) };
     }),
   };
 }
@@ -940,7 +989,7 @@ function makeArtifactSet(partial){
   const p = partial || {};
   const build = (side) => {
     const out = {};
-    ARTIFACT_SLOTS.forEach(({key})=>{ out[key] = emptyArtifactSlot(key, (p[side]||{})[key]); });
+    ARTIFACT_SLOTS.forEach(({key})=>{ out[key] = emptyArtifactSlot(key, (p[side]||{})[key], side); });
     const sideData = p[side] || {};
     out.sets = (sideData.sets && sideData.sets.length) ? sideData.sets.slice() : [""];
     return out;
@@ -1078,7 +1127,8 @@ function makeDefaultCharacter(name){
       skill:{label:"Elemental Skill",target:0,current:0},
       burst:{label:"Elemental Burst",target:0,current:0},
     },
-    pinnedNotes: []
+    pinnedNotes: [],
+    lockModel: 2
   };
 }
 
@@ -1202,15 +1252,18 @@ function renderCharacterPage(){
     tr.innerHTML = `
       <td>${t.label}</td>
       <td class="num"><input class="stat-input" type="number"
-            data-kind="talent" data-key="${key}" data-field="target" value="${t.target}" style="width:50px;"></td>
+            data-kind="talent" data-key="${key}" data-field="target" placeholder="0" value="${t.target || ""}" style="width:50px;"></td>
       <td class="num"><input class="stat-input" type="number"
-            data-kind="talent" data-key="${key}" data-field="current" value="${t.current}" style="width:50px;"></td>
+            data-kind="talent" data-key="${key}" data-field="current" placeholder="0" value="${t.current || ""}" style="width:50px;"></td>
       <td class="num" id="diff-talent-${key}"></td>
     `;
     talentBody.appendChild(tr);
   });
 
   updateAllDiffsAndProgress();
+  positionPins();
+  setTimeout(positionPins, 250);
+  setTimeout(positionPins, 1000);
 }
 
 /* Renders one Stat/Target/Current/Diff/Status/Notes table body.
@@ -1223,8 +1276,8 @@ function renderStatTable(tbodyId, dataObj, kind){
   Object.entries(dataObj).forEach(([key, s])=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><input class="stat-input label-input" type="text"
-            data-kind="${kind}" data-key="${key}" data-field="label" value="${s.label}"></td>
+      <td><input class="stat-input label-input" type="text" placeholder="Stat naam" autocomplete="off"
+            data-kind="${kind}" data-key="${key}" data-field="label" value="${esc(s.label)}"></td>
       <td class="num"><input class="stat-input" type="text" autocomplete="off" placeholder="0"
             data-kind="${kind}" data-key="${key}" data-field="target" value="${statBoxValue(s,"target")}"></td>
       <td class="num"><input class="stat-input" type="text" autocomplete="off" placeholder="0"
@@ -1256,7 +1309,7 @@ function renderWeaponPanel(){
   }
   lvlSelect.value = w.level;
 
-  document.getElementById("wBaseAtk").value = w.baseAtk;
+  document.getElementById("wBaseAtk").value = w.baseAtk || "";
   document.getElementById("wBaseAtk").disabled = !!w.baseAtkLocked;
   const lockBtn = document.getElementById("wAtkLockBtn");
   lockBtn.classList.toggle("is-flat", !!w.baseAtkLocked);
@@ -1266,9 +1319,6 @@ function renderWeaponPanel(){
   subSelect.innerHTML = SUB_STAT_OPTIONS.map(opt =>
     `<option value="${opt}" ${w.subStat.stat===opt?"selected":""}>${opt}</option>`).join("");
   document.getElementById("wSubStatValue").value = w.subStat.value;
-  const subToggle = document.getElementById("wSubStatToggle");
-  subToggle.classList.toggle("is-pct", w.subStat.type === "%");
-  subToggle.classList.toggle("is-flat", w.subStat.type !== "%");
 
   document.getElementById("wRefine").value = w.refine;
   document.getElementById("wRefineNote").value = w.refineNote || "";
@@ -1278,7 +1328,7 @@ function addStatRow(kind){
   const c = characters[activeIndex];
   const bucket = c.stats;
   const key = "custom_" + Date.now();
-  bucket[key] = { label: "New Stat", target: 0, current: 0, unit: "", note: "" };
+  bucket[key] = { label: "", target: 0, current: 0, unit: "", note: "" };
   renderStatTable("statsBody", bucket, kind);
   updateAllDiffsAndProgress();
 }
@@ -1296,67 +1346,56 @@ function deleteStatRow(kind, key){
    done by the "Mark Affix" summary box above, see renderMarkedAffix().) */
 function renderArtifacts(){
   const c = characters[activeIndex];
-  ["current"].forEach(side=>{
-    const grid = document.getElementById("artifactsCurrent");
-    const setsWrap = document.getElementById("artifactSetsCurrent");
+  [["target","artifactsTarget","artifactSetsTarget"],
+   ["current","artifactsCurrent","artifactSetsCurrent"]].forEach(([side, gridId, setsId])=>{
+    const grid = document.getElementById(gridId);
+    const setsWrap = document.getElementById(setsId);
+    if (!grid || !setsWrap) return;
+    const isTarget = side === "target";
 
-    // ---- artifact SET NAME chips, one row above the 5 pieces ----
     setsWrap.innerHTML = c.artifacts[side].sets.map((name, i) => `
       <div class="art-set-chip">
-        <input type="text" placeholder="Set name" value="${name}"
+        <input type="text" placeholder="Artifact set name" value="${esc(name)}" autocomplete="off"
           data-art="${side}" data-set-index="${i}">
         <button type="button" class="art-set-remove" data-art="${side}" data-set-index="${i}" title="Remove this set">×</button>
       </div>`).join("")
       + `<button type="button" class="art-set-add-btn" data-art="${side}">＋ Add set</button>`;
 
-    grid.innerHTML = ARTIFACT_SLOTS.map(({key, label, icon, lockable})=>{
+    grid.innerHTML = ARTIFACT_SLOTS.map(({key, label, icon})=>{
       const slot = c.artifacts[side][key];
-      const locked = slot.locked;
+      const locked = !!slot.locked;          // 🔒 = bevrore (nie wysigbaar nie), 🔓 = wysigbaar
+      const dis = locked ? "disabled" : "";
 
-      // ---- Main Stat block: greyed/locked for Flower & Feather,
-      //      dropdown + editable value for Sands/Goblet/Circlet ----
       const mainBlock = locked ? `
         <div class="art-main-lock">
           <div class="art-lock-row">
             <span class="art-lock-label">Main:</span>
-            <span class="art-lock-value">${slot.mainStat}</span>
+            <span class="art-lock-value">${esc(slot.mainStat)}</span>
           </div>
-          <input class="art-input art-input-locked" type="text" disabled value="${slot.mainValue}">
+          ${isTarget ? "" : `<input class="art-input art-input-locked" type="text" disabled placeholder="0" value="${esc(slot.mainValue)}">`}
         </div>` : `
         <div class="art-main-unlock">
           <div class="art-field-label">Main Type</div>
           <select class="art-select" data-art="${side}" data-slot="${key}" data-field="mainStat">
             ${(MAIN_STAT_OPTIONS[key]||[]).map(opt=>`<option value="${opt}" ${slot.mainStat===opt?"selected":""}>${opt}</option>`).join("")}
           </select>
-          <div class="art-field-row">
-            <div class="art-field-col">
-              <div class="art-field-label">Value</div>
-              <input class="art-input" type="text" placeholder="0"
-                data-art="${side}" data-slot="${key}" data-field="mainValue" value="${slot.mainValue}">
-            </div>
-            <button type="button" class="art-toggle ${slot.mainType==="%"?"is-pct":"is-flat"}"
-              data-art="${side}" data-slot="${key}" data-main-toggle="1" title="Toggle % / Flat">
-              <span class="art-toggle-label-pct">%</span><span class="art-toggle-label-flat">Flat</span>
-            </button>
-          </div>
+          ${isTarget ? "" : `
+          <div class="art-field-label">Value</div>
+          <input class="art-input" type="text" placeholder="0" autocomplete="off"
+            data-art="${side}" data-slot="${key}" data-field="mainValue" value="${esc(slot.mainValue)}">`}
         </div>`;
 
-      // ---- Sub Stats block: identical shape on all 5 pieces ----
       const subsBlock = `
         <div class="art-subs-head">Sub Stats (${slot.subs.length}/4)</div>
         <div class="art-subs">
           ${slot.subs.map((sub, i)=>`
-            <div class="art-sub-row-v2">
-              <select class="art-select art-select-sm" data-art="${side}" data-slot="${key}" data-field="sub${i}stat">
+            <div class="art-sub-row-v2 ${isTarget ? "is-names" : ""}">
+              <select class="art-select art-select-sm" ${dis} data-art="${side}" data-slot="${key}" data-field="sub${i}stat">
                 <option value="">— Stat —</option>
                 ${SUB_STAT_OPTIONS.map(opt=>`<option value="${opt}" ${sub.stat===opt?"selected":""}>${opt}</option>`).join("")}
               </select>
-              <input class="art-input art-input-sm" type="text" placeholder="0"
-                data-art="${side}" data-slot="${key}" data-field="sub${i}value" value="${sub.value}">
-              <button type="button" class="art-toggle ${sub.type==="%"?"is-pct":"is-flat"}"
-                data-art="${side}" data-slot="${key}" data-sub-index="${i}" title="Toggle % / Flat">
-                <span class="art-toggle-label-pct">%</span><span class="art-toggle-label-flat">Flat</span>
-              </button>
+              ${isTarget ? "" : `<input class="art-input art-input-sm" type="text" placeholder="0" autocomplete="off" ${dis}
+                data-art="${side}" data-slot="${key}" data-field="sub${i}value" value="${esc(sub.value)}">`}
               <button type="button" class="art-trash-btn" data-art="${side}" data-slot="${key}" data-sub-remove="${i}" title="Remove sub stat">🗑</button>
             </div>`).join("")}
         </div>
@@ -1365,26 +1404,27 @@ function renderArtifacts(){
           : ""}`;
 
       return `
-      <div class="art-card ${locked?"is-locked":""}">
+      <div class="art-card ${locked?"is-locked":""}" data-art-side="${side}" data-art-slot="${key}">
         <div class="art-card-head">
           <span>${icon} ${label}</span>
-          ${lockable ? `
-            <button type="button" class="art-lock-btn" data-art="${side}" data-slot="${key}"
-              data-lock-toggle="1" title="${locked ? "Unlock main stat" : "Lock main stat"}">
-              ${locked ? "🔒" : "🔓"}
-            </button>` : ""}
+          <button type="button" class="art-lock-btn" data-art="${side}" data-slot="${key}"
+            data-lock-toggle="1" title="${locked ? "Unlock om te wysig" : "Lock (bevries hierdie stuk)"}">
+            ${locked ? "🔒" : "🔓"}
+          </button>
         </div>
+        ${isTarget ? "" : `
         <div class="art-row-2">
-          <input class="art-input" type="number" min="0" max="20" title="Level"
+          <input class="art-input" type="number" min="0" max="20" title="Level" ${dis}
             data-art="${side}" data-slot="${key}" data-field="level" value="${slot.level}">
-          <input class="art-input" type="number" min="1" max="5" title="Rarity"
+          <input class="art-input" type="number" min="1" max="5" title="Rarity" ${dis}
             data-art="${side}" data-slot="${key}" data-field="rarity" value="${slot.rarity}">
-        </div>
+        </div>`}
         <div class="art-main">${mainBlock}</div>
         <div class="art-subs-wrap">${subsBlock}</div>
       </div>`;
     }).join("");
   });
+  positionPins();
 }
 
 /* ---------------------------------------------------------------
@@ -1605,7 +1645,7 @@ function handleStatInput(e){
     row[field] = pr.num;
     if (pr.text !== undefined) row[field + "Text"] = pr.text; else delete row[field + "Text"];
   } else {
-    row[field] = Number(input.value);
+    row[field] = input.value === "" ? 0 : Number(input.value);
   }
   updateAllDiffsAndProgress();
 }
@@ -1626,6 +1666,7 @@ document.getElementById("statsBody").addEventListener("click", handleRowDeleteCl
     w.level = Number(document.getElementById("wLevel").value);
     w.baseAtk = Number(document.getElementById("wBaseAtk").value);
     w.subStat.value = document.getElementById("wSubStatValue").value;
+    w.subStat.type = valueType(w.subStat.value);
     w.refine = document.getElementById("wRefine").value;
     w.refineNote = document.getElementById("wRefineNote").value;
   });
@@ -1636,11 +1677,6 @@ document.getElementById("wSubStatType").addEventListener("change", ()=>{
 document.getElementById("wAtkLockBtn").addEventListener("click", ()=>{
   const w = characters[activeIndex].weapon;
   w.baseAtkLocked = !w.baseAtkLocked;
-  renderWeaponPanel();
-});
-document.getElementById("wSubStatToggle").addEventListener("click", ()=>{
-  const w = characters[activeIndex].weapon;
-  w.subStat.type = w.subStat.type === "%" ? "flat" : "%";
   renderWeaponPanel();
 });
 
@@ -1656,14 +1692,17 @@ function handleRowDeleteClick(e){
 // and data-field ("level"/"rarity"/"mainStat"/"mainValue" or
 // "sub0stat".."sub3value"). Text/number inputs fire "input"; the Main
 // Type and Sub Stat <select> dropdowns fire "change".
-document.getElementById("artifactsCurrent").addEventListener("input", handleArtifactInput);
-document.getElementById("artifactsCurrent").addEventListener("change", handleArtifactInput);
+["artifactsTarget","artifactsCurrent"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", handleArtifactInput);
+  document.getElementById(id).addEventListener("change", handleArtifactInput);
+});
 
 function handleArtifactInput(e){
   const input = e.target;
   if (!input.dataset.art || !input.dataset.slot || !input.dataset.field) return;
   const c = characters[activeIndex];
   const slot = c.artifacts[input.dataset.art][input.dataset.slot];
+  if (slot.locked) return;                 // bevrore stuk kan nie verander nie
   const field = input.dataset.field;
 
   if (field.startsWith("sub")){
@@ -1671,17 +1710,19 @@ function handleArtifactInput(e){
     const subField = field.slice(4);       // "stat" or "value"
     if (!slot.subs[idx]) return;
     slot.subs[idx][subField] = input.value;
+    if (subField === "value") slot.subs[idx].type = valueType(input.value);
   } else if (field === "level" || field === "rarity"){
     slot[field] = Number(input.value);
   } else {
     slot[field] = input.value;
+    if (field === "mainValue") slot.mainType = valueType(input.value);
   }
 }
 
 // %/Flat toggles, the 🗑 remove-sub-stat button, and the "+ Add Sub
 // Stat" button all live inside the same two grids, so one click
 // listener (event delegation) handles all three.
-document.getElementById("artifactsCurrent").addEventListener("click", handleArtifactClick);
+["artifactsTarget","artifactsCurrent"].forEach(id=> document.getElementById(id).addEventListener("click", handleArtifactClick));
 
 function handleArtifactClick(e){
   const c = characters[activeIndex];
@@ -1689,28 +1730,7 @@ function handleArtifactClick(e){
   const lockBtn = e.target.closest(".art-lock-btn");
   if (lockBtn){
     const slot = c.artifacts[lockBtn.dataset.art][lockBtn.dataset.slot];
-    const meta = ARTIFACT_SLOTS.find(s => s.key === lockBtn.dataset.slot);
     slot.locked = !slot.locked;
-    if (slot.locked){
-      // Back to the game's fixed main stat for this piece.
-      slot.mainStat = meta.fixedMain;
-      slot.mainType = "flat";
-    } else if (!(MAIN_STAT_OPTIONS[meta.key] || []).includes(slot.mainStat)){
-      slot.mainStat = (MAIN_STAT_OPTIONS[meta.key] || [""])[0];
-    }
-    renderArtifacts();
-    return;
-  }
-
-  const toggleBtn = e.target.closest(".art-toggle");
-  if (toggleBtn){
-    const slot = c.artifacts[toggleBtn.dataset.art][toggleBtn.dataset.slot];
-    if (toggleBtn.dataset.mainToggle){
-      slot.mainType = slot.mainType === "%" ? "flat" : "%";
-    } else {
-      const idx = Number(toggleBtn.dataset.subIndex);
-      slot.subs[idx].type = slot.subs[idx].type === "%" ? "flat" : "%";
-    }
     renderArtifacts();
     return;
   }
@@ -1718,6 +1738,7 @@ function handleArtifactClick(e){
   const trashBtn = e.target.closest(".art-trash-btn");
   if (trashBtn){
     const slot = c.artifacts[trashBtn.dataset.art][trashBtn.dataset.slot];
+    if (slot.locked) return;
     slot.subs.splice(Number(trashBtn.dataset.subRemove), 1);
     renderArtifacts();
     return;
@@ -1726,14 +1747,17 @@ function handleArtifactClick(e){
   const addSubBtn = e.target.closest(".art-add-sub-btn");
   if (addSubBtn){
     const slot = c.artifacts[addSubBtn.dataset.art][addSubBtn.dataset.slot];
-    if (slot.subs.length < 4) slot.subs.push({ stat:"", value:"", type:"%" });
+    if (slot.locked) return;
+    if (slot.subs.length < 4) slot.subs.push({ stat:"", value:"", type:"flat" });
     renderArtifacts();
   }
 }
 
 // Artifact SET NAME chips (the row above the 5 pieces, both Target & Current)
-document.getElementById("artifactSetsCurrent").addEventListener("input", handleArtifactSetInput);
-document.getElementById("artifactSetsCurrent").addEventListener("click", handleArtifactSetClick);
+["artifactSetsTarget","artifactSetsCurrent"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", handleArtifactSetInput);
+  document.getElementById(id).addEventListener("click", handleArtifactSetClick);
+});
 
 function handleArtifactSetInput(e){
   const input = e.target;
@@ -1804,6 +1828,64 @@ const PIN_EMOJI_COLOR = {
 };
 function pinColor(emoji){ return PIN_EMOJI_COLOR[emoji] || "#8b7bf7"; }
 
+/* ---- Pen-posisies: elke pen onthou die BLOKKIE waarop jy geklik het (artifact-kaart,
+   stat-ry of paneel) + waar binne daardie blokkie. Só bly hy op die regte plek al
+   verander die bladsy se hoogte (rye bygevoeg, ander skerm, terug-kom, ens.). ---- */
+function pinAnchorFor(target){
+  const page = document.getElementById("characterPage");
+  const card = target.closest && target.closest(".art-card[data-art-side]");
+  if (card) return "card:" + card.dataset.artSide + ":" + card.dataset.artSlot;
+  const tr = target.closest && target.closest("#statsBody tr, #talentBody tr");
+  if (tr){
+    const inp = tr.querySelector("[data-key]");
+    if (inp) return "row:" + tr.parentElement.id + ":" + inp.dataset.key;
+  }
+  const panel = target.closest && target.closest(".panel");
+  if (panel){
+    const idx = Array.from(page.querySelectorAll(".panel")).indexOf(panel);
+    if (idx >= 0) return "panel:" + idx;
+  }
+  return "";   // "" = die hele bladsy
+}
+function pinAnchorEl(anchor){
+  const page = document.getElementById("characterPage");
+  if (anchor === "") return page;
+  const parts = anchor.split(":");
+  if (parts[0] === "card")
+    return page.querySelector(`.art-card[data-art-side="${parts[1]}"][data-art-slot="${parts[2]}"]`);
+  if (parts[0] === "row"){
+    const inp = document.querySelector(`#${parts[1]} [data-key="${parts[2]}"]`);
+    return inp ? inp.closest("tr") : null;
+  }
+  if (parts[0] === "panel") return page.querySelectorAll(".panel")[Number(parts[1])] || null;
+  return null;
+}
+function positionPins(){
+  const c = characters[activeIndex];
+  const page = document.getElementById("characterPage");
+  const layer = document.getElementById("pinMarkersLayer");
+  if (!c || !page || !layer) return;
+  const pr = page.getBoundingClientRect();
+  layer.querySelectorAll(".pin-dot").forEach(dot=>{
+    const n = (c.pinnedNotes || []).find(x => String(x.id) === dot.dataset.id);
+    if (!n || n.anchor === undefined) return;       // ou pen: bly op sy % plek
+    const el = pinAnchorEl(n.anchor);
+    if (!el){ dot.style.display = "none"; return; }
+    const r = el.getBoundingClientRect();
+    dot.style.display = "";
+    dot.style.left = (r.left - pr.left + n.fx * r.width) + "px";
+    dot.style.top  = (r.top  - pr.top  + n.fy) + "px";
+  });
+}
+let pinRaf = null;
+function schedulePinPosition(){
+  if (pinRaf) return;
+  pinRaf = requestAnimationFrame(()=>{ pinRaf = null; positionPins(); });
+}
+window.addEventListener("resize", schedulePinPosition);
+["click","change","input"].forEach(evt => document.addEventListener(evt, schedulePinPosition, true));
+if (window.ResizeObserver) new ResizeObserver(schedulePinPosition).observe(document.getElementById("characterPage"));
+
 function renderPinNotes(){
   const c = characters[activeIndex];
   const notes = c.pinnedNotes || [];
@@ -1811,7 +1893,7 @@ function renderPinNotes(){
   // ---- little dots scattered over the page ----
   const layer = document.getElementById("pinMarkersLayer");
   layer.innerHTML = notes.map(n => `
-    <div class="pin-dot" data-id="${n.id}" style="left:${n.xPct}%; top:${n.yPct}%; background:${pinColor(n.emoji)};" title="Dubbel-klik om terug te gaan na die nota">
+    <div class="pin-dot" data-id="${n.id}" style="${n.anchor === undefined ? `left:${n.xPct}%; top:${n.yPct}%; ` : ""}background:${pinColor(n.emoji)};" title="Dubbel-klik om terug te gaan na die nota">
       ${n.emoji}
       <div class="pin-tooltip">${n.text.replace(/</g,"&lt;")}</div>
     </div>
@@ -1823,6 +1905,7 @@ function renderPinNotes(){
     list.innerHTML = `<div class="muted">Nog geen notas nie — klik "📌 Add Note" en klik dan enige plek op die bladsy.</div>`;
     return;
   }
+  schedulePinPosition();
   list.innerHTML = notes.map(n => `
     <div class="pin-list-row" data-id="${n.id}">
       <span class="pin-list-dot" style="background:${pinColor(n.emoji)}"></span>
@@ -1873,16 +1956,24 @@ document.getElementById("characterPage").addEventListener("mousedown", (e)=>{
   const rect = page.getBoundingClientRect();
   const xPct = ((e.clientX - rect.left) / rect.width) * 100;
   const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+  // onthou op watter blokkie jy geklik het + waar binne dit
+  const anchor = pinAnchorFor(e.target);
+  const aEl = pinAnchorEl(anchor) || page;
+  const aRect = aEl.getBoundingClientRect();
+  const aW = aRect.width || 1;
 
   const popup = document.getElementById("pinPopup");
   popup.dataset.xpct = xPct;
   popup.dataset.ypct = yPct;
+  popup.dataset.anchor = pinAnchorEl(anchor) ? anchor : "";
+  popup.dataset.fx = (e.clientX - aRect.left) / aW;
+  popup.dataset.fy = e.clientY - aRect.top;
   popup.querySelectorAll(".note-emoji-btn").forEach(b => b.classList.remove("selected"));
   popup.querySelectorAll(".note-emoji-btn")[0].classList.add("selected");
   document.getElementById("pinPopupText").value = "";
 
   // position the popup near the click, but keep it fully on-screen
-  const popupW = 280, popupH = 240;
+  const popupW = 280, popupH = 300;
   let left = Math.min(e.clientX + 10, window.innerWidth - popupW - 12);
   let top = Math.min(e.clientY + 10, window.innerHeight - popupH - 12);
   popup.style.left = Math.max(12, left) + "px";
@@ -1927,6 +2018,9 @@ document.getElementById("pinPopupSaveBtn").addEventListener("click", ()=>{
     text,
     xPct: Number(popup.dataset.xpct),
     yPct: Number(popup.dataset.ypct),
+    anchor: popup.dataset.anchor || "",
+    fx: Number(popup.dataset.fx),
+    fy: Number(popup.dataset.fy),
   });
   closePinPopup();
   renderPinNotes();
@@ -1962,9 +2056,15 @@ document.getElementById("pinNotesList").addEventListener("click", (e)=>{
    --------------------------------------------------------------- */
 const TRACKER_STORAGE_KEY = "genshinTrackerCharacterData";
 
+const TRACKER_DIRTY_KEY = "genshinTrackerUnsynced";
 function saveCharacterData(){
   try {
-    localStorage.setItem(TRACKER_STORAGE_KEY, JSON.stringify(characters));
+    const json = JSON.stringify(characters);
+    const prev = localStorage.getItem(TRACKER_STORAGE_KEY);
+    // Verander jy iets terwyl dit nog nie na die wolk gestoor is nie, onthou ons dit
+    // sodat die wolk-weergawe nooit jou nuwer veranderinge oorskryf nie.
+    if (prev !== null && prev !== json) localStorage.setItem(TRACKER_DIRTY_KEY, "1");
+    localStorage.setItem(TRACKER_STORAGE_KEY, json);
   } catch(e){ /* storage full / unavailable — nothing else we can do */ }
   saveToFirebase();
 }
@@ -1979,24 +2079,32 @@ function saveCharacterData(){
 // look like they "did nothing" and Difference/Status/% could get stuck,
 // since updateAllDiffsAndProgress() runs right after and never got reached.
 // ---------------------------------------------------------------
-function ensureArtifactSlotShape(key, slot){
+// Ou data het syfers (+ aparte %/flat) gestoor; nuwe data is die teks soos getik.
+// Hierdie omskakeling is veilig om herhaaldelik te loop (verloor nooit iets nie).
+function toValueText(v, type){
+  if (v === undefined || v === null || v === "") return "";
+  if (typeof v === "number") return (isNaN(v) || v === 0) ? "" : String(v) + (type === "%" ? "%" : "");
+  let s = String(v);
+  if (type === "%" && s.trim() !== "" && !s.includes("%")) s += "%";
+  return s;
+}
+function ensureArtifactSlotShape(key, slot, side){
   const meta = ARTIFACT_SLOTS.find(s => s.key === key);
   if (!slot || typeof slot !== "object") slot = {};
   if (typeof slot.set !== "string") slot.set = "";
   if (typeof slot.level !== "number" || isNaN(slot.level)) slot.level = 20;
   if (typeof slot.rarity !== "number" || isNaN(slot.rarity)) slot.rarity = 5;
-  if (typeof slot.locked !== "boolean") slot.locked = meta.locked;
+  if (typeof slot.locked !== "boolean") slot.locked = false;
   if (typeof slot.mainStat !== "string" || !slot.mainStat){
-    slot.mainStat = slot.locked ? meta.fixedMain : (MAIN_STAT_OPTIONS[key] || [""])[0];
+    slot.mainStat = meta.fixedMain || (MAIN_STAT_OPTIONS[key] || [""])[0];
   }
-  if (typeof slot.mainValue !== "number" || isNaN(slot.mainValue)) slot.mainValue = Number(slot.mainValue) || 0;
-  if (slot.mainType !== "%" && slot.mainType !== "flat") slot.mainType = "flat";
+  slot.mainValue = toValueText(slot.mainValue, slot.mainType);
+  slot.mainType = valueType(slot.mainValue);
   if (!Array.isArray(slot.subs)) slot.subs = [];
-  slot.subs = slot.subs.slice(0, 4).map(s => ({
-    stat: (s && typeof s.stat === "string") ? s.stat : "",
-    value: (s && typeof s.value === "number" && !isNaN(s.value)) ? s.value : (Number(s && s.value) || 0),
-    type: (s && (s.type === "%" || s.type === "flat")) ? s.type : "%",
-  }));
+  slot.subs = slot.subs.slice(0, 4).map(s => {
+    const val = toValueText(s && s.value, s && s.type);
+    return { stat: (s && typeof s.stat === "string") ? s.stat : "", value: val, type: valueType(val) };
+  });
   return slot;
 }
 function ensureArtifactSetShape(artSet){
@@ -2004,14 +2112,27 @@ function ensureArtifactSetShape(artSet){
   ["target","current"].forEach(side=>{
     if (!artSet[side] || typeof artSet[side] !== "object") artSet[side] = {};
     const sideData = artSet[side];
-    ARTIFACT_SLOTS.forEach(({key})=>{ sideData[key] = ensureArtifactSlotShape(key, sideData[key]); });
+    ARTIFACT_SLOTS.forEach(({key})=>{ sideData[key] = ensureArtifactSlotShape(key, sideData[key], side); });
     if (!Array.isArray(sideData.sets) || !sideData.sets.length) sideData.sets = [""];
   });
   return artSet;
 }
 function repairCharacterData(list){
   (list || []).forEach(c => { if (c) { c.artifacts = ensureArtifactSetShape(c.artifacts);
-    if (c.role === undefined) c.role = ""; } });
+    if (c.role === undefined) c.role = "";
+    if (c.weapon && typeof c.weapon === "object"){
+      if (!c.weapon.subStat || typeof c.weapon.subStat !== "object") c.weapon.subStat = { stat: SUB_STAT_OPTIONS[0], value: "", type: "%" };
+      c.weapon.subStat.value = toValueText(c.weapon.subStat.value, c.weapon.subStat.type);
+      c.weapon.subStat.type = valueType(c.weapon.subStat.value);
+    }
+    if (!Array.isArray(c.pinnedNotes)) c.pinnedNotes = [];
+    // Eenmalig: die ou "lock" (vaste main stat) het nou 'n nuwe betekenis (bevries die stuk),
+    // so alles begin ontsluit sodat jy kan invul.
+    if (c.lockModel !== 2){
+      ["target","current"].forEach(side => ARTIFACT_SLOTS.forEach(({key}) => { c.artifacts[side][key].locked = false; }));
+      c.lockModel = 2;
+    }
+  } });
   return list;
 }
 
@@ -2021,6 +2142,8 @@ function loadCharacterData(){
     if (Array.isArray(raw) && raw.length) characters = raw;
   } catch(e){ /* no saved data yet, or it's corrupted — keep the defaults */ }
   repairCharacterData(characters);
+  // Stoor die herstelde weergawe dadelik (sonder om dit as "nuwe verandering" te merk).
+  try { if (localStorage.getItem(TRACKER_STORAGE_KEY) !== null) localStorage.setItem(TRACKER_STORAGE_KEY, JSON.stringify(characters)); } catch(e){}
 }
 
 // Auto-save shortly after ANY edit (typing, ticking, clicking Save on a
@@ -2052,8 +2175,13 @@ setInterval(saveCharacterData, 4000);
    while logged in.
    --------------------------------------------------------------- */
 function saveToFirebase(){
+  // NOOIT na die wolk skryf voordat die wolk-data eers gelees is nie — anders kan 'n
+  // leë/verstek weergawe jou regte data daar oorskryf (dit was 'n moontlike rede
+  // waarom goed soms weggeraak het).
+  if (!firebaseSyncApplied) return;
   if (window._fbUid && window._fbDb && window._fbRef && window._fbSet){
     window._fbSet(window._fbRef(window._fbDb, "users/" + window._fbUid + "/genshinTracker"), characters)
+      .then(()=>{ try { localStorage.removeItem(TRACKER_DIRTY_KEY); } catch(e){} })
       .catch(()=>{ /* offline — the localStorage copy from saveCharacterData() still has it */ });
   }
 }
@@ -2078,7 +2206,12 @@ window.onFirebaseTrackerReady = function(uid){
     firebaseSyncApplied = true;
 
     const data = snapshot.val();
-    if (Array.isArray(data) && data.length){
+    // Het jy veranderinge wat nog nie in die wolk is nie? Hou jou plaaslike data en stoor dit op.
+    let hasUnsynced = false;
+    try { hasUnsynced = localStorage.getItem(TRACKER_DIRTY_KEY) === "1"; } catch(e){}
+    if (hasUnsynced){
+      saveToFirebase();
+    } else if (Array.isArray(data) && data.length){
       characters = data;
       repairCharacterData(characters);
       saveCharacterData();
