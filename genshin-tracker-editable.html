@@ -234,6 +234,8 @@
     font-size:13px; flex:1; min-width:0; width:100%; padding:3px 2px;
   }
   .art-side-title{ font-size:13px; font-weight:800; color:#c8bfff; margin:6px 0 8px; letter-spacing:.02em; }
+  .art-side-title{ display:flex; align-items:center; gap:10px; }
+  .art-lock-all{ font-size:13px; padding:4px 10px; margin-left:auto; }
   .art-side-title span{ font-weight:600; color:#a6a6c2; font-size:11px; }
   .art-side-title.is-current{ margin-top:18px; }
   .art-set-chip input:focus{ outline:none; }
@@ -722,11 +724,11 @@
         </div>
       </div>
 
-      <div class="art-side-title">🎯 Target</div>
+      <div class="art-side-title">🎯 Target <button type="button" class="art-lock-btn art-lock-all" id="lockAllTarget" data-side="target"></button></div>
       <div class="art-sets-row" id="artifactSetsTarget"></div>
       <div class="art-grid" id="artifactsTarget"></div>
 
-      <div class="art-side-title is-current">📦 Current</div>
+      <div class="art-side-title is-current">📦 Current <button type="button" class="art-lock-btn art-lock-all" id="lockAllCurrent" data-side="current"></button></div>
       <div class="art-sets-row" id="artifactSetsCurrent"></div>
       <div class="art-grid" id="artifactsCurrent"></div>
     </div>
@@ -1407,10 +1409,6 @@ function renderArtifacts(){
       <div class="art-card ${locked?"is-locked":""}" data-art-side="${side}" data-art-slot="${key}">
         <div class="art-card-head">
           <span>${icon} ${label}</span>
-          <button type="button" class="art-lock-btn" data-art="${side}" data-slot="${key}"
-            data-lock-toggle="1" title="${locked ? "Unlock om te wysig" : "Lock (bevries hierdie stuk)"}">
-            ${locked ? "🔒" : "🔓"}
-          </button>
         </div>
         ${isTarget ? "" : `
         <div class="art-row-2">
@@ -1424,8 +1422,32 @@ function renderArtifacts(){
       </div>`;
     }).join("");
   });
+  updateLockAllButtons();
   positionPins();
 }
+
+// Een knoppie per kant (Target / Current): sluit of ontsluit al 5 stukke in een klik.
+function updateLockAllButtons(){
+  const c = characters[activeIndex];
+  if (!c) return;
+  ["target","current"].forEach(side=>{
+    const btn = document.getElementById(side === "target" ? "lockAllTarget" : "lockAllCurrent");
+    if (!btn) return;
+    const allLocked = ARTIFACT_SLOTS.every(({key}) => c.artifacts[side][key].locked);
+    btn.textContent = allLocked ? "🔒 Locked" : "🔓 Unlocked";
+    btn.title = allLocked ? "Klik om almal te ontsluit" : "Klik om almal te sluit";
+  });
+}
+["lockAllTarget","lockAllCurrent"].forEach(id=>{
+  document.getElementById(id).addEventListener("click", ()=>{
+    const c = characters[activeIndex];
+    if (!c) return;
+    const side = document.getElementById(id).dataset.side;
+    const allLocked = ARTIFACT_SLOTS.every(({key}) => c.artifacts[side][key].locked);
+    ARTIFACT_SLOTS.forEach(({key}) => { c.artifacts[side][key].locked = !allLocked; });
+    renderArtifacts();
+  });
+});
 
 /* ---------------------------------------------------------------
    MARKED AFFIXES — the small summary box above the Current grid
