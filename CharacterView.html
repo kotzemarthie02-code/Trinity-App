@@ -144,6 +144,13 @@
         select, input[type="text"], input[type="number"] { text-overflow: ellipsis; min-width: 0; }
         .art-set2 .repeater-row select:nth-child(1) { flex: 2; }
         .art-set2 .repeater-row select:nth-child(2), .art-set2 .repeater-row select:nth-child(3) { flex: 1; }
+        select, input[type="text"], input[type="number"] { font-size: 14px; }
+        .tab-panel-row.active { flex-direction: column; }
+        .tab-panel-row .half-panel { width: 95% !important; flex: none !important; margin: 0 auto 20px auto !important; }
+        @media (max-width: 900px) {
+            .weapon-grid, .talent-grid, .future-grid { grid-template-columns: 1fr; }
+            .ascend-grid { grid-template-columns: 1fr 1fr; }
+        }
         .domain-row-flex {
             display: flex; gap: 30px; align-items: flex-end; margin-top: 15px;
         }
@@ -546,18 +553,8 @@
             <div style="flex:1;" class="field"><label>Domain:</label><select class="art-dom-drop"></select></div>
             <div style="flex:1;" class="field"><label>Region:</label><select class="region-drop"></select></div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:-5px;">
-            <label style="flex:2;">Artifact Name:</label>
-            <label style="flex:1;">Domain:</label>
-            <label style="flex:1;">Region:</label>
-        </div>
-        <div class="repeater art-set2" data-group="artSet2" style="margin-bottom:15px;">
-            <div class="repeater-row" style="gap:10px;">
-                <select class="art-list-drop"></select>
-                <select class="art-dom-drop"></select>
-                <select class="region-drop"></select>
-            </div>
-        </div>
+        <div class="repeater art-set2" data-group="artSet2"></div>
+        <button type="button" class="repeater-add-btn" onclick="repeaterAdd('artSet2')" style="margin-bottom:15px;">+ Add Artifact</button>
         <table>
             <tr><th style="color:#ffe14b;">Piece</th><th style="color:#ffe14b;">Main Affix</th><th style="color:#ffe14b;">Minor Affixes</th></tr>
             <tr><td>Flower</td><td style="color:#fff;font-size:15px;font-weight:bold;">HP</td><td><div style="display:flex;gap:4px;"><select class="minor-affix-drop"></select><select class="minor-affix-drop"></select></div></td></tr>
@@ -1047,22 +1044,11 @@ async function fbRemove(key) {
 // Maak die lettergrootte van elke select/input kleiner sodat die hele gekose teks sigbaar is.
 const _fitCtx = document.createElement('canvas').getContext('2d');
 function fitTextEl(el) {
-    if (!el || el.offsetParent === null) return;           // versteekte tab: later weer
-    const cs = getComputedStyle(el);
-    if (!el.dataset.baseFs) el.dataset.baseFs = parseFloat(cs.fontSize) || 13;
-    const base = parseFloat(el.dataset.baseFs);
-    let text = '';
-    if (el.tagName === 'SELECT') text = el.selectedIndex >= 0 ? (el.options[el.selectedIndex].text || '') : '';
-    else text = el.value || '';
-    el.title = text;                                       // volle teks by hover/hou
-    if (!text || text === 'Select') { el.style.fontSize = ''; return; }
-    const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
-    const arrow = el.tagName === 'SELECT' ? 24 : 0;
-    const avail = el.clientWidth - pad - arrow - 2;
-    if (avail <= 0) return;
-    _fitCtx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + base + 'px ' + cs.fontFamily;
-    const w = _fitCtx.measureText(text).width;
-    el.style.fontSize = (w > avail ? Math.max(8, Math.floor(base * avail / w * 10) / 10) : base) + 'px';
+    // Lettergrootte bly soos dit is (nie meer kleiner gemaak nie); volle teks net as tooltip.
+    if (!el) return;
+    if (el.style.fontSize) el.style.fontSize = '';
+    if (el.tagName === 'SELECT') el.title = el.selectedIndex >= 0 ? (el.options[el.selectedIndex].text || '') : '';
+    else if (el.tagName === 'INPUT') el.title = el.value || '';
 }
 function fitAllText() {
     document.querySelectorAll('select, input[type="text"], input[type="number"]').forEach(fitTextEl);
@@ -1268,7 +1254,7 @@ async function setupDropdowns() {
 // ============ REPEATER ("+ Add") ENJIN ============
 // Elke groep se velde: watter select-klas met watter opsielys, en of daar 'n Total-inset is.
 const REPEATER_CONFIG = {
-    artSet2:      [{ type:'select', cls:'art-list-drop', list:()=>artifacts }, { type:'select', cls:'art-dom-drop', list:()=>artifactDomains }, { type:'select', cls:'region-drop', list:()=>regions }],
+    artSet2:      [{ type:'select', cls:'art-list-drop', ph:'Artifact Name', list:()=>artifacts }, { type:'select', cls:'art-dom-drop', ph:'Domain', list:()=>artifactDomains }, { type:'select', cls:'region-drop', ph:'Region', list:()=>regions }],
     wnInfoMat:    [{ type:'select', cls:'mat-drop',               list:()=>enemyMaterials },       { type:'input', cls:'total-input' }],
     wnEnemyMat:   [{ type:'select', cls:'mat-drop',               list:()=>enemyMaterials },       { type:'input', cls:'total-input' }],
     wnEnemyType:  [{ type:'select', cls:'enemy-type-list',        list:()=>enemyList }],
@@ -1284,6 +1270,9 @@ const REPEATER_CONFIG = {
     fut5Domain:   [{ type:'select', cls:'dom-mat-drop',           list:()=>domainMaterials },      { type:'input', cls:'future-input-small' }],
 };
 
+function isOptionalGroup(groupKey) { return groupKey === 'artSet2'; }
+function defaultRows(groupKey) { return isOptionalGroup(groupKey) ? 0 : 1; }
+
 function buildRepeaterRow(groupKey) {
     const config = REPEATER_CONFIG[groupKey];
     const row = document.createElement('div');
@@ -1293,7 +1282,7 @@ function buildRepeaterRow(groupKey) {
         if (f.type === 'select') {
             el = document.createElement('select');
             el.className = f.cls;
-            el.innerHTML = '<option value="">Select</option>';
+            el.innerHTML = '<option value="">' + (f.ph || 'Select') + '</option>';
             f.list().forEach(item => {
                 const opt = document.createElement('option');
                 opt.value = item; opt.textContent = item;
@@ -1313,9 +1302,10 @@ function buildRepeaterRow(groupKey) {
 // Wys 'n "×" verwyder-knoppie op elke ry behalwe die eerste
 function refreshRepeaterRemoveButtons(container) {
     const rows = container.querySelectorAll('.repeater-row');
+    const optional = isOptionalGroup(container.dataset.group);
     rows.forEach((row, i) => {
         let btn = row.querySelector('.repeater-remove-btn');
-        if (i === 0) {
+        if (i === 0 && !optional) {
             if (btn) btn.remove();
             return;
         }
@@ -1344,7 +1334,7 @@ function resetRepeaterRowCount(groupKey, count) {
     const container = document.querySelector('.repeater[data-group="' + groupKey + '"]');
     if (!container) return;
     container.innerHTML = '';
-    const n = Math.max(1, count || 1);
+    const n = Math.max(defaultRows(groupKey), count || 0);
     for (let i = 0; i < n; i++) container.appendChild(buildRepeaterRow(groupKey));
     refreshRepeaterRemoveButtons(container);
 }
@@ -1403,7 +1393,7 @@ async function resetCurrentChar() {
     // Reset all text inputs
     document.querySelectorAll('input[type="text"]').forEach(inp => inp.value = "");
     // Reset elke "+ Add" groep terug na 1 leë ry
-    Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, 1));
+    Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, defaultRows(groupKey)));
     restoreFutWeapon(null);
     restoreNowWeapon(null);
     // Reset circles to grey
@@ -1506,7 +1496,7 @@ async function loadCharData(charName, myToken) {
         [...document.querySelectorAll('select')].filter(sel => sel.id !== 'charSelect' && !sel.closest('.repeater-row') && !sel.closest('#trackerExtras') && !sel.closest('.idx-skip')).forEach(sel => { sel.value = ""; });
         [...document.querySelectorAll('input[type="text"]')].filter(inp => !inp.closest('.repeater-row') && !inp.closest('#statsTableBody') && !inp.closest('#trackerExtras')).forEach(inp => { inp.value = ""; });
         // Geen data nie (nuwe karakter) -> elke repeater-groep terug na 1 leë ry
-        Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, 1));
+        Object.keys(REPEATER_CONFIG).forEach(groupKey => resetRepeaterRowCount(groupKey, defaultRows(groupKey)));
         restoreFutWeapon(null);
         restoreNowWeapon(null);
     } else {
@@ -1520,8 +1510,9 @@ async function loadCharData(charName, myToken) {
         // Repeater-groepe herstel: eers die regte aantal rye maak, dan waardes instel
         const dyn = data.dynGroups || {};
         Object.keys(REPEATER_CONFIG).forEach(groupKey => {
-            const savedRows = dyn[groupKey] || [];
-            resetRepeaterRowCount(groupKey, savedRows.length || 1);
+            let savedRows = dyn[groupKey] || [];
+            if (isOptionalGroup(groupKey)) savedRows = savedRows.filter(r => r && r.some(v => v));   // leë rye weglaat
+            resetRepeaterRowCount(groupKey, savedRows.length || defaultRows(groupKey));
             const container = document.querySelector('.repeater[data-group="' + groupKey + '"]');
             if (!container) return;
             const rows = container.querySelectorAll('.repeater-row');
