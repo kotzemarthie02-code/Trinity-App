@@ -791,16 +791,17 @@
    --------------------------------------------------------------- */
 
 // Reads what you typed in a Target/Current box. Accepts a plain number
-// ("46.6", "50%", "1,5") OR a range ("30-50", "20 – 80%"). A range is
-// counted by its MIDDLE value (30-50 -> 40), and the text you typed is kept
-// so the box still shows "30-50".
+// ("46.6", "50%", "1,5") OR a range ("30-50", "20 – 80%"). % en spasies word
+// outomaties verwyder. TARGET-reeks: die MINIMUM is die doel (Current >= Min = ✅,
+// anders Diff = Current - Min). Die teks wat jy getik het bly in die boksie.
 function parseStatInput(raw){
   const str = String(raw ?? "").replace(/,/g, ".").replace(/[%\s]/g, "").replace(/[–—−]/g, "-");
   if (str === "") return { num: 0, text: undefined };
   const m = str.match(/^(-?\d*\.?\d+)-(\d*\.?\d+)$/);
   if (m) {
     const lo = parseFloat(m[1]), hi = parseFloat(m[2]);
-    return { num: Math.round(((lo + hi) / 2) * 10) / 10, text: String(raw).trim() };
+    // lo/hi = die grense; num = middelwaarde (net gebruik vir Current-reekse)
+    return { num: Math.round(((lo + hi) / 2) * 10) / 10, text: String(raw).trim(), lo: Math.min(lo, hi), hi: Math.max(lo, hi) };
   }
   const n = parseFloat(str);
   return { num: isNaN(n) ? 0 : n, text: undefined };
@@ -1101,11 +1102,11 @@ function getOwnedNames(){
   try {
     const raw = JSON.parse(localStorage.getItem("ownedCharacters"));
     const arr = Array.isArray(raw) ? raw : (raw ? Object.values(raw) : []);
-    if (arr.length) return arr;
-  } catch(e){ /* localStorage empty / not on the same origin as training_guide.html */ }
-  // Fallback so the tracker still works before Training Guide has been used
-  // on this origin: just show whatever characters are already tracked here.
-  return characters.map(c => c.name);
+    return arr;      // net karakters wat in Training Guide as "Owned" gemerk is
+  } catch(e){ /* localStorage leeg / nie dieselfde origin as training_guide.html nie */ }
+  // Geen terugval meer nie: karakters wat nie as Owned gemerk is nie (bv. die
+  // voorbeeld-karakters Columbina/Mona) verskyn nie in die lys nie.
+  return [];
 }
 
 function makeDefaultCharacter(name){
@@ -1120,15 +1121,15 @@ function makeDefaultCharacter(name){
     },
     artifacts: makeArtifactSet({}),
     stats: {
-      hp:{label:"Max HP",target:0,current:0,unit:"",note:""},
-      atk:{label:"ATK",target:0,current:0,unit:"",note:""},
-      def:{label:"DEF",target:0,current:0,unit:"",note:""},
-      em:{label:"Elemental Mastery",target:0,current:0,unit:"",note:""},
-      er:{label:"Energy Recharge",target:0,current:0,unit:"%",note:""},
-      cr:{label:"CRIT Rate",target:0,current:0,unit:"%",note:""},
-      cd:{label:"CRIT DMG",target:0,current:0,unit:"%",note:""},
-      dmg:{label:"Elemental DMG Bonus",target:0,current:0,unit:"%",note:""},
-      heal:{label:"Healing Bonus",target:0,current:0,unit:"%",note:""},
+      hp:{label:"",target:0,current:0,unit:"",note:""},
+      atk:{label:"",target:0,current:0,unit:"",note:""},
+      def:{label:"",target:0,current:0,unit:"",note:""},
+      em:{label:"",target:0,current:0,unit:"",note:""},
+      er:{label:"",target:0,current:0,unit:"%",note:""},
+      cr:{label:"",target:0,current:0,unit:"%",note:""},
+      cd:{label:"",target:0,current:0,unit:"%",note:""},
+      dmg:{label:"",target:0,current:0,unit:"%",note:""},
+      heal:{label:"",target:0,current:0,unit:"%",note:""},
     },
     talents: {
       normal:{label:"Normal Attack",target:0,current:0},
@@ -1185,7 +1186,7 @@ function renderCharacterSelect(){
   sel.innerHTML = "";
   const ph = document.createElement("option");
   ph.value = "-1";
-  ph.textContent = "— Select Character —";
+  ph.textContent = ownedCharacterEntries().length ? "— Select Character —" : "— Geen Owned karakters (merk in Training Guide) —";
   sel.appendChild(ph);
   ownedCharacterEntries().forEach(({c, i})=>{
     const opt = document.createElement("option");
@@ -1554,9 +1555,9 @@ function applyDiffAndStatus(kind, dataObj){
         diffCell.textContent = "";
         diffCell.className = "num";
       } else {
-        const isRange = !!(s.targetText || s.currentText);
+        const isRange = !!s.currentText;   // Target-reeks gebruik die minimum (presies); Current-reeks die middelwaarde
         diffCell.textContent = diff >= 0 ? "✅" : `${isRange ? "~" : ""}${diff}${statUnit(s)}`;
-        diffCell.title = isRange ? "Reeks: die middelwaarde word gebruik" : "";
+        diffCell.title = s.targetText ? ("Target-reeks " + s.targetText + ": verskil teenoor die minimum (" + s.target + ")") : (isRange ? "Current-reeks: die middelwaarde word gebruik" : "");
         diffCell.className = "num " + (diff >= 0 ? "diff-ok" : "diff-bad");
       }
     }
@@ -1608,7 +1609,7 @@ function updateAllDiffsAndProgress(){
   const missing = [];
   Object.values(c.stats).forEach(s=>{
     const diff = calcDiff(s.target, s.current);
-    if (diff < 0) missing.push({ label: s.label, val: `${Math.abs(diff)}${statUnit(s)}` });
+    if (diff < 0) missing.push({ label: esc(s.label) || "(stat sonder naam)", val: `${Math.abs(diff)}${statUnit(s)}` });
   });
   talentEntries(c).forEach(([, t])=>{
     const diff = calcDiff(t.target, t.current);
@@ -1682,7 +1683,13 @@ function handleStatInput(e){
     row[field] = input.value;
   } else if (input.dataset.kind === "stat") {
     const pr = parseStatInput(input.value);       // handles 30-50 style ranges
-    row[field] = pr.num;
+    if (field === "target" && pr.lo !== undefined){
+      row.target = pr.lo;            // Target-reeks: minimum is die doel
+      row.targetMax = pr.hi;
+    } else {
+      row[field] = pr.num;
+      if (field === "target") delete row.targetMax;
+    }
     row[field + "Pct"] = /%/.test(input.value);   // onthou of jy % getik het (vir die diff)
     if (pr.text !== undefined) row[field + "Text"] = pr.text; else delete row[field + "Text"];
   } else {
@@ -2167,6 +2174,13 @@ function repairCharacterData(list){
       c.weapon.subStat.type = valueType(c.weapon.subStat.value);
     }
     if (!Array.isArray(c.pinnedNotes)) c.pinnedNotes = [];
+    // Ou data het die middelwaarde van 'n Target-reeks gestoor; herbereken na die minimum.
+    Object.values(c.stats || {}).forEach(st => {
+      if (st && st.targetText){
+        const pr = parseStatInput(st.targetText);
+        if (pr.lo !== undefined){ st.target = pr.lo; st.targetMax = pr.hi; }
+      }
+    });
     // Eenmalig: die ou "lock" (vaste main stat) het nou 'n nuwe betekenis (bevries die stuk),
     // so alles begin ontsluit sodat jy kan invul.
     if (c.lockModel !== 2){
