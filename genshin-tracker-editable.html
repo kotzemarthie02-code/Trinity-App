@@ -409,10 +409,11 @@
   .weapon-substat-row{ display:flex; align-items:center; gap:8px; }
   .weapon-substat-row select{ flex:1.3; min-width:0; }
   .weapon-substat-row input{ flex:1; min-width:0; }
-  .weapon-refine-info{ display:flex; align-items:center; gap:6px; font-size:12px; }
+  .weapon-refine-info{ display:flex; align-items:flex-start; gap:6px; font-size:12px; }
   .weapon-refine-input{
-    flex:1; background:transparent; border:none; border-bottom:1px dashed rgba(255,255,255,0.2);
-    color:#a6a6c2; font-size:12px; padding:2px 2px; border-radius:0;
+    flex:1; min-width:0; background:transparent; border:none; border-bottom:1px dashed rgba(255,255,255,0.2);
+    color:#a6a6c2; font-size:12px; line-height:1.5; padding:2px 2px; border-radius:0;
+    font-family:inherit; resize:none; overflow:hidden; white-space:pre-wrap; word-break:break-word;
   }
   .weapon-refine-input:focus{ outline:none; border-bottom-color:#8b7bf7; }
 
@@ -690,7 +691,7 @@
           </select>
         </div>
         <div class="muted weapon-refine-info">
-          ℹ️ <input id="wRefineNote" type="text" class="weapon-refine-input" placeholder="Refinement bonus...">
+          ℹ️ <textarea id="wRefineNote" rows="1" class="weapon-refine-input" placeholder="Refinement bonus..."></textarea>
         </div>
 
       </div>
@@ -818,6 +819,11 @@ function esc(v){
 }
 // Tipe word afgelei van wat jy tik: bevat '%' = %, anders flat.
 function valueType(txt){ return /%/.test(String(txt ?? "")) ? "%" : "flat"; }
+
+// Eenheid vir die diff: net "%" as jy % by Target of Current getik het, anders niks.
+function statUnit(s){
+  return (s.targetPct || s.currentPct) ? "%" : "";
+}
 
 // Difference = Current - Target. Negative means "still missing".
 function calcDiff(target, current){
@@ -1324,7 +1330,19 @@ function renderWeaponPanel(){
 
   document.getElementById("wRefine").value = w.refine;
   document.getElementById("wRefineNote").value = w.refineNote || "";
+  autosizeRefineNote();
 }
+
+// Refinement-nota groei in hoogte sodat die hele teks sigbaar is (teks bly dieselfde grootte).
+function autosizeRefineNote(){
+  const t = document.getElementById("wRefineNote");
+  if (!t) return;
+  t.style.height = "auto";
+  t.style.height = t.scrollHeight + "px";
+}
+document.getElementById("wRefineNote").addEventListener("input", autosizeRefineNote);
+window.addEventListener("resize", autosizeRefineNote);
+if (window.ResizeObserver) new ResizeObserver(autosizeRefineNote).observe(document.getElementById("wRefineNote").parentElement);
 
 function addStatRow(kind){
   const c = characters[activeIndex];
@@ -1537,7 +1555,7 @@ function applyDiffAndStatus(kind, dataObj){
         diffCell.className = "num";
       } else {
         const isRange = !!(s.targetText || s.currentText);
-        diffCell.textContent = diff >= 0 ? "✅" : `${isRange ? "~" : ""}${diff}${s.unit||""}`;
+        diffCell.textContent = diff >= 0 ? "✅" : `${isRange ? "~" : ""}${diff}${statUnit(s)}`;
         diffCell.title = isRange ? "Reeks: die middelwaarde word gebruik" : "";
         diffCell.className = "num " + (diff >= 0 ? "diff-ok" : "diff-bad");
       }
@@ -1590,7 +1608,7 @@ function updateAllDiffsAndProgress(){
   const missing = [];
   Object.values(c.stats).forEach(s=>{
     const diff = calcDiff(s.target, s.current);
-    if (diff < 0) missing.push({ label: s.label, val: `${Math.abs(diff)}${s.unit}` });
+    if (diff < 0) missing.push({ label: s.label, val: `${Math.abs(diff)}${statUnit(s)}` });
   });
   talentEntries(c).forEach(([, t])=>{
     const diff = calcDiff(t.target, t.current);
@@ -1665,6 +1683,7 @@ function handleStatInput(e){
   } else if (input.dataset.kind === "stat") {
     const pr = parseStatInput(input.value);       // handles 30-50 style ranges
     row[field] = pr.num;
+    row[field + "Pct"] = /%/.test(input.value);   // onthou of jy % getik het (vir die diff)
     if (pr.text !== undefined) row[field + "Text"] = pr.text; else delete row[field + "Text"];
   } else {
     row[field] = input.value === "" ? 0 : Number(input.value);
