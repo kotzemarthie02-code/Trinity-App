@@ -116,9 +116,19 @@
     border:1px solid rgba(139,123,247,0.5); border-radius:12px; padding:12px;
     box-shadow:0 10px 30px rgba(0,0,0,0.5); width:280px;
   }
-  .pin-popup-emojis{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; max-height:150px; overflow-y:auto; }
+  .pin-popup-emojis{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; max-height:130px; overflow-y:auto; }
   .pin-popup-emojis .note-emoji-btn.selected{ background:rgba(139,123,247,0.4); border-color:#8b7bf7; }
-  .pin-popup input{ width:100%; margin-bottom:10px; }
+  .pin-popup input[type=text]{ width:100%; margin-bottom:10px; }
+  .pin-popup .pin-small-input{ margin-bottom:8px; }
+  .pin-popup-label{ font-size:11px; color:#a6a6c2; margin:2px 0 4px; }
+  .pin-popup-colors{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:10px; }
+  .pin-swatch{ width:24px; height:24px; border-radius:50%; border:2px solid rgba(255,255,255,0.25); cursor:pointer; padding:0; font-size:12px; line-height:1; color:#fff; }
+  .pin-swatch:hover{ transform:scale(1.12); }
+  .pin-swatch.selected{ border-color:#fff; box-shadow:0 0 0 2px rgba(139,123,247,0.9); }
+  .pin-swatch-auto{ background:linear-gradient(135deg,#f87171,#fbbf24,#4ade80,#7ecbf5,#8b7bf7); }
+  .pin-color-custom{ display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#a6a6c2; cursor:pointer; }
+  .pin-color-custom input[type=color]{ width:34px; height:26px; padding:0; border:1px solid rgba(255,255,255,0.3); border-radius:6px; background:transparent; cursor:pointer; }
+  .pin-color-custom.selected input[type=color]{ box-shadow:0 0 0 2px rgba(139,123,247,0.9); }
   .pin-popup-actions{ display:flex; gap:8px; }
   .pin-popup-actions .btn, .pin-popup-actions .filter-btn{ flex:1; text-align:center; }
 
@@ -565,6 +575,53 @@
         <button type="button" class="note-emoji-btn" data-emoji="🏆" title="🏆">🏆</button>
         <button type="button" class="note-emoji-btn" data-emoji="👑" title="👑">👑</button>
         <button type="button" class="note-emoji-btn" data-emoji="🔁" title="🔁">🔁</button>
+        <button type="button" class="note-emoji-btn" data-emoji="⚡" title="⚡">⚡</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💧" title="💧">💧</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🌿" title="🌿">🌿</button>
+        <button type="button" class="note-emoji-btn" data-emoji="❄️" title="❄️">❄️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🪨" title="🪨">🪨</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🌪️" title="🌪️">🌪️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🔮" title="🔮">🔮</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🍀" title="🍀">🍀</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🎵" title="🎵">🎵</button>
+        <button type="button" class="note-emoji-btn" data-emoji="☠️" title="☠️">☠️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🧪" title="🧪">🧪</button>
+        <button type="button" class="note-emoji-btn" data-emoji="📦" title="📦">📦</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🗡️" title="🗡️">🗡️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🏹" title="🏹">🏹</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🧿" title="🧿">🧿</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🎲" title="🎲">🎲</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🌙" title="🌙">🌙</button>
+        <button type="button" class="note-emoji-btn" data-emoji="☀️" title="☀️">☀️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💫" title="💫">💫</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🐱" title="🐱">🐱</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🐶" title="🐶">🐶</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🍎" title="🍎">🍎</button>
+        <button type="button" class="note-emoji-btn" data-emoji="☕" title="☕">☕</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💤" title="💤">💤</button>
+        <button type="button" class="note-emoji-btn" data-emoji="📅" title="📅">📅</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🔔" title="🔔">🔔</button>
+        <button type="button" class="note-emoji-btn" data-emoji="📣" title="📣">📣</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🔍" title="🔍">🔍</button>
+        <button type="button" class="note-emoji-btn" data-emoji="⚙️" title="⚙️">⚙️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="✔️" title="✔️">✔️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="⬆️" title="⬆️">⬆️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="⬇️" title="⬇️">⬇️</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💯" title="💯">💯</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🆕" title="🆕">🆕</button>
+        <button type="button" class="note-emoji-btn" data-emoji="❗" title="❗">❗</button>
+        <button type="button" class="note-emoji-btn" data-emoji="💬" title="💬">💬</button>
+        <button type="button" class="note-emoji-btn" data-emoji="😭" title="😭">😭</button>
+        <button type="button" class="note-emoji-btn" data-emoji="😎" title="😎">😎</button>
+        <button type="button" class="note-emoji-btn" data-emoji="🥳" title="🥳">🥳</button>
+        <button type="button" class="note-emoji-btn" data-emoji="😴" title="😴">😴</button>
+      </div>
+      <input type="text" id="pinCustomEmoji" class="pin-small-input" maxlength="12" placeholder="Of tik / plak enige emoji hier (bv. 🐉)" autocomplete="off">
+      <div class="pin-popup-label">Kleur</div>
+      <div class="pin-popup-colors" id="pinPopupColors">
+        <button type="button" class="pin-swatch pin-swatch-auto selected" data-color="" title="Outomaties (volgens emoji)"></button>
+        <button type="button" class="pin-swatch" data-color="#f87171" style="background:#f87171" title="#f87171"></button><button type="button" class="pin-swatch" data-color="#fb923c" style="background:#fb923c" title="#fb923c"></button><button type="button" class="pin-swatch" data-color="#fbbf24" style="background:#fbbf24" title="#fbbf24"></button><button type="button" class="pin-swatch" data-color="#a3e635" style="background:#a3e635" title="#a3e635"></button><button type="button" class="pin-swatch" data-color="#4ade80" style="background:#4ade80" title="#4ade80"></button><button type="button" class="pin-swatch" data-color="#2dd4bf" style="background:#2dd4bf" title="#2dd4bf"></button><button type="button" class="pin-swatch" data-color="#7ecbf5" style="background:#7ecbf5" title="#7ecbf5"></button><button type="button" class="pin-swatch" data-color="#60a5fa" style="background:#60a5fa" title="#60a5fa"></button><button type="button" class="pin-swatch" data-color="#8b7bf7" style="background:#8b7bf7" title="#8b7bf7"></button><button type="button" class="pin-swatch" data-color="#c084fc" style="background:#c084fc" title="#c084fc"></button><button type="button" class="pin-swatch" data-color="#f472b6" style="background:#f472b6" title="#f472b6"></button><button type="button" class="pin-swatch" data-color="#e5e7eb" style="background:#e5e7eb" title="#e5e7eb"></button><button type="button" class="pin-swatch" data-color="#9ca3af" style="background:#9ca3af" title="#9ca3af"></button><button type="button" class="pin-swatch" data-color="#78350f" style="background:#78350f" title="#78350f"></button>
+        <label class="pin-color-custom" id="pinCustomColorWrap" title="Kies enige kleur">🎨 <input type="color" id="pinCustomColor" value="#8b7bf7"></label>
       </div>
       <input type="text" id="pinPopupText" placeholder="Skryf jou nota... (bv. Max HP moet nog op)">
       <div class="pin-popup-actions">
@@ -1875,6 +1932,8 @@ const PIN_EMOJI_COLOR = {
   "🔥": "#f87171", "⏰": "#fbbf24", "👍": "#4ade80",
 };
 function pinColor(emoji){ return PIN_EMOJI_COLOR[emoji] || "#8b7bf7"; }
+// Kleur van 'n nota: jou eie gekose kleur, anders outomaties volgens die emoji.
+function noteColor(n){ return (n && /^#[0-9a-fA-F]{6}$/.test(n.color || "")) ? n.color : pinColor(n && n.emoji); }
 
 /* ---- Pen-posisies: elke pen onthou die BLOKKIE waarop jy geklik het (artifact-kaart,
    stat-ry of paneel) + waar binne daardie blokkie. Só bly hy op die regte plek al
@@ -1941,7 +2000,7 @@ function renderPinNotes(){
   // ---- little dots scattered over the page ----
   const layer = document.getElementById("pinMarkersLayer");
   layer.innerHTML = notes.map(n => `
-    <div class="pin-dot" data-id="${n.id}" style="${n.anchor === undefined ? `left:${n.xPct}%; top:${n.yPct}%; ` : ""}background:${pinColor(n.emoji)};" title="Dubbel-klik om terug te gaan na die nota">
+    <div class="pin-dot" data-id="${n.id}" style="${n.anchor === undefined ? `left:${n.xPct}%; top:${n.yPct}%; ` : ""}background:${noteColor(n)};" title="Dubbel-klik om terug te gaan na die nota">
       ${n.emoji}
       <div class="pin-tooltip">${n.text.replace(/</g,"&lt;")}</div>
     </div>
@@ -1956,7 +2015,7 @@ function renderPinNotes(){
   schedulePinPosition();
   list.innerHTML = notes.map(n => `
     <div class="pin-list-row" data-id="${n.id}">
-      <span class="pin-list-dot" style="background:${pinColor(n.emoji)}"></span>
+      <span class="pin-list-dot" style="background:${noteColor(n)}"></span>
       <span class="pin-list-emoji">${n.emoji}</span>
       <span class="pin-list-text">${n.text.replace(/</g,"&lt;")}</span>
       <button type="button" class="pin-list-del" data-id="${n.id}" title="Verwyder nota">✕</button>
@@ -2018,10 +2077,13 @@ document.getElementById("characterPage").addEventListener("mousedown", (e)=>{
   popup.dataset.fy = e.clientY - aRect.top;
   popup.querySelectorAll(".note-emoji-btn").forEach(b => b.classList.remove("selected"));
   popup.querySelectorAll(".note-emoji-btn")[0].classList.add("selected");
+  document.getElementById("pinCustomEmoji").value = "";
+  pinColorChoice = "";
+  refreshPinColorSelection();
   document.getElementById("pinPopupText").value = "";
 
   // position the popup near the click, but keep it fully on-screen
-  const popupW = 280, popupH = 300;
+  const popupW = 280, popupH = 440;
   let left = Math.min(e.clientX + 10, window.innerWidth - popupW - 12);
   let top = Math.min(e.clientY + 10, window.innerHeight - popupH - 12);
   popup.style.left = Math.max(12, left) + "px";
@@ -2040,9 +2102,44 @@ document.getElementById("pinMarkersLayer").addEventListener("dblclick", (e)=>{
   locateNote(dot.dataset.id);
 });
 
+// ---- kleur- en eie-emoji-keuse ----
+let pinColorChoice = "";     // "" = outomaties volgens emoji
+function refreshPinColorSelection(){
+  document.querySelectorAll("#pinPopupColors .pin-swatch").forEach(b =>
+    b.classList.toggle("selected", b.dataset.color === pinColorChoice));
+  const wrap = document.getElementById("pinCustomColorWrap");
+  const isPreset = !!document.querySelector(`#pinPopupColors .pin-swatch[data-color="${pinColorChoice}"]`);
+  wrap.classList.toggle("selected", pinColorChoice !== "" && !isPreset);
+}
+document.getElementById("pinPopupColors").addEventListener("click", (e)=>{
+  const sw = e.target.closest(".pin-swatch");
+  if (!sw) return;
+  pinColorChoice = sw.dataset.color;
+  refreshPinColorSelection();
+});
+document.getElementById("pinCustomColor").addEventListener("input", (e)=>{
+  pinColorChoice = e.target.value;
+  refreshPinColorSelection();
+});
+function firstGrapheme(str){
+  str = String(str || "").trim();
+  if (!str) return "";
+  if (window.Intl && Intl.Segmenter){
+    const it = new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(str)[Symbol.iterator]().next();
+    return it.done ? "" : it.value.segment;
+  }
+  return Array.from(str)[0] || "";
+}
+document.getElementById("pinCustomEmoji").addEventListener("input", (e)=>{
+  const g = firstGrapheme(e.target.value);
+  e.target.value = g;                       // net een emoji
+  if (g) document.querySelectorAll("#pinPopupEmojis .note-emoji-btn").forEach(b => b.classList.remove("selected"));
+});
+
 document.getElementById("pinPopupEmojis").addEventListener("click", (e)=>{
   const btn = e.target.closest(".note-emoji-btn");
   if (!btn) return;
+  document.getElementById("pinCustomEmoji").value = "";
   document.getElementById("pinPopupEmojis").querySelectorAll(".note-emoji-btn").forEach(b => b.classList.remove("selected"));
   btn.classList.add("selected");
 });
@@ -2062,7 +2159,8 @@ document.getElementById("pinPopupSaveBtn").addEventListener("click", ()=>{
   if (!c.pinnedNotes) c.pinnedNotes = [];
   c.pinnedNotes.push({
     id: Date.now(),
-    emoji: selected ? selected.dataset.emoji : "📌",
+    emoji: firstGrapheme(document.getElementById("pinCustomEmoji").value) || (selected ? selected.dataset.emoji : "📌"),
+    color: pinColorChoice || "",
     text,
     xPct: Number(popup.dataset.xpct),
     yPct: Number(popup.dataset.ypct),
