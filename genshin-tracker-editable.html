@@ -129,7 +129,7 @@
   .pin-color-custom{ display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#a6a6c2; cursor:pointer; }
   .pin-color-custom input[type=color]{ width:34px; height:26px; padding:0; border:1px solid rgba(255,255,255,0.3); border-radius:6px; background:transparent; cursor:pointer; }
   .pin-color-custom.selected input[type=color]{ box-shadow:0 0 0 2px rgba(139,123,247,0.9); }
-  .pin-eyedropper-btn{ width:30px; height:26px; padding:0; font-size:14px; line-height:1; cursor:pointer;
+  .pin-eyedropper-btn{ height:26px; padding:0 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px; line-height:1; cursor:pointer;
     background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; }
   .pin-eyedropper-btn:hover{ background:rgba(255,255,255,0.18); }
   .pin-eyedropper-btn.selected{ box-shadow:0 0 0 2px rgba(139,123,247,0.9); }
@@ -739,7 +739,7 @@
         <button type="button" class="pin-swatch pin-swatch-auto selected" data-color="" title="Outomaties (volgens emoji)"></button>
         <button type="button" class="pin-swatch" data-color="#f87171" style="background:#f87171" title="#f87171"></button><button type="button" class="pin-swatch" data-color="#fb923c" style="background:#fb923c" title="#fb923c"></button><button type="button" class="pin-swatch" data-color="#fbbf24" style="background:#fbbf24" title="#fbbf24"></button><button type="button" class="pin-swatch" data-color="#a3e635" style="background:#a3e635" title="#a3e635"></button><button type="button" class="pin-swatch" data-color="#4ade80" style="background:#4ade80" title="#4ade80"></button><button type="button" class="pin-swatch" data-color="#2dd4bf" style="background:#2dd4bf" title="#2dd4bf"></button><button type="button" class="pin-swatch" data-color="#7ecbf5" style="background:#7ecbf5" title="#7ecbf5"></button><button type="button" class="pin-swatch" data-color="#60a5fa" style="background:#60a5fa" title="#60a5fa"></button><button type="button" class="pin-swatch" data-color="#8b7bf7" style="background:#8b7bf7" title="#8b7bf7"></button><button type="button" class="pin-swatch" data-color="#c084fc" style="background:#c084fc" title="#c084fc"></button><button type="button" class="pin-swatch" data-color="#f472b6" style="background:#f472b6" title="#f472b6"></button><button type="button" class="pin-swatch" data-color="#e5e7eb" style="background:#e5e7eb" title="#e5e7eb"></button><button type="button" class="pin-swatch" data-color="#9ca3af" style="background:#9ca3af" title="#9ca3af"></button><button type="button" class="pin-swatch" data-color="#78350f" style="background:#78350f" title="#78350f"></button>
         <label class="pin-color-custom" id="pinCustomColorWrap" title="Kies enige kleur">🎨 <input type="color" id="pinCustomColor" value="#8b7bf7"></label>
-        <button type="button" class="pin-eyedropper-btn" id="pinEyedropperBtn" title="Eyedropper – kies 'n kleur van enige plek op die skerm">🧪</button>
+        <button type="button" class="pin-eyedropper-btn" id="pinEyedropperBtn" title="Eyedropper – tik op enige plek op die skerm om daardie kleur te kies"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg> Dropper</button>
       </div>
       <input type="text" id="pinPopupText" placeholder="Skryf jou nota... (begin met enige emoji, bv. 🐉 Max HP)" autocomplete="off">
       <div class="pin-popup-actions">
@@ -2239,26 +2239,123 @@ document.getElementById("pinCustomColor").addEventListener("input", (e)=>{
   pinColorChoice = e.target.value;
   refreshPinColorSelection();
 });
-// ---- Eyedropper / Color Picker: pluk 'n kleur van enige plek op die skerm ----
+// ---- Eyedropper / Color Dropper: pluk 'n kleur van enige plek op die skerm ----
+// Desktop Chrome/Edge: die ingeboude EyeDropper (kan selfs buite die blaaier pluk).
+// Android / Firefox / Safari het dit nie, so ons "neem 'n foto" van die bladsy met
+// html2canvas en jy tik / sleep op die skerm met 'n vergrootglas om die kleur te kies.
 (function(){
   const btn = document.getElementById("pinEyedropperBtn");
   if (!btn) return;
-  if (!("EyeDropper" in window)){
-    // Firefox / Safari ondersteun dit nie – gebruik eerder die 🎨 kleurkieser langsaan.
-    btn.disabled = true;
-    btn.style.opacity = "0.45";
-    btn.style.cursor = "not-allowed";
-    btn.title = "Eyedropper werk net in Chrome / Edge / Opera. Gebruik die 🎨 kleurkieser.";
-    return;
+  const popup = document.getElementById("pinPopup");
+
+  function applyPicked(hex){
+    pinColorChoice = hex;
+    document.getElementById("pinCustomColor").value = hex;
+    refreshPinColorSelection();
   }
-  btn.addEventListener("click", async ()=>{
+  function toast(msg){
+    let t = document.getElementById("eyeToast");
+    if (!t){
+      t = document.createElement("div"); t.id = "eyeToast";
+      t.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10001;background:rgba(16,16,30,.97);color:#f2f2fa;border:1px solid rgba(255,255,255,.2);padding:10px 14px;border-radius:10px;font-size:13px;max-width:90vw;text-align:center;";
+      document.body.appendChild(t);
+    }
+    t.textContent = msg; t.style.display = "block";
+    clearTimeout(t._h); t._h = setTimeout(()=> t.style.display = "none", 3500);
+  }
+  function loadH2C(){
+    if (window.html2canvas) return Promise.resolve();
+    return new Promise((res, rej)=>{
+      const sc = document.createElement("script");
+      sc.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+      sc.onload = res; sc.onerror = ()=> rej(new Error("load"));
+      document.head.appendChild(sc);
+    });
+  }
+  const hex2 = n => n.toString(16).padStart(2, "0");
+
+  async function customPick(){
+    popup.style.visibility = "hidden";
+    // kkontrole-balk bo-aan
+    const bar = document.createElement("div");
+    bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:10000;display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(16,16,30,.97);color:#f2f2fa;font-size:13px;border-bottom:1px solid rgba(255,255,255,.2);";
+    bar.innerHTML = '<span id="eyeMsg" style="flex:1">Laai skerm…</span><span id="eyeSw" style="width:26px;height:26px;border-radius:6px;border:2px solid #fff;background:#000"></span><button type="button" id="eyeCancel" class="filter-btn" style="padding:6px 12px">Cancel</button>';
+    document.body.appendChild(bar);
+    const msg = bar.querySelector("#eyeMsg"), sw = bar.querySelector("#eyeSw");
+    let overlay = null, loupe = null;
+    const cleanup = ()=>{
+      bar.remove(); if (overlay) overlay.remove(); if (loupe) loupe.remove();
+      popup.style.visibility = "";
+      document.removeEventListener("keydown", onKey, true);
+    };
+    const onKey = ev=>{ if (ev.key === "Escape"){ ev.stopPropagation(); cleanup(); } };
+    document.addEventListener("keydown", onKey, true);
+    bar.querySelector("#eyeCancel").addEventListener("click", cleanup);
+
+    let shot;
     try{
-      const result = await new EyeDropper().open();   // { sRGBHex: "#rrggbb" }
-      pinColorChoice = result.sRGBHex;
-      document.getElementById("pinCustomColor").value = result.sRGBHex;
-      refreshPinColorSelection();
-      document.getElementById("pinPopupText").focus();
-    }catch(err){ /* gebruiker het Esc gedruk – niks om te doen */ }
+      await loadH2C();
+      shot = await html2canvas(document.body, {
+        scale: 1, useCORS: true, logging: false,
+        ignoreElements: el => el === popup || el === bar || el.id === "eyeToast"
+      });
+    }catch(err){
+      cleanup();
+      toast("Kon nie die skerm lees nie (is jy aflyn?). Gebruik die 🎨 kleurkieser.");
+      return;
+    }
+    const ctx = shot.getContext("2d", { willReadFrequently: true });
+    const bodyRect = document.body.getBoundingClientRect();   // hou rekening met scroll
+    const k = shot.width / bodyRect.width;
+    const sampleAt = (cx, cy)=>{
+      const px = Math.max(0, Math.min(shot.width - 1, Math.round((cx - bodyRect.left) * k)));
+      const py = Math.max(0, Math.min(shot.height - 1, Math.round((cy - bodyRect.top) * k)));
+      const d = ctx.getImageData(px, py, 1, 1).data;
+      return { px, py, hex: "#" + hex2(d[0]) + hex2(d[1]) + hex2(d[2]) };
+    };
+
+    overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;cursor:crosshair;touch-action:none;background:rgba(0,0,0,0.001);";
+    loupe = document.createElement("canvas");
+    loupe.width = loupe.height = 110;
+    loupe.style.cssText = "position:fixed;z-index:10000;width:110px;height:110px;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.6);pointer-events:none;display:none;";
+    document.body.append(overlay, loupe);
+    const lctx = loupe.getContext("2d");
+    msg.textContent = "Hou en sleep jou vinger oor die skerm, laat los om die kleur te kies";
+
+    function move(ev){
+      const r = sampleAt(ev.clientX, ev.clientY);
+      sw.style.background = r.hex; msg.textContent = r.hex.toUpperCase();
+      lctx.imageSmoothingEnabled = false;
+      lctx.clearRect(0, 0, 110, 110);
+      lctx.drawImage(shot, r.px - 7, r.py - 7, 15, 15, 0, 0, 110, 110);
+      lctx.strokeStyle = "#fff"; lctx.lineWidth = 2; lctx.strokeRect(47, 47, 16, 16);
+      lctx.strokeStyle = "#000"; lctx.lineWidth = 1; lctx.strokeRect(48.5, 48.5, 13, 13);
+      let top = ev.clientY - 150; if (top < 56) top = ev.clientY + 50;
+      loupe.style.left = Math.max(4, Math.min(window.innerWidth - 114, ev.clientX - 55)) + "px";
+      loupe.style.top = top + "px";
+      loupe.style.display = "block";
+      return r;
+    }
+    overlay.addEventListener("pointerdown", ev=>{ ev.preventDefault(); overlay.setPointerCapture(ev.pointerId); move(ev); });
+    overlay.addEventListener("pointermove", ev=>{ if (ev.buttons || ev.pointerType === "touch") move(ev); });
+    overlay.addEventListener("pointerup", ev=>{
+      const r = sampleAt(ev.clientX, ev.clientY);
+      cleanup(); applyPicked(r.hex);
+      toast("Kleur gekies: " + r.hex.toUpperCase());
+    });
+    overlay.addEventListener("pointercancel", cleanup);
+  }
+
+  btn.addEventListener("click", async ()=>{
+    if ("EyeDropper" in window){
+      try{
+        const result = await new EyeDropper().open();   // { sRGBHex: "#rrggbb" }
+        applyPicked(result.sRGBHex);
+      }catch(err){ /* Esc – niks om te doen */ }
+    } else {
+      customPick();
+    }
   });
 })();
 // Een tik-boksie: begin die nota met enige emoji (tik of plak) en dit word die pen se emoji.
