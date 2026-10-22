@@ -742,6 +742,7 @@
         <button type="button" class="pin-eyedropper-btn" id="pinEyedropperBtn" title="Eyedropper – tik op enige plek op die skerm om daardie kleur te kies"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg> Dropper</button>
         <button type="button" class="pin-eyedropper-btn" id="pinShotBtn" title="Kies 'n kleur uit 'n screenshot / foto (bv. van Google of enige ander app)">📷 Screenshot</button>
         <input type="file" id="pinShotFile" accept="image/*" style="display:none">
+        <input type="text" id="pinHexInput" placeholder="#hex plak hier" maxlength="7" autocomplete="off" autocapitalize="off" spellcheck="false" title="Plak 'n hex-kode van 'n ander kleur-app, bv. #8b7bf7" style="width:104px;height:26px;padding:0 8px;font-size:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;">
       </div>
       <input type="text" id="pinPopupText" placeholder="Skryf jou nota... (begin met enige emoji, bv. 🐉 Max HP)" autocomplete="off">
       <div class="pin-popup-actions">
@@ -2253,6 +2254,7 @@ document.getElementById("pinCustomColor").addEventListener("input", (e)=>{
   function applyPicked(hex){
     pinColorChoice = hex;
     document.getElementById("pinCustomColor").value = hex;
+    const hi = document.getElementById("pinHexInput"); if (hi) hi.value = hex;
     refreshPinColorSelection();
   }
   function toast(msg){
@@ -2439,6 +2441,19 @@ document.getElementById("pinCustomColor").addEventListener("input", (e)=>{
     shotFile.value = "";
     if (f) shotPick(f);
   });
+
+  // ---- Hex-kode veld: plak 'n kleur van enige ander app (bv. 'n kleur-dropper app) ----
+  const hexInput = document.getElementById("pinHexInput");
+  function parseHex(v){
+    v = (v || "").trim().replace(/^#/, "");
+    if (/^[0-9a-fA-F]{3}$/.test(v)) v = v.split("").map(c=>c+c).join("");
+    return /^[0-9a-fA-F]{6}$/.test(v) ? "#" + v.toLowerCase() : null;
+  }
+  hexInput.addEventListener("input", ()=>{
+    const h = parseHex(hexInput.value);
+    if (h){ pinColorChoice = h; document.getElementById("pinCustomColor").value = h; refreshPinColorSelection(); }
+  });
+  document.getElementById("pinCustomColor").addEventListener("input", e=>{ hexInput.value = e.target.value; });
 
   btn.addEventListener("click", async ()=>{
     if ("EyeDropper" in window){
