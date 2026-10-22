@@ -155,6 +155,12 @@
     padding:2px 6px; border-radius:6px; flex-shrink:0;
   }
   .pin-list-del:hover{ color:#f87171; background:rgba(248,113,113,0.12); }
+  .pin-list-edit, .pin-list-move{
+    background:none; border:none; color:#a6a6c2; cursor:pointer; font-size:12px;
+    padding:2px 6px; border-radius:6px; flex-shrink:0;
+  }
+  .pin-list-edit:hover, .pin-list-move:hover{ color:#8b7bf7; background:rgba(139,123,247,0.15); }
+  .pin-popup-title{ font-size:12px; color:#8b7bf7; font-weight:600; margin-bottom:8px; display:none; }
 
   .back-btn{ background:none; border:none; color:#dcdcf2; font-size:14px; cursor:pointer; margin-bottom:14px; }
 
@@ -742,9 +748,11 @@
         <button type="button" class="pin-eyedropper-btn" id="pinEyedropperBtn" title="Eyedropper – tik op enige plek op die skerm om daardie kleur te kies"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg> Dropper</button>
         <input type="text" id="pinHexInput" placeholder="#hex" maxlength="7" autocomplete="off" autocapitalize="off" spellcheck="false" title="Plak 'n hex-kode van 'n ander kleur-app, bv. #8b7bf7" style="width:84px;height:26px;padding:0 8px;font-size:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;">
       </div>
+      <div class="pin-popup-title" id="pinPopupTitle">✏️ Wysig nota</div>
       <input type="text" id="pinPopupText" placeholder="Skryf jou nota... (begin met enige emoji, bv. 🐉 Max HP)" autocomplete="off">
       <div class="pin-popup-actions">
         <button type="button" class="btn" id="pinPopupSaveBtn">Save</button>
+        <button type="button" class="filter-btn" id="pinPopupMoveBtn" style="display:none;" title="Skuif hierdie pen na 'n ander plek">📍 Skuif</button>
         <button type="button" class="filter-btn" id="pinPopupCancelBtn">Cancel</button>
       </div>
     </div>
@@ -2138,6 +2146,8 @@ function renderPinNotes(){
       <span class="pin-list-dot" style="background:${noteColor(n)}"></span>
       <span class="pin-list-emoji">${n.emoji}</span>
       <span class="pin-list-text">${n.text.replace(/</g,"&lt;")}</span>
+      <button type="button" class="pin-list-edit" data-id="${n.id}" title="Wysig nota">✏️</button>
+      <button type="button" class="pin-list-move" data-id="${n.id}" title="Skuif pen na 'n ander plek">📍</button>
       <button type="button" class="pin-list-del" data-id="${n.id}" title="Verwyder nota">✕</button>
     </div>
   `).join("");
@@ -2161,11 +2171,24 @@ function locateNote(id){
   setTimeout(()=> row.classList.remove("pin-flash"), 1100);
 }
 
+let movingPinId = null;   // id van die pen wat jy nou skuif (null = niks)
+const PIN_HINT_ADD  = "Klik enige plek op die bladsy waar jy 'n nota wil sit... (Esc om te kanselleer)";
+const PIN_HINT_MOVE = "Klik die nuwe plek vir die pen... (Esc om te kanselleer)";
 function setPinMode(on){
   pinModeOn = on;
+  if (!on) movingPinId = null;
   document.body.classList.toggle("pin-mode-active", on);
-  document.getElementById("pinModeHint").style.display = on ? "block" : "none";
+  const hint = document.getElementById("pinModeHint");
+  hint.style.display = on ? "block" : "none";
+  hint.textContent = movingPinId !== null ? PIN_HINT_MOVE : PIN_HINT_ADD;
   document.getElementById("addPinModeBtn").textContent = on ? "✕ Cancel" : "📌 Add Note";
+}
+function startMovePin(id){
+  closePinPopup();
+  setPinMode(true);
+  movingPinId = id;
+  document.getElementById("pinModeHint").textContent = PIN_HINT_MOVE;
+  document.getElementById("pinModeHint").scrollIntoView({ behavior:"smooth", block:"center" });
 }
 
 document.getElementById("addPinModeBtn").addEventListener("click", ()=> setPinMode(!pinModeOn));
@@ -2174,13 +2197,37 @@ document.getElementById("addPinModeBtn").addEventListener("click", ()=> setPinMo
 // little popup at that spot; we use "mousedown" + capture so it fires
 // before any button/input underneath reacts to the click.
 document.getElementById("characterPage").addEventListener("mousedown", (e)=>{
-  if (!pinModeOn) return;
+  if (!pinModeOn && movingPinId === null) return;
   if (e.target.closest("#pinPopup") || e.target.closest("#addPinModeBtn")) return;
+  if (e.target.closest(".pin-list-edit, .pin-list-move, .pin-list-del")) return;
   e.preventDefault();
   e.stopPropagation();
 
   const page = document.getElementById("characterPage");
   const rect = page.getBoundingClientRect();
+
+  // ---- SKUIF-MODUS: sit 'n bestaande pen op die nuwe plek neer ----
+  if (movingPinId !== null){
+    const mc = characters[activeIndex];
+    const mn = (mc.pinnedNotes || []).find(x => x.id === movingPinId);
+    if (mn){
+      const mAnchor = pinAnchorFor(e.target);
+      const mEl = pinAnchorEl(mAnchor) || page;
+      const mRect = mEl.getBoundingClientRect();
+      mn.xPct = ((e.clientX - rect.left) / rect.width) * 100;
+      mn.yPct = ((e.clientY - rect.top) / rect.height) * 100;
+      mn.anchor = pinAnchorEl(mAnchor) ? mAnchor : "";
+      mn.fx = (e.clientX - mRect.left) / (mRect.width || 1);
+      mn.fy = e.clientY - mRect.top;
+      const movedId = mn.id;
+      setPinMode(false);
+      renderPinNotes();
+      setTimeout(()=> locatePin(movedId), 0);
+    } else {
+      setPinMode(false);
+    }
+    return;
+  }
   const xPct = ((e.clientX - rect.left) / rect.width) * 100;
   const yPct = ((e.clientY - rect.top) / rect.height) * 100;
   // onthou op watter blokkie jy geklik het + waar binne dit
@@ -2190,6 +2237,9 @@ document.getElementById("characterPage").addEventListener("mousedown", (e)=>{
   const aW = aRect.width || 1;
 
   const popup = document.getElementById("pinPopup");
+  popup.dataset.editId = "";
+  document.getElementById("pinPopupTitle").style.display = "none";
+  document.getElementById("pinPopupMoveBtn").style.display = "none";
   popup.dataset.xpct = xPct;
   popup.dataset.ypct = yPct;
   popup.dataset.anchor = pinAnchorEl(anchor) ? anchor : "";
@@ -2393,20 +2443,64 @@ document.getElementById("pinPopupEmojis").addEventListener("click", (e)=>{
 });
 
 function closePinPopup(){
-  document.getElementById("pinPopup").style.display = "none";
+  const pp = document.getElementById("pinPopup");
+  pp.style.display = "none";
+  pp.dataset.editId = "";
+  document.getElementById("pinPopupTitle").style.display = "none";
+  document.getElementById("pinPopupMoveBtn").style.display = "none";
+}
+
+// ---- WYSIG 'n bestaande nota: maak dieselfde popup oop, vooraf ingevul ----
+function openEditPopup(id){
+  const c = characters[activeIndex];
+  const n = (c.pinnedNotes || []).find(x => String(x.id) === String(id));
+  if (!n) return;
+  const popup = document.getElementById("pinPopup");
+  popup.dataset.editId = String(n.id);
+  document.getElementById("pinPopupTitle").style.display = "block";
+  document.getElementById("pinPopupMoveBtn").style.display = "";
+  const btns = popup.querySelectorAll("#pinPopupEmojis .note-emoji-btn");
+  btns.forEach(b => b.classList.remove("selected"));
+  const match = Array.from(btns).find(b => b.dataset.emoji === n.emoji);
+  if (match){ match.classList.add("selected"); document.getElementById("pinPopupText").value = n.text; }
+  else { document.getElementById("pinPopupText").value = (n.emoji ? n.emoji + " " : "") + n.text; }
+  pinColorChoice = n.color || "";
+  if (/^#[0-9a-fA-F]{6}$/.test(pinColorChoice)){
+    document.getElementById("pinCustomColor").value = pinColorChoice;
+    const hi = document.getElementById("pinHexInput"); if (hi) hi.value = pinColorChoice;
+  }
+  refreshPinColorSelection();
+  const popupW = 280, popupH = 400;
+  popup.style.left = Math.max(12, (window.innerWidth - popupW) / 2) + "px";
+  popup.style.top  = Math.max(12, (window.innerHeight - popupH) / 2) + "px";
+  popup.style.display = "block";
+  setPinMode(false);
+  setTimeout(()=>{ const t = document.getElementById("pinPopupText"); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 0);
 }
 
 document.getElementById("pinPopupCancelBtn").addEventListener("click", closePinPopup);
 
-document.getElementById("pinPopupSaveBtn").addEventListener("click", ()=>{
+function commitPinPopup(){
   const popup = document.getElementById("pinPopup");
   const typed = document.getElementById("pinPopupText").value.trim();
-  if (!typed){ closePinPopup(); return; }
+  const editId = popup.dataset.editId || "";
+  if (!typed){ closePinPopup(); return null; }
   const lead = splitLeadingEmoji(typed);
   const text = lead.rest || typed;          // net 'n emoji getik? hou dit as teks
   const selected = popup.querySelector(".note-emoji-btn.selected");
   const c = characters[activeIndex];
   if (!c.pinnedNotes) c.pinnedNotes = [];
+  if (editId){
+    const n = c.pinnedNotes.find(x => String(x.id) === editId);
+    if (n){
+      n.emoji = lead.emoji || (selected ? selected.dataset.emoji : (n.emoji || "📌"));
+      n.color = pinColorChoice || "";
+      n.text = text;
+      closePinPopup();
+      renderPinNotes();
+      return n.id;
+    }
+  }
   c.pinnedNotes.push({
     id: Date.now(),
     emoji: lead.emoji || (selected ? selected.dataset.emoji : "📌"),
@@ -2420,6 +2514,12 @@ document.getElementById("pinPopupSaveBtn").addEventListener("click", ()=>{
   });
   closePinPopup();
   renderPinNotes();
+  return null;
+}
+document.getElementById("pinPopupSaveBtn").addEventListener("click", commitPinPopup);
+document.getElementById("pinPopupMoveBtn").addEventListener("click", ()=>{
+  const id = commitPinPopup();          // eers die wysigings stoor, dan skuif
+  if (id !== null) startMovePin(id);
 });
 
 document.getElementById("pinPopupText").addEventListener("keydown", (e)=>{
@@ -2437,6 +2537,15 @@ document.getElementById("pinNotesList").addEventListener("click", (e)=>{
     const c = characters[activeIndex];
     c.pinnedNotes = (c.pinnedNotes || []).filter(n => String(n.id) !== delBtn.dataset.id);
     renderPinNotes();
+    return;
+  }
+  const editBtn = e.target.closest(".pin-list-edit");
+  if (editBtn){ openEditPopup(editBtn.dataset.id); return; }
+  const moveBtn = e.target.closest(".pin-list-move");
+  if (moveBtn){
+    const c = characters[activeIndex];
+    const n = (c.pinnedNotes || []).find(x => String(x.id) === moveBtn.dataset.id);
+    if (n) startMovePin(n.id);
     return;
   }
   const row = e.target.closest(".pin-list-row");
