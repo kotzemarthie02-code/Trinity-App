@@ -129,6 +129,10 @@
   .pin-color-custom{ display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#a6a6c2; cursor:pointer; }
   .pin-color-custom input[type=color]{ width:34px; height:26px; padding:0; border:1px solid rgba(255,255,255,0.3); border-radius:6px; background:transparent; cursor:pointer; }
   .pin-color-custom.selected input[type=color]{ box-shadow:0 0 0 2px rgba(139,123,247,0.9); }
+  .pin-eyedropper-btn{ width:30px; height:26px; padding:0; font-size:14px; line-height:1; cursor:pointer;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; }
+  .pin-eyedropper-btn:hover{ background:rgba(255,255,255,0.18); }
+  .pin-eyedropper-btn.selected{ box-shadow:0 0 0 2px rgba(139,123,247,0.9); }
   .pin-popup-actions{ display:flex; gap:8px; }
   .pin-popup-actions .btn, .pin-popup-actions .filter-btn{ flex:1; text-align:center; }
 
@@ -735,6 +739,7 @@
         <button type="button" class="pin-swatch pin-swatch-auto selected" data-color="" title="Outomaties (volgens emoji)"></button>
         <button type="button" class="pin-swatch" data-color="#f87171" style="background:#f87171" title="#f87171"></button><button type="button" class="pin-swatch" data-color="#fb923c" style="background:#fb923c" title="#fb923c"></button><button type="button" class="pin-swatch" data-color="#fbbf24" style="background:#fbbf24" title="#fbbf24"></button><button type="button" class="pin-swatch" data-color="#a3e635" style="background:#a3e635" title="#a3e635"></button><button type="button" class="pin-swatch" data-color="#4ade80" style="background:#4ade80" title="#4ade80"></button><button type="button" class="pin-swatch" data-color="#2dd4bf" style="background:#2dd4bf" title="#2dd4bf"></button><button type="button" class="pin-swatch" data-color="#7ecbf5" style="background:#7ecbf5" title="#7ecbf5"></button><button type="button" class="pin-swatch" data-color="#60a5fa" style="background:#60a5fa" title="#60a5fa"></button><button type="button" class="pin-swatch" data-color="#8b7bf7" style="background:#8b7bf7" title="#8b7bf7"></button><button type="button" class="pin-swatch" data-color="#c084fc" style="background:#c084fc" title="#c084fc"></button><button type="button" class="pin-swatch" data-color="#f472b6" style="background:#f472b6" title="#f472b6"></button><button type="button" class="pin-swatch" data-color="#e5e7eb" style="background:#e5e7eb" title="#e5e7eb"></button><button type="button" class="pin-swatch" data-color="#9ca3af" style="background:#9ca3af" title="#9ca3af"></button><button type="button" class="pin-swatch" data-color="#78350f" style="background:#78350f" title="#78350f"></button>
         <label class="pin-color-custom" id="pinCustomColorWrap" title="Kies enige kleur">🎨 <input type="color" id="pinCustomColor" value="#8b7bf7"></label>
+        <button type="button" class="pin-eyedropper-btn" id="pinEyedropperBtn" title="Eyedropper – kies 'n kleur van enige plek op die skerm">🧪</button>
       </div>
       <input type="text" id="pinPopupText" placeholder="Skryf jou nota... (begin met enige emoji, bv. 🐉 Max HP)" autocomplete="off">
       <div class="pin-popup-actions">
@@ -2234,6 +2239,28 @@ document.getElementById("pinCustomColor").addEventListener("input", (e)=>{
   pinColorChoice = e.target.value;
   refreshPinColorSelection();
 });
+// ---- Eyedropper / Color Picker: pluk 'n kleur van enige plek op die skerm ----
+(function(){
+  const btn = document.getElementById("pinEyedropperBtn");
+  if (!btn) return;
+  if (!("EyeDropper" in window)){
+    // Firefox / Safari ondersteun dit nie – gebruik eerder die 🎨 kleurkieser langsaan.
+    btn.disabled = true;
+    btn.style.opacity = "0.45";
+    btn.style.cursor = "not-allowed";
+    btn.title = "Eyedropper werk net in Chrome / Edge / Opera. Gebruik die 🎨 kleurkieser.";
+    return;
+  }
+  btn.addEventListener("click", async ()=>{
+    try{
+      const result = await new EyeDropper().open();   // { sRGBHex: "#rrggbb" }
+      pinColorChoice = result.sRGBHex;
+      document.getElementById("pinCustomColor").value = result.sRGBHex;
+      refreshPinColorSelection();
+      document.getElementById("pinPopupText").focus();
+    }catch(err){ /* gebruiker het Esc gedruk – niks om te doen */ }
+  });
+})();
 // Een tik-boksie: begin die nota met enige emoji (tik of plak) en dit word die pen se emoji.
 const LEADING_EMOJI_RE = /^((?:\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*)|(?:[\u{1F1E6}-\u{1F1FF}]{2}))\s*/u;
 function splitLeadingEmoji(text){
