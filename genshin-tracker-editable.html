@@ -740,9 +740,7 @@
         <button type="button" class="pin-swatch" data-color="#f87171" style="background:#f87171" title="#f87171"></button><button type="button" class="pin-swatch" data-color="#fb923c" style="background:#fb923c" title="#fb923c"></button><button type="button" class="pin-swatch" data-color="#fbbf24" style="background:#fbbf24" title="#fbbf24"></button><button type="button" class="pin-swatch" data-color="#a3e635" style="background:#a3e635" title="#a3e635"></button><button type="button" class="pin-swatch" data-color="#4ade80" style="background:#4ade80" title="#4ade80"></button><button type="button" class="pin-swatch" data-color="#2dd4bf" style="background:#2dd4bf" title="#2dd4bf"></button><button type="button" class="pin-swatch" data-color="#7ecbf5" style="background:#7ecbf5" title="#7ecbf5"></button><button type="button" class="pin-swatch" data-color="#60a5fa" style="background:#60a5fa" title="#60a5fa"></button><button type="button" class="pin-swatch" data-color="#8b7bf7" style="background:#8b7bf7" title="#8b7bf7"></button><button type="button" class="pin-swatch" data-color="#c084fc" style="background:#c084fc" title="#c084fc"></button><button type="button" class="pin-swatch" data-color="#f472b6" style="background:#f472b6" title="#f472b6"></button><button type="button" class="pin-swatch" data-color="#e5e7eb" style="background:#e5e7eb" title="#e5e7eb"></button><button type="button" class="pin-swatch" data-color="#9ca3af" style="background:#9ca3af" title="#9ca3af"></button><button type="button" class="pin-swatch" data-color="#78350f" style="background:#78350f" title="#78350f"></button>
         <label class="pin-color-custom" id="pinCustomColorWrap" title="Kies enige kleur">🎨 <input type="color" id="pinCustomColor" value="#8b7bf7"></label>
         <button type="button" class="pin-eyedropper-btn" id="pinEyedropperBtn" title="Eyedropper – tik op enige plek op die skerm om daardie kleur te kies"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg> Dropper</button>
-        <button type="button" class="pin-eyedropper-btn" id="pinShotBtn" title="Kies 'n kleur uit 'n screenshot / foto (bv. van Google of enige ander app)">📷 Screenshot</button>
-        <input type="file" id="pinShotFile" accept="image/*" style="display:none">
-        <input type="text" id="pinHexInput" placeholder="#hex plak hier" maxlength="7" autocomplete="off" autocapitalize="off" spellcheck="false" title="Plak 'n hex-kode van 'n ander kleur-app, bv. #8b7bf7" style="width:104px;height:26px;padding:0 8px;font-size:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;">
+        <input type="text" id="pinHexInput" placeholder="#hex" maxlength="7" autocomplete="off" autocapitalize="off" spellcheck="false" title="Plak 'n hex-kode van 'n ander kleur-app, bv. #8b7bf7" style="width:84px;height:26px;padding:0 8px;font-size:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;">
       </div>
       <input type="text" id="pinPopupText" placeholder="Skryf jou nota... (begin met enige emoji, bv. 🐉 Max HP)" autocomplete="off">
       <div class="pin-popup-actions">
@@ -2351,96 +2349,6 @@ document.getElementById("pinCustomColor").addEventListener("input", (e)=>{
     overlay.addEventListener("pointercancel", cleanup);
   }
 
-
-  // ---- Kies kleur uit 'n screenshot/foto van enige app of webwerf ----
-  function shotPick(file){
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = ()=>{
-      const cv = document.createElement("canvas");
-      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
-      const ctx = cv.getContext("2d", { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-      popup.style.visibility = "hidden";
-
-      const wrap = document.createElement("div");
-      wrap.style.cssText = "position:fixed;inset:0;z-index:9999;background:#000;touch-action:none;cursor:crosshair;";
-      const view = document.createElement("canvas");
-      view.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
-      wrap.appendChild(view);
-      const bar = document.createElement("div");
-      bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:10000;display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(16,16,30,.97);color:#f2f2fa;font-size:13px;border-bottom:1px solid rgba(255,255,255,.2);";
-      bar.innerHTML = '<span id="shMsg" style="flex:1">Sleep jou vinger oor die prent, laat los om te kies</span><span id="shSw" style="width:26px;height:26px;border-radius:6px;border:2px solid #fff;background:#000"></span><button type="button" id="shCancel" class="filter-btn" style="padding:6px 12px">Cancel</button>';
-      const loupe = document.createElement("canvas");
-      loupe.width = loupe.height = 110;
-      loupe.style.cssText = "position:fixed;z-index:10000;width:110px;height:110px;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.6);pointer-events:none;display:none;";
-      document.body.append(wrap, bar, loupe);
-      const msg = bar.querySelector("#shMsg"), sw = bar.querySelector("#shSw");
-      const lctx = loupe.getContext("2d");
-
-      // teken die prent "contain" in die volskerm
-      let sc = 1, ox = 0, oy = 0;
-      function layout(){
-        const W = window.innerWidth, H = window.innerHeight, d = window.devicePixelRatio || 1;
-        view.width = W * d; view.height = H * d;
-        const v = view.getContext("2d");
-        v.scale(d, d);
-        sc = Math.min(W / img.naturalWidth, H / img.naturalHeight);
-        ox = (W - img.naturalWidth * sc) / 2; oy = (H - img.naturalHeight * sc) / 2;
-        v.drawImage(img, ox, oy, img.naturalWidth * sc, img.naturalHeight * sc);
-      }
-      layout();
-      window.addEventListener("resize", layout);
-
-      const cleanup = ()=>{
-        wrap.remove(); bar.remove(); loupe.remove();
-        popup.style.visibility = "";
-        window.removeEventListener("resize", layout);
-        document.removeEventListener("keydown", onKey, true);
-      };
-      const onKey = ev=>{ if (ev.key === "Escape"){ ev.stopPropagation(); cleanup(); } };
-      document.addEventListener("keydown", onKey, true);
-      bar.querySelector("#shCancel").addEventListener("click", cleanup);
-
-      const sampleAt = (cx, cy)=>{
-        const px = Math.max(0, Math.min(cv.width - 1, Math.round((cx - ox) / sc - 0.5)));
-        const py = Math.max(0, Math.min(cv.height - 1, Math.round((cy - oy) / sc - 0.5)));
-        const d = ctx.getImageData(px, py, 1, 1).data;
-        return { px, py, hex: "#" + hex2(d[0]) + hex2(d[1]) + hex2(d[2]) };
-      };
-      function move(ev){
-        const r = sampleAt(ev.clientX, ev.clientY);
-        sw.style.background = r.hex; msg.textContent = r.hex.toUpperCase();
-        lctx.imageSmoothingEnabled = false;
-        lctx.clearRect(0, 0, 110, 110);
-        lctx.drawImage(cv, r.px - 7, r.py - 7, 15, 15, 0, 0, 110, 110);
-        lctx.strokeStyle = "#fff"; lctx.lineWidth = 2; lctx.strokeRect(47, 47, 16, 16);
-        lctx.strokeStyle = "#000"; lctx.lineWidth = 1; lctx.strokeRect(48.5, 48.5, 13, 13);
-        let top = ev.clientY - 150; if (top < 56) top = ev.clientY + 50;
-        loupe.style.left = Math.max(4, Math.min(window.innerWidth - 114, ev.clientX - 55)) + "px";
-        loupe.style.top = top + "px";
-        loupe.style.display = "block";
-      }
-      wrap.addEventListener("pointerdown", ev=>{ ev.preventDefault(); wrap.setPointerCapture(ev.pointerId); move(ev); });
-      wrap.addEventListener("pointermove", ev=>{ if (ev.buttons || ev.pointerType === "touch") move(ev); });
-      wrap.addEventListener("pointerup", ev=>{
-        const r = sampleAt(ev.clientX, ev.clientY);
-        cleanup(); applyPicked(r.hex);
-        toast("Kleur gekies: " + r.hex.toUpperCase());
-      });
-      wrap.addEventListener("pointercancel", cleanup);
-    };
-    img.onerror = ()=>{ URL.revokeObjectURL(url); toast("Kon nie die prent oopmaak nie."); };
-    img.src = url;
-  }
-  const shotBtn = document.getElementById("pinShotBtn"), shotFile = document.getElementById("pinShotFile");
-  shotBtn.addEventListener("click", ()=> shotFile.click());
-  shotFile.addEventListener("change", ()=>{
-    const f = shotFile.files && shotFile.files[0];
-    shotFile.value = "";
-    if (f) shotPick(f);
-  });
 
   // ---- Hex-kode veld: plak 'n kleur van enige ander app (bv. 'n kleur-dropper app) ----
   const hexInput = document.getElementById("pinHexInput");
