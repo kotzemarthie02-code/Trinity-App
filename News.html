@@ -10,7 +10,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -75,6 +75,23 @@
         set(ref(db, 'sharedData/newsData/' + key), value);
         // Timestamp — Dashboard wys ! vir almal
         set(ref(db, 'sharedData/lastUpdated/news'), Date.now());
+    };
+
+    // Post huidige News na Primogem Besties (foon-app lees net hierdie node)
+    window.postToBesties = async function() {
+        if (!window._unlocked) { alert('🔒 Ontsluit eers via Settings.'); return; }
+        if (!confirm('📤 Post hierdie News na Primogem Besties?')) return;
+        try {
+            const nd = await get(ref(db, 'sharedData/newsData'));
+            const bi = await get(ref(db, 'sharedData/bdayImg'));
+            await set(ref(db, 'sharedData/primogemNews'), {
+                postedAt: Date.now(),
+                data: nd.val() || {},
+                bdayImg: bi.val() || '',
+                bdays: window.getTopBdays ? window.getTopBdays() : []
+            });
+            alert('✅ Gepos! Primogem Besties wys nou jou News.');
+        } catch (e) { alert('❌ Post het misluk: ' + e.message); }
     };
 
     // Stoor prent URL na Firebase sodat almal dit sien
@@ -206,6 +223,7 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
     <div style="display:flex;gap:8px;align-items:center;">
       <button id="lock-btn" onclick="toggleLock()" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">⚙️ <span id="lock-lbl">Settings</span></button>
       <button onclick="resetNews()" title="Skoon alles vir nuwe update" style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.4);color:#ff9090;padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">🔄 Reset</button>
+      <button onclick="postToBesties()" title="Post na Primogem Besties" style="background:rgba(165,255,173,0.15);border:1px solid rgba(165,255,173,0.5);color:#a5ffad;padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">📤 Post</button>
     </div>
   </div>
   <div class="site-title"><h1>The Trinity News</h1></div>
@@ -749,6 +767,13 @@ function renderBdays() {
     container.appendChild(row);
   });
 }
+
+window.getTopBdays=function(){
+  const t=new Date(),tm=t.getMonth()+1,td=t.getDate();
+  return charBirthdays.map(e=>{const p=e.split(' '),ds=p[p.length-1],name=p.slice(0,-1).join(' '),[m,d]=ds.split('/').map(Number);
+    let diff=(m-tm)*31+(d-td);if(m<tm||(m===tm&&d<td))diff+=365;return{name,m,d,diff};})
+    .sort((a,b)=>a.diff-b.diff).slice(0,4).map(b=>({name:b.name,label:MONTH_NAMES[b.m-1]+' '+b.d,today:b.m===tm&&b.d===td}));
+};
 
 function saveDates(){P('cds',{d1:V('cd1'),d2:V('cd2')});P('pd',{p1:V('p1d'),p2:V('p2d')});saveLive();}
 
