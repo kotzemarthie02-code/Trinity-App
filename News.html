@@ -119,8 +119,8 @@
     onValue(ref(db, 'sharedData/newsData'), (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
-        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
-        const phMap = {'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
+        const imgKeys = ['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','char-wrap','bday-wrap'];
+        const phMap = {'maps-wrap':'maps-ph','boss-wrap':'boss-ph','char-wrap':'char-ph','bday-wrap':'bday-ph'};
         imgKeys.forEach(id => {
             const url = data['img_' + id];
             if (url) {
@@ -404,6 +404,11 @@ textarea,input[type=text]{width:100%;background:rgba(0,0,0,0.4);border:1px solid
         <div class="lr"><input type="text" id="build-link" placeholder="Link..." oninput="saveBattle()"><button class="btn btn-gd pub-btn" onclick="openL('build-link')">📖 Open</button></div>
         <span class="lbl">Genshin Impact Wiki</span>
         <div class="lr"><input type="text" id="wiki-link" placeholder="Link..." oninput="saveBattle()"><button class="btn btn-gd pub-btn" onclick="openL('wiki-link')">📖 Open</button></div>
+        <span class="lbl">Character Picture</span>
+        <div class="pw" id="char-wrap" style="border:1px solid rgba(165,255,173,0.35);height:200px;background-size:cover;background-position:center;" onclick="if(_unlocked)document.getElementById('char-file').click()">
+          <span id="char-ph" style="font-size:11px;opacity:0.5;">✨ Click to add Character picture</span>
+        </div>
+        <input type="file" id="char-file" style="display:none" accept="image/*" onchange="chPic(this,'char-wrap','char-ph')">
       </div>
       <div style="display:flex;flex-direction:column;gap:15px;">
         <div class="b-boss">
@@ -942,8 +947,8 @@ window.onload=()=>{
   codes=G('codes')||[];renderCodes();
   updVer();
   // Herstel prente van localStorage
-  const _imgKeys=['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','bday-wrap'];
-  const _phMap={'maps-wrap':'maps-ph','boss-wrap':'boss-ph','bday-wrap':'bday-ph'};
+  const _imgKeys=['bg1','bg2','bgp1','bgp2','live-bg','maps-wrap','boss-wrap','char-wrap','bday-wrap'];
+  const _phMap={'maps-wrap':'maps-ph','boss-wrap':'boss-ph','char-wrap':'char-ph','bday-wrap':'bday-ph'};
   _imgKeys.forEach(id=>{
     try{
       const url=JSON.parse(localStorage.getItem('tnews_final_img_'+id));
