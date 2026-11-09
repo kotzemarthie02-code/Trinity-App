@@ -231,6 +231,14 @@
             if (user) {
                 localStorage.setItem('trinity_uid', user.uid);
 
+                // Skakel e-pos -> Trinity-ID, sodat Primogem Besties jou ID kan vind (ook in 'n aparte iPhone-app)
+                try {
+                    if (user.email) {
+                        const linkKey = user.email.toLowerCase().replace(/[.#$\[\]\/]/g, '_');
+                        set(ref(db, 'emailLinks/' + linkKey), user.uid).catch(e => console.warn('emailLink:', e.message));
+                    }
+                } catch (e) { console.warn('emailLink:', e.message); }
+
                 // Nickname/UID — stoor in localStorage sodat dit bly na refresh
                 onValue(ref(db, 'users/' + user.uid), (snapshot) => {
                     const data = snapshot.val();
