@@ -8,6 +8,41 @@
     <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
     <title>Genshin Dashboard</title>
     <style>
+        /* Wys niks van die profiel tot dit reg is nie - geen leë/verstek-flits */
+        html:not(.pf-ready) .profile-section, html:not(.pf-ready) .uid-tag { visibility: hidden; }
+    </style>
+    <script>
+        (function () {
+            var pf = null;
+            try {
+                var uid = null;
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (k && k.indexOf('firebase:authUser:') === 0) {
+                        try { uid = JSON.parse(localStorage.getItem(k)).uid; } catch (e) {}
+                        break;
+                    }
+                }
+                if (!uid) uid = localStorage.getItem('trinity_uid');
+                var raw = uid && localStorage.getItem('trinity_profile_' + uid);
+                if (raw) pf = JSON.parse(raw);
+            } catch (e) {}
+            window.applyProfile = function (p) {
+                if (!p) return;
+                var n = document.getElementById('n-display'); if (n && p.nick) n.innerText = p.nick;
+                var u = document.getElementById('u-display'); if (u && p.gid) u.innerText = p.gid;
+                var a = document.getElementById('avatar'); if (a && p.pic && a.getAttribute('src') !== p.pic) a.src = p.pic;
+            };
+            window.showProfile = function () { document.documentElement.classList.add('pf-ready'); };
+            if (pf) {
+                document.addEventListener('DOMContentLoaded', function () { window.applyProfile(pf); window.showProfile(); });
+            }
+            // Veiligheidsnet: wys altyd na 4s selfs al het Firebase nie geantwoord nie
+            setTimeout(function () { window.showProfile(); }, 4000);
+        })();
+    </script>
+
+    <style>
         /* AL JOU OORSPRONKLIKE STYLE BLY PRESIES DIESELFDE */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -243,28 +278,17 @@
                 onValue(ref(db, 'users/' + user.uid), (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        const nick = data.nickname || "Traveler";
-                        const uid  = data.genshinUid || data.uid || "--------";
-                        document.getElementById("n-display").innerText = nick;
-                        document.getElementById("u-display").innerText = uid;
-                        // Stoor in localStorage sodat refresh dit behou
-                        localStorage.setItem('trinity_nickname', nick);
-                        localStorage.setItem('trinity_genshinuid', uid);
-                        if (data.profilePic) {
-                            const av = document.getElementById("avatar");
-                            if (av.src !== data.profilePic) av.src = data.profilePic;
-                            try { localStorage.setItem('trinity_profilepic', data.profilePic); } catch(e) { console.warn('pic cache:', e.message); }
-                        }
+                        const prev = (() => { try { return JSON.parse(localStorage.getItem('trinity_profile_' + user.uid)) || {}; } catch (e) { return {}; } })();
+                        const p = {
+                            nick: data.nickname || "Traveler",
+                            gid:  data.genshinUid || data.uid || "--------",
+                            pic:  data.profilePic || prev.pic || ""
+                        };
+                        window.applyProfile(p);
+                        try { localStorage.setItem('trinity_profile_' + user.uid, JSON.stringify(p)); } catch (e) { console.warn('profile cache:', e.message); }
                     }
+                    window.showProfile();
                 });
-
-                // Wys nickname/uid van localStorage terwyl Firebase laai
-                const cachedNick = localStorage.getItem('trinity_nickname');
-                const cachedUid  = localStorage.getItem('trinity_genshinuid');
-                const cachedPic  = localStorage.getItem('trinity_profilepic');
-                if (cachedNick) document.getElementById("n-display").innerText = cachedNick;
-                if (cachedUid)  document.getElementById("u-display").innerText = cachedUid;
-                if (cachedPic)  document.getElementById("avatar").src = cachedPic;
 
                 // Luister na kalender notes
                 onValue(ref(db, 'sharedData/calendarNotes'), (snapshot) => {
@@ -307,9 +331,6 @@
         window.logout = () => { 
             signOut(auth).then(() => { 
                 localStorage.removeItem('trinity_uid');
-                localStorage.removeItem('trinity_profilepic');
-                localStorage.removeItem('trinity_nickname');
-                localStorage.removeItem('trinity_genshinuid');
                 localStorage.removeItem('ownedCharacters');
                 localStorage.removeItem('characterDetails');
                 window.location.href = "index.html"; 
@@ -332,9 +353,15 @@
                     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
                     const base64 = c.toDataURL('image/jpeg', 0.85);
                     document.getElementById('avatar').src = base64;
-                    try { localStorage.setItem('trinity_profilepic', base64); } catch(e) { console.warn('pic cache:', e.message); }
                     const user = auth.currentUser;
-                    if (user) set(ref(db, 'users/' + user.uid + '/profilePic'), base64);
+                    if (user) {
+                        try {
+                            const prev = JSON.parse(localStorage.getItem('trinity_profile_' + user.uid)) || {};
+                            prev.pic = base64;
+                            localStorage.setItem('trinity_profile_' + user.uid, JSON.stringify(prev));
+                        } catch(e) { console.warn('pic cache:', e.message); }
+                        set(ref(db, 'users/' + user.uid + '/profilePic'), base64);
+                    }
                 };
                 img.src = reader.result;
             };
@@ -344,23 +371,6 @@
 </head>
 <body>
 
-    <!-- Laai cached profiel ONMIDDELLIK voor Firebase — geen flicker nie -->
-    <script>
-        (function() {
-            const nick = localStorage.getItem('trinity_nickname');
-            const uid  = localStorage.getItem('trinity_genshinuid');
-            const pic  = localStorage.getItem('trinity_profilepic');
-            if (nick) document.addEventListener('DOMContentLoaded', function() {
-                const n = document.getElementById('n-display'); if(n) n.innerText = nick;
-            });
-            if (uid) document.addEventListener('DOMContentLoaded', function() {
-                const u = document.getElementById('u-display'); if(u) u.innerText = uid;
-            });
-            if (pic) document.addEventListener('DOMContentLoaded', function() {
-                const a = document.getElementById('avatar'); if(a) a.src = pic;
-            });
-        })();
-    </script>
 
     <div class="top-right-box">
         <span class="uid-tag">UID: <span id="u-display">--------</span></span>
@@ -399,13 +409,7 @@
     <div class="profile-section">
         <div class="profile-pic" onclick="document.getElementById('file-input').click()">
             <img id="avatar" src="" alt="Avatar" style="width:100%;height:100%;object-fit:cover;visibility:hidden;" onload="this.style.visibility='visible'">
-            <script>
-                // Wys die gestoorde foto DADELIK (voor Firebase laai)
-                (function(){ try {
-                    var p = localStorage.getItem('trinity_profilepic');
-                    if (p) document.getElementById('avatar').src = p;
-                } catch(e){} })();
-            </script>
+
         </div>
         <div class="profile-right">
             <div class="nickname" id="n-display">Traveler</div>
