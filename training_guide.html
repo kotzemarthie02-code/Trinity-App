@@ -233,14 +233,8 @@ window.syncFirebase = function() {
         }
     }
 
-    // As jy in die "Unowned"-aansig 'n karakter owned maak, gaan terug na die normale Owned-aansig
-    function backToOwnedViewIfNeeded(name) {
-        const sel = document.getElementById('f-owned');
-        if (sel && sel.value === 'unowned' && window.characters[name] && window.characters[name].o) {
-            sel.value = 'owned';
-            window.filter();
-        }
-    }
+    // Die Unowned/Owned-aansig bly soos jy dit gekies het - geen outomatiese terugspring nie
+    function backToOwnedViewIfNeeded(name) { /* doen niks meer nie */ }
 
     // Vinnige owned toggle van prentjie klik
     window.quickToggleOwned = function(name) {

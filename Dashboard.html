@@ -251,8 +251,9 @@
                         localStorage.setItem('trinity_nickname', nick);
                         localStorage.setItem('trinity_genshinuid', uid);
                         if (data.profilePic) {
-                            document.getElementById("avatar").src = data.profilePic;
-                            localStorage.setItem('trinity_profilepic', data.profilePic);
+                            const av = document.getElementById("avatar");
+                            if (av.src !== data.profilePic) av.src = data.profilePic;
+                            try { localStorage.setItem('trinity_profilepic', data.profilePic); } catch(e) { console.warn('pic cache:', e.message); }
                         }
                     }
                 });
@@ -306,6 +307,9 @@
         window.logout = () => { 
             signOut(auth).then(() => { 
                 localStorage.removeItem('trinity_uid');
+                localStorage.removeItem('trinity_profilepic');
+                localStorage.removeItem('trinity_nickname');
+                localStorage.removeItem('trinity_genshinuid');
                 localStorage.removeItem('ownedCharacters');
                 localStorage.removeItem('characterDetails');
                 window.location.href = "index.html"; 
@@ -314,14 +318,25 @@
 
         window.changePic = (event) => {
             const file = event.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = function() {
-                const base64 = reader.result;
-                const user = auth.currentUser;
-                if (user) {
-                    set(ref(db, 'users/' + user.uid + '/profilePic'), base64);
+                const img = new Image();
+                img.onload = function() {
+                    // Verklein tot 400px sodat dit altyd in localStorage pas en vinnig laai
+                    const max = 400;
+                    const scale = Math.min(1, max / Math.max(img.width, img.height));
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.width * scale);
+                    c.height = Math.round(img.height * scale);
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    const base64 = c.toDataURL('image/jpeg', 0.85);
                     document.getElementById('avatar').src = base64;
-                }
+                    try { localStorage.setItem('trinity_profilepic', base64); } catch(e) { console.warn('pic cache:', e.message); }
+                    const user = auth.currentUser;
+                    if (user) set(ref(db, 'users/' + user.uid + '/profilePic'), base64);
+                };
+                img.src = reader.result;
             };
             reader.readAsDataURL(file);
         };
@@ -383,7 +398,14 @@
 
     <div class="profile-section">
         <div class="profile-pic" onclick="document.getElementById('file-input').click()">
-            <img id="avatar" src="" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
+            <img id="avatar" src="" alt="Avatar" style="width:100%;height:100%;object-fit:cover;visibility:hidden;" onload="this.style.visibility='visible'">
+            <script>
+                // Wys die gestoorde foto DADELIK (voor Firebase laai)
+                (function(){ try {
+                    var p = localStorage.getItem('trinity_profilepic');
+                    if (p) document.getElementById('avatar').src = p;
+                } catch(e){} })();
+            </script>
         </div>
         <div class="profile-right">
             <div class="nickname" id="n-display">Traveler</div>
