@@ -109,7 +109,7 @@
             <button class="back-btn" onclick="window.location.href='Dashboard.html'">🏠 Dashboard View</button>
             <select id="f-rarity" onchange="filter()"><option value="all">Rarity</option><option value="5">5 Ster</option><option value="4">4 Ster</option></select>
             <select id="f-element" onchange="filter()"><option value="all">Element</option><option value="Anemo">Anemo</option><option value="Geo">Geo</option><option value="Electro">Electro</option><option value="Dendro">Dendro</option><option value="Hydro">Hydro</option><option value="Pyro">Pyro</option><option value="Cryo">Cryo</option></select>
-            <select id="f-owned" onchange="filter()"><option value="all" selected>Own</option><option value="owned">Owned</option><option value="unowned">Unowned</option></select>
+            <select id="f-owned" onchange="filter()"><option value="all">Own</option><option value="owned" selected>Owned</option><option value="unowned">Unowned</option></select>
         </div>
         <div class="character-grid" id="grid"></div>
     </div>
@@ -162,14 +162,15 @@ onValue(ref(db, 'users/' + currentUsername + '/ownedCharacters'), (snapshot) => 
     Object.keys(window.characters).forEach(name => {
         window.characters[name].o = window.ownedFromStorage.includes(name);
     });
-    if (typeof window.filter === "function") window.filter();
+    if (window.filterSoon) window.filterSoon();
 });
 
 onValue(ref(db, 'users/' + currentUsername + '/characterDetails'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
         localStorage.setItem('characterDetails', JSON.stringify(data));
-        if (typeof window.filter === "function") window.filter();
+        if (window.resetDetailsCache) window.resetDetailsCache();
+        if (window.filterSoon) window.filterSoon();
     }
 });
 
@@ -177,7 +178,7 @@ onValue(ref(db, 'users/' + currentUsername + '/guideProgress'), (snapshot) => {
     const data = snapshot.val() || {};
     localStorage.setItem('guideProgress', JSON.stringify(data));
     window.guideProgress = data;
-    if (typeof window.filter === "function") window.filter();
+    if (window.filterSoon) window.filterSoon();
     if (window.refreshCurrentCircles) window.refreshCurrentCircles();
 });
 
@@ -211,8 +212,11 @@ window.syncFirebase = function() {
         return v !== undefined ? v : charProg[t];
     }
 
+    let _cdCache = null;
+    window.resetDetailsCache = function() { _cdCache = null; };
     function getCharLV(name) {
-        const charDetails = JSON.parse(localStorage.getItem('characterDetails')) || {};
+        if (!_cdCache) { try { _cdCache = JSON.parse(localStorage.getItem('characterDetails')) || {}; } catch (e) { _cdCache = {}; } }
+        const charDetails = _cdCache;
         const data = charDetails[name];
         if (!data) return null;
         // CharacterView stoor lvFrom/lvTo direk; ou data: sel_0 = van, sel_1 = tot
@@ -318,6 +322,9 @@ window.syncFirebase = function() {
             }
         });
     };
+
+    let _fT = null;
+    window.filterSoon = function() { clearTimeout(_fT); _fT = setTimeout(() => window.filter(), 50); };
 
     window.filter = function() {
         const r = document.getElementById('f-rarity').value;
