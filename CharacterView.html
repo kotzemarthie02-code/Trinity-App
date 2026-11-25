@@ -1031,6 +1031,17 @@ const db = firebase.database();
 // Firebase helper functions
 const currentUsername = localStorage.getItem('trinity_uid') || "Admin";
 
+// Owned-lys in geheue: werk selfs as die blaaier-stoor vol is (QuotaExceeded)
+let ownedMem = null;
+function setOwnedMem(arr) {
+    ownedMem = arr;
+    try { localStorage.setItem('ownedCharacters', JSON.stringify(arr)); } catch (e) { /* stoor vol - geheue is genoeg */ }
+}
+function getOwnedMem() {
+    if (ownedMem) return ownedMem;
+    try { const r = JSON.parse(localStorage.getItem('ownedCharacters') || '[]'); return Array.isArray(r) ? r : Object.values(r || {}); } catch (e) { return []; }
+}
+
 async function fbGet(key) {
     const snap = await db.ref('users/' + currentUsername + '/' + key).once('value');
     return snap.exists() ? snap.val() : null;
@@ -1177,8 +1188,7 @@ function fillDropdown(selector, list) {
 async function updateCharacterDropdown() {
     const selectBox = document.getElementById('charSelect');
     // Wys NET owned karakters in dropdown
-    const rawOwned = JSON.parse(localStorage.getItem('ownedCharacters') || '[]');
-    const owned = Array.isArray(rawOwned) ? rawOwned : Object.values(rawOwned);
+    const owned = getOwnedMem();
 
     const previous = selectBox.value; // onthou wat gekies was
     selectBox.innerHTML = '<option value="">Select</option>';
@@ -1199,7 +1209,7 @@ async function refreshOwnedFromCloud() {
         const ownedData = await fbGet('ownedCharacters');
         if (ownedData) {
             const arr = Array.isArray(ownedData) ? ownedData : Object.values(ownedData);
-            localStorage.setItem('ownedCharacters', JSON.stringify(arr));
+            setOwnedMem(arr);
         }
     } catch (e) { /* offline - gebruik wat in localStorage is */ }
     await updateCharacterDropdown();
@@ -1676,10 +1686,19 @@ window.onload = async () => {
     const ownedData = await fbGet('ownedCharacters');
     if (ownedData) {
         const arr = Array.isArray(ownedData) ? ownedData : Object.values(ownedData);
-        localStorage.setItem('ownedCharacters', JSON.stringify(arr));
+        setOwnedMem(arr);
     }
 
     await setupDropdowns();
+
+    // Live: as jy in Training Guide 'n karakter merk, verskyn dit dadelik hier
+    try {
+        db.ref('users/' + currentUsername + '/ownedCharacters').on('value', (snap) => {
+            const v = snap.val();
+            setOwnedMem(v ? (Array.isArray(v) ? v : Object.values(v)) : []);
+            updateCharacterDropdown();
+        });
+    } catch (e) { console.warn('owned listener:', e); }
     scheduleFit();
 };
 

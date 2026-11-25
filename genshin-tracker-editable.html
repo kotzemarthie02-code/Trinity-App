@@ -1283,6 +1283,7 @@ let characters = [
 const ROSTER = {"Aino":{r:4,e:"Hydro"},"Albedo":{r:5,e:"Geo"},"Alhaitham":{r:5,e:"Dendro"},"Aloy":{r:5,e:"Cryo"},"Amber":{r:4,e:"Pyro"},"Arataki Itto":{r:5,e:"Geo"},"Arlecchino":{r:5,e:"Pyro"},"Baizhu":{r:5,e:"Dendro"},"Barbara":{r:4,e:"Hydro"},"Beidou":{r:4,e:"Electro"},"Bennett":{r:4,e:"Pyro"},"Candace":{r:4,e:"Hydro"},"Charlotte":{r:4,e:"Cryo"},"Chasca":{r:5,e:"Anemo"},"Chevreuse":{r:4,e:"Pyro"},"Chiori":{r:5,e:"Geo"},"Chongyun":{r:4,e:"Cryo"},"Citlali":{r:5,e:"Cryo"},"Clorinde":{r:5,e:"Electro"},"Collei":{r:4,e:"Dendro"},"Columbina":{r:5,e:"Hydro"},"Cyno":{r:5,e:"Electro"},"Dahlia":{r:4,e:"Hydro"},"Dehya":{r:5,e:"Pyro"},"Diluc":{r:5,e:"Pyro"},"Diona":{r:4,e:"Cryo"},"Dori":{r:4,e:"Electro"},"Durin":{r:5,e:"Pyro"},"Emilie":{r:5,e:"Dendro"},"Escoffier":{r:5,e:"Cryo"},"Eula":{r:5,e:"Cryo"},"Faruzan":{r:4,e:"Anemo"},"Fischl":{r:4,e:"Electro"},"Flins":{r:5,e:"Electro"},"Freminet":{r:4,e:"Cryo"},"Furina":{r:5,e:"Hydro"},"Gaming":{r:4,e:"Pyro"},"Ganyu":{r:5,e:"Cryo"},"Gorou":{r:4,e:"Geo"},"Hu Tao":{r:5,e:"Pyro"},"Iansan":{r:4,e:"Electro"},"Ifa":{r:4,e:"Anemo"},"Illuga":{r:4,e:"Geo"},"Ineffa":{r:5,e:"Electro"},"Jahoda":{r:4,e:"Anemo"},"Jean":{r:5,e:"Anemo"},"Kachina":{r:4,e:"Geo"},"Kaedehara Kazuha":{r:5,e:"Anemo"},"Kaeya":{r:4,e:"Cryo"},"Kamisato Ayaka":{r:5,e:"Cryo"},"Kamisato Ayato":{r:5,e:"Hydro"},"Kaveh":{r:4,e:"Dendro"},"Keqing":{r:5,e:"Electro"},"Kinich":{r:5,e:"Dendro"},"Kirara":{r:4,e:"Dendro"},"Klee":{r:5,e:"Pyro"},"Kujou Sara":{r:4,e:"Electro"},"Kuki Shinobu":{r:4,e:"Electro"},"Lan Yan":{r:4,e:"Anemo"},"Lauma":{r:5,e:"Dendro"},"Layla":{r:4,e:"Cryo"},"Lisa":{r:4,e:"Electro"},"Lynette":{r:4,e:"Anemo"},"Lyney":{r:5,e:"Pyro"},"Mavuika":{r:5,e:"Pyro"},"Mika":{r:4,e:"Cryo"},"Mona":{r:5,e:"Hydro"},"Mualani":{r:5,e:"Hydro"},"Nahida":{r:5,e:"Dendro"},"Navia":{r:5,e:"Geo"},"Nefer":{r:5,e:"Dendro"},"Neuvillette":{r:5,e:"Hydro"},"Nilou":{r:5,e:"Hydro"},"Ningguang":{r:4,e:"Geo"},"Noelle":{r:4,e:"Geo"},"Ororon":{r:4,e:"Electro"},"Qiqi":{r:5,e:"Cryo"},"Raiden Shogun":{r:5,e:"Electro"},"Razor":{r:4,e:"Electro"},"Rosaria":{r:4,e:"Cryo"},"Sangonomiya Kokomi":{r:5,e:"Hydro"},"Sayu":{r:4,e:"Anemo"},"Sethos":{r:4,e:"Electro"},"Shenhe":{r:5,e:"Cryo"},"Shikanoin Heizou":{r:4,e:"Anemo"},"Sigewinne":{r:5,e:"Hydro"},"Skirk":{r:5,e:"Cryo"},"Sucrose":{r:4,e:"Anemo"},"Tartaglia":{r:5,e:"Hydro"},"Thoma":{r:4,e:"Pyro"},"Tighnari":{r:5,e:"Dendro"},"Traveler Anemo":{r:5,e:"Anemo"},"Traveler Geo":{r:5,e:"Geo"},"Traveler Electro":{r:5,e:"Electro"},"Traveler Hydro":{r:5,e:"Hydro"},"Traveler Pyro":{r:5,e:"Pyro"},"Traveler Dendro":{r:5,e:"Dendro"},"Varesa":{r:5,e:"Electro"},"Varka":{r:5,e:"Anemo"},"Venti":{r:5,e:"Anemo"},"Wanderer":{r:5,e:"Anemo"},"Wriothesley":{r:5,e:"Cryo"},"Xiangling":{r:4,e:"Pyro"},"Xianyun":{r:5,e:"Anemo"},"Xiao":{r:5,e:"Anemo"},"Xilonen":{r:5,e:"Geo"},"Xingqiu":{r:4,e:"Hydro"},"Xinyan":{r:4,e:"Pyro"},"Yae Miko":{r:5,e:"Electro"},"Yanfei":{r:4,e:"Pyro"},"Yaoyao":{r:4,e:"Dendro"},"Yelan":{r:5,e:"Hydro"},"Yoimiya":{r:5,e:"Pyro"},"Yumemizuki Mizuki":{r:5,e:"Anemo"},"Yun Jin":{r:4,e:"Geo"},"Zhongli":{r:5,e:"Geo"},"Zibai":{r:5,e:"Geo"},"Linnea":{r:5,e:"Geo"}};
 
 function getOwnedNames(){
+  if (Array.isArray(window._ownedMem)) return window._ownedMem;   // live uit Firebase (werk ook as blaaier-stoor vol is)
   try {
     const raw = JSON.parse(localStorage.getItem("ownedCharacters"));
     const arr = Array.isArray(raw) ? raw : (raw ? Object.values(raw) : []);
@@ -2724,6 +2725,15 @@ function saveToFirebase(){
 let firebaseSyncApplied = false;
 window.onFirebaseTrackerReady = function(uid){
   window._fbUid = uid;
+  // Live: owned-lys uit Firebase (Training Guide se ✓) — nie afhanklik van blaaier-stoor nie
+  try {
+    window._fbOnValue(window._fbRef(window._fbDb, "users/" + uid + "/ownedCharacters"), (snap)=>{
+      const v = snap.val();
+      window._ownedMem = v ? (Array.isArray(v) ? v : Object.values(v)) : [];
+      try { localStorage.setItem("ownedCharacters", JSON.stringify(window._ownedMem)); } catch(e){ /* stoor vol - geheue is genoeg */ }
+      try { syncWithTrainingGuide(); renderTop(); } catch(e){ console.warn("owned refresh:", e); }
+    });
+  } catch(e){ console.warn("owned listener:", e); }
   window._fbOnValue(window._fbRef(window._fbDb, "users/" + uid + "/genshinTracker"), (snapshot)=>{
     if (firebaseSyncApplied) return;
     firebaseSyncApplied = true;
