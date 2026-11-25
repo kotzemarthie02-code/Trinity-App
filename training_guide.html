@@ -31,6 +31,7 @@
         .character-grid { display: grid; grid-template-columns: repeat(4, 95px); grid-gap: 15px; }
         
         .char-card {
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
             width: 95px; height: 115px; background-color: rgba(255, 255, 255, 0.9); 
             border-radius: 10px; cursor: pointer; position: relative; color: #333;
             display: flex; flex-direction: column; align-items: center; overflow: hidden;
@@ -53,12 +54,13 @@
             position: absolute;
             top: 4px;
             right: 4px;
-            width: 22px; height: 22px;
+            width: 30px; height: 30px;
             border-radius: 50%;
+            touch-action: manipulation;
             border: 2px solid rgba(255,255,255,0.4);
             background: rgba(0,0,0,0.55);
             display: flex; align-items: center; justify-content: center;
-            font-size: 12px;
+            font-size: 15px;
             cursor: pointer;
             z-index: 10;
             transition: 0.2s;
@@ -107,7 +109,7 @@
             <button class="back-btn" onclick="window.location.href='Dashboard.html'">🏠 Dashboard View</button>
             <select id="f-rarity" onchange="filter()"><option value="all">Rarity</option><option value="5">5 Ster</option><option value="4">4 Ster</option></select>
             <select id="f-element" onchange="filter()"><option value="all">Element</option><option value="Anemo">Anemo</option><option value="Geo">Geo</option><option value="Electro">Electro</option><option value="Dendro">Dendro</option><option value="Hydro">Hydro</option><option value="Pyro">Pyro</option><option value="Cryo">Cryo</option></select>
-            <select id="f-owned" onchange="filter()"><option value="all">Own</option><option value="owned" selected>Owned</option><option value="unowned">Unowned</option></select>
+            <select id="f-owned" onchange="filter()"><option value="all" selected>Own</option><option value="owned">Owned</option><option value="unowned">Unowned</option></select>
         </div>
         <div class="character-grid" id="grid"></div>
     </div>
@@ -182,7 +184,8 @@ onValue(ref(db, 'users/' + currentUsername + '/guideProgress'), (snapshot) => {
 // Sync na Firebase
 window.syncFirebase = function() {
     const owned = JSON.parse(localStorage.getItem('ownedCharacters')) || [];
-    set(ref(db, 'users/' + currentUsername + '/ownedCharacters'), owned);
+    return set(ref(db, 'users/' + currentUsername + '/ownedCharacters'), owned)
+        .catch(e => { console.error(e); alert('Kon nie stoor nie: ' + (e.code || e.message) + '\n(ID: ' + currentUsername + ')'); });
 };
 </script>
 
@@ -262,6 +265,7 @@ window.syncFirebase = function() {
             owned = owned.filter(name => name !== current);
         }
         localStorage.setItem('ownedCharacters', JSON.stringify(owned));
+        window.ownedFromStorage = owned;
         
         if (window.syncFirebase) window.syncFirebase();
 
